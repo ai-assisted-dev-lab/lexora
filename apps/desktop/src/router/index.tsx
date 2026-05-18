@@ -7,6 +7,7 @@ import { AchievementsPage } from "@/pages/AchievementsPage";
 import { AdminDataStudioPage } from "@/pages/AdminDataStudioPage";
 import { DeckDetailPage } from "@/pages/DeckDetailPage";
 import { DiscoverPage } from "@/pages/DiscoverPage";
+import { HomePage } from "@/pages/HomePage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -30,8 +31,8 @@ export const routeTree = [
       {
         element: <AppShellLayout />,
         children: [
-          { index: true, element: <Navigate to="/discover" replace /> },
-          { path: "home", element: <Navigate to="/discover" replace /> },
+          { index: true, element: <Navigate to="/home" replace /> },
+          { path: "home", element: <HomePage /> },
           { path: "discover", element: <DiscoverPage /> },
           { path: "library", element: <LibraryPage /> },
           { path: "library/:deckId", element: <DeckDetailPage /> },

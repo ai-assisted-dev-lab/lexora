@@ -30,6 +30,7 @@ describe("Sidebar — brand block", () => {
 describe("Sidebar — nav items", () => {
   it("renders all main nav labels", () => {
     renderSidebar();
+    expect(screen.getByText("Home")).toBeInTheDocument();
     expect(screen.getByText("Discover")).toBeInTheDocument();
     expect(screen.getByText("My Library")).toBeInTheDocument();
     expect(screen.getByText("Review")).toBeInTheDocument();

@@ -4,6 +4,7 @@ import {
   BookOpen,
   Brain,
   Compass,
+  Home,
   Settings2,
   Trophy,
 } from "lucide-react";
@@ -20,6 +21,15 @@ export interface RouteConfig {
 
 export const ROUTE_CONFIGS: RouteConfig[] = [
   /* ── Sidebar — main section ──────────────────────────────────────── */
+  {
+    path: "/home",
+    label: "Home",
+    icon: Home,
+    requiresAuth: true,
+    requiresOwner: false,
+    showInSidebar: true,
+    sidebarSection: "main",
+  },
   {
     path: "/discover",
     label: "Discover",

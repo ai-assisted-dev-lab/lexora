@@ -46,6 +46,7 @@ describe("Route metadata", () => {
   });
 
   it("getPageLabel returns the correct label for static paths", () => {
+    expect(getPageLabel("/home")).toBe("Home");
     expect(getPageLabel("/discover")).toBe("Discover");
     expect(getPageLabel("/library")).toBe("My Library");
     expect(getPageLabel("/review")).toBe("Review");
@@ -72,6 +73,7 @@ describe("Route metadata", () => {
 
 describe("Route smoke tests", () => {
   const shellRoutes: [string, string][] = [
+    ["/home", "Expand words. Expand your world."],
     ["/discover", "Discover"],
     ["/library", "My Library"],
     ["/review", "Review"],
