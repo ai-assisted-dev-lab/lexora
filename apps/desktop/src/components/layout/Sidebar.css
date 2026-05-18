@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--color-text-on-accent);
   flex-shrink: 0;
 }
 
@@ -46,7 +46,7 @@
   right: -3px;
   font-size: 9px;
   font-weight: 800;
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-accent);
   border-radius: 3px;
   padding: 1px 3px;
@@ -143,13 +143,13 @@
 }
 
 .sidebar__nav-item--active {
-  background: #dbeafe;
+  background: var(--color-primary-soft-hover);
   color: var(--color-accent);
   font-weight: 600;
 }
 
 .sidebar__nav-item--active:hover {
-  background: #bfdbfe;
+  background: var(--color-border-strong);
 }
 
 .sidebar__nav-icon {
@@ -169,7 +169,7 @@
   top: 50%;
   transform: translateY(-50%);
   background: var(--color-text);
-  color: #fff;
+  color: var(--color-text-on-accent);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   font-size: 12px;

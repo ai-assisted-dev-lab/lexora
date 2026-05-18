@@ -1,4 +1,10 @@
-/* ── Design Tokens ───────────────────────────────────────────────────── */
+@import "./components/ui/primitives.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design Tokens */
 :root {
   /* Layout dimensions */
   --title-bar-h: 40px;
@@ -10,30 +16,55 @@
   --gap-sm: 8px;
   --gap-md: 16px;
   --gap-lg: 24px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
 
   /* Border radii */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
 
-  /* Colors - Canvas */
+  /* Colors - canvas and surfaces */
   --color-canvas: #eff6ff;
   --color-canvas-subtle: #f0f9ff;
-
-  /* Colors - Surfaces */
   --color-surface: #ffffff;
   --color-surface-raised: #f8faff;
+  --color-surface-elevated: #f8faff;
+  --color-surface-glass: rgba(255, 255, 255, 0.78);
 
-  /* Colors - Borders */
+  /* Colors - borders */
   --color-border: #dbeafe;
   --color-border-muted: #e8f0fe;
+  --color-border-strong: #bfdbfe;
 
-  /* Colors - Accent */
+  /* Colors - accents */
   --color-accent: #2563eb;
   --color-accent-light: #eff6ff;
   --color-accent-hover: #1d4ed8;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #eff6ff;
+  --color-primary-soft-hover: #dbeafe;
+  --color-azure: #3b82f6;
+  --color-cyan: #0891b2;
+  --color-cyan-soft: #cffafe;
+  --color-focus-ring: #3b82f6;
+  --color-text-on-accent: #ffffff;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fee2e2;
+  --color-danger-soft-hover: #fecaca;
+  --color-success: #15803d;
+  --color-success-soft: #dcfce7;
+  --color-warning: #b45309;
+  --color-warning-soft: #fef3c7;
 
-  /* Colors - Text */
+  /* Colors - text */
   --color-text: #1e293b;
   --color-text-muted: #64748b;
   --color-text-subtle: #94a3b8;
@@ -43,9 +74,12 @@
   --shadow-md:
     0 4px 12px rgba(37, 99, 235, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 8px 24px rgba(37, 99, 235, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-glass:
+    0 10px 30px rgba(37, 99, 235, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --shadow-focus: 0 0 0 4px rgba(59, 130, 246, 0.14);
 }
 
-/* ── Reset ───────────────────────────────────────────────────────────── */
+/* Reset */
 *,
 *::before,
 *::after {
@@ -74,7 +108,7 @@ body {
   height: 100%;
 }
 
-/* ── Splash placeholder (shown until real routes exist) ──────────────── */
+/* Splash placeholder */
 .splash {
   display: flex;
   flex-direction: column;
@@ -87,8 +121,11 @@ body {
 .wordmark {
   font-size: 4.5rem;
   font-weight: 700;
-  letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-cyan) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -100,5 +137,4 @@ body {
   font-size: 1.125rem;
   color: var(--color-text-muted);
   font-weight: 400;
-  letter-spacing: 0.01em;
 }

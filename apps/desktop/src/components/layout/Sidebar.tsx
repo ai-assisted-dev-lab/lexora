@@ -5,6 +5,7 @@ import { BookOpen, ChevronLeft, ChevronRight, Flame, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
+import { Card, IconButton } from "@/components/ui";
 import { SIDEBAR_BOTTOM_ITEMS, SIDEBAR_MAIN_ITEMS } from "@/router/routes";
 
 const AUTO_COLLAPSE_BREAKPOINT = 1024;
@@ -64,17 +65,17 @@ export function Sidebar() {
             <span className="sidebar__subtitle">EN ↔ VI</span>
           </div>
         )}
-        <button
+        <IconButton
           className="sidebar__toggle"
           onClick={() => setIsCollapsed((c) => !c)}
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (
             <ChevronRight size={14} aria-hidden="true" />
           ) : (
             <ChevronLeft size={14} aria-hidden="true" />
           )}
-        </button>
+        </IconButton>
       </div>
 
       <div className="sidebar__section">
@@ -102,10 +103,11 @@ export function Sidebar() {
           />
         ))}
 
-        <div
+        <Card
           className="sidebar__profile-card"
           data-testid="sidebar-profile"
           title={isCollapsed ? "Profile" : undefined}
+          variant="compact"
         >
           <div className="sidebar__profile-avatar">
             <User size={14} aria-hidden="true" />
@@ -118,7 +120,7 @@ export function Sidebar() {
               </span>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </nav>
   );

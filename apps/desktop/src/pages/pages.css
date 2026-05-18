@@ -37,7 +37,12 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 50%, #eff6ff 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-canvas-subtle) 0%,
+    var(--color-primary-soft-hover) 50%,
+    var(--color-primary-soft) 100%
+  );
 }
 
 .login-page__content {
@@ -63,7 +68,11 @@
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-cyan) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -113,7 +122,11 @@
   font-size: 5rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-border-strong) 0%,
+    var(--color-primary-soft-hover) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -141,7 +154,7 @@
   gap: var(--gap-sm);
   padding: 10px 20px;
   background: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-text-on-accent);
   border-radius: var(--radius-md);
   text-decoration: none;
   font-size: 0.875rem;

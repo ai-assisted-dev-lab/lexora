@@ -3,6 +3,7 @@ import "./Header.css";
 import { Bell } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
+import { Badge, IconButton, PageHeader } from "@/components/ui";
 import { getPageLabel } from "@/router/routes";
 
 import { SearchBar } from "./SearchBar";
@@ -15,19 +16,20 @@ interface NotificationButtonProps {
 function NotificationButton({ count = 0 }: NotificationButtonProps) {
   return (
     <div className="page-header__notif">
-      <button
-        className="page-header__icon-btn"
-        aria-label={
-          count > 0 ? `Notifications, ${count} unread` : "Notifications"
-        }
+      <IconButton
+        label={count > 0 ? `Notifications, ${count} unread` : "Notifications"}
         title="Notifications"
       >
         <Bell size={20} aria-hidden="true" />
-      </button>
+      </IconButton>
       {count > 0 && (
-        <span className="page-header__badge" aria-hidden="true">
+        <Badge
+          className="page-header__badge"
+          variant="danger"
+          aria-hidden="true"
+        >
           {count > 9 ? "9+" : count}
-        </span>
+        </Badge>
       )}
     </div>
   );
@@ -38,7 +40,7 @@ export function Header() {
   const title = getPageLabel(pathname);
 
   return (
-    <div className="page-header" aria-label="Page header">
+    <PageHeader className="page-header" aria-label="Page header">
       <h1 className="page-header__title">{title}</h1>
 
       <SearchBar />
@@ -47,6 +49,6 @@ export function Header() {
         <NotificationButton count={0} />
         <UserProfile />
       </div>
-    </div>
+    </PageHeader>
   );
 }

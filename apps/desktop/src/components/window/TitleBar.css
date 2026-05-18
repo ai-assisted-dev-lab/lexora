@@ -1,55 +1,51 @@
-/* ── Title Bar Shell ─────────────────────────────────────────────────── */
+/* Title Bar Shell */
 .title-bar {
   display: flex;
   align-items: center;
-  height: 40px;
-  background: #ffffff;
-  border-bottom: 1px solid #dbeafe;
+  height: var(--title-bar-h);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
-  /* Prevent text selection during drag */
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* ── Draggable Region ────────────────────────────────────────────────── */
+/* Draggable Region */
 .title-bar__drag {
   flex: 1;
   display: flex;
   align-items: center;
   height: 100%;
-  /* Cursor stays default (arrow) — not a text area */
   cursor: default;
 }
 
-/* ── Brand / Wordmark ────────────────────────────────────────────────── */
+/* Brand / Wordmark */
 .title-bar__brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-  pointer-events: none; /* brand is decorative — drag passes through */
+  gap: var(--gap-sm);
+  padding: 0 var(--gap-md);
+  pointer-events: none;
 }
 
 .title-bar__logo {
   width: 18px;
   height: 18px;
-  color: #2563eb;
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
 .title-bar__wordmark {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
-  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
-/* ── Window Control Buttons ──────────────────────────────────────────── */
+/* Window Control Buttons */
 .title-bar__controls {
   display: flex;
   align-items: stretch;
   height: 100%;
-  /* Ensure buttons sit above the drag region in event handling */
   position: relative;
   z-index: 1;
 }
@@ -58,43 +54,40 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Standard Windows title bar button width */
   width: 46px;
   height: 100%;
   padding: 0;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--color-text-muted);
   cursor: default;
   transition:
     background-color 100ms ease,
     color 100ms ease;
-  /* Remove default button outline — custom focus ring below */
   outline: none;
 }
 
 .title-bar__btn:hover {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .title-bar__btn:active {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--color-primary-soft-hover);
+  color: var(--color-primary-hover);
 }
 
 .title-bar__btn:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: -2px;
 }
 
-/* Close button uses the universal red hover convention */
 .title-bar__btn--close:hover {
-  background: #ef4444;
-  color: #ffffff;
+  background: var(--color-danger);
+  color: var(--color-text-on-accent);
 }
 
 .title-bar__btn--close:active {
-  background: #dc2626;
-  color: #ffffff;
+  background: var(--color-danger);
+  color: var(--color-text-on-accent);
 }
