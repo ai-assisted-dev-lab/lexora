@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
 import { useAppInfo } from "@/hooks/useAppInfo";
 import { useDbHealth } from "@/hooks/useDbHealth";
+import { useSchemaVersion } from "@/hooks/useSchemaVersion";
 
 // ── Primitive helpers ────────────────────────────────────────────────────────
 
@@ -396,6 +397,7 @@ function NotificationsSection() {
 function BackupSection() {
   const [exportFormat, setExportFormat] = useState("sqlite");
   const dbHealth = useDbHealth();
+  const schemaVersion = useSchemaVersion();
 
   return (
     <div className="settings-content">
@@ -417,6 +419,16 @@ function BackupSection() {
         >
           <span className="settings-locked" aria-label="Database status">
             {dbHealth ? `SQLite ${dbHealth.sqliteVersion}` : "—"}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Schema Version"
+          description="Current database schema version applied by the migration runner."
+        >
+          <span className="settings-locked" aria-label="Schema version">
+            {schemaVersion
+              ? `v${schemaVersion.version} (${schemaVersion.migrationCount} migration${schemaVersion.migrationCount === 1 ? "" : "s"})`
+              : "—"}
           </span>
         </SettingsRow>
         <SettingsRow

@@ -19,6 +19,14 @@ pub fn run() {
             // Open (or create) the per-user SQLite database.
             let paths = filesystem::AppPaths { app_data_dir };
             let db = db::open(&paths.user_db())?;
+
+            // Run pending migrations before handing the connection to Tauri.
+            {
+                let mut conn = db.conn.lock()
+                    .map_err(|e| errors::AppError::Internal(format!("DB mutex poisoned: {e}")))?;
+                db::migrations::run(&mut conn)?;
+            }
+
             app.manage(db);
 
             Ok(())
@@ -26,6 +34,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::info::get_app_info,
             commands::db::db_health_check,
+            commands::db::get_schema_version,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

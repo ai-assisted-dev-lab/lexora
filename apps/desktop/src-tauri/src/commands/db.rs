@@ -1,7 +1,7 @@
 use tauri::State;
 
 use crate::db::DbConn;
-use crate::dto::db::DbHealthDto;
+use crate::dto::db::{DbHealthDto, SchemaVersionDto};
 use crate::errors::AppError;
 
 /// Verifies that the managed SQLite connection is alive and queryable.
@@ -27,5 +27,22 @@ pub fn db_health_check(db: State<'_, DbConn>) -> Result<DbHealthDto, AppError> {
         sqlite_version,
         db_path: db.path.display().to_string(),
         message: "Database connection is healthy".to_string(),
+    })
+}
+
+/// Returns the current schema version and total number of applied migrations.
+#[tauri::command]
+pub fn get_schema_version(db: State<'_, DbConn>) -> Result<SchemaVersionDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+
+    let version = crate::db::migrations::current_version(&conn)?;
+    let migration_count = crate::db::migrations::applied_count(&conn)?;
+
+    Ok(SchemaVersionDto {
+        version,
+        migration_count,
     })
 }
