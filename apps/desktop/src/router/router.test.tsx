@@ -66,9 +66,9 @@ describe("Route metadata", () => {
 
 /* ── Route smoke tests ───────────────────────────────────────────────── */
 /*
- * Each PlaceholderPage renders an <h2> with the page title. Querying by
- * role + level avoids matching the sidebar <a> or the header <h1> which
- * also display the same label.
+ * Each route must render at least one <h2>. Placeholder pages use the page
+ * title; real pages use their own first h2 content. Querying by role + level
+ * avoids matching the sidebar <a> or the header <h1>.
  */
 
 describe("Route smoke tests", () => {
@@ -77,10 +77,10 @@ describe("Route smoke tests", () => {
     ["/discover", "Discover"],
     ["/library", "My Library"],
     ["/review", "Review"],
-    ["/stats", "Stats"],
+    ["/stats", "Statistics"],
     ["/achievements", "Achievements"],
-    ["/settings", "Settings"],
-    ["/profile", "Profile"],
+    ["/settings", "Account"],
+    ["/profile", "Minh"],
     ["/weak-words", "Weak Words"],
     ["/study/session", "Study Session"],
     ["/library/deck-123", "Deck Detail"],

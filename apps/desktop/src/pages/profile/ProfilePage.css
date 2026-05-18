@@ -1,0 +1,305 @@
+/* ═══════════════════════════════════════════════════════════
+   PROFILE PAGE
+═══════════════════════════════════════════════════════════ */
+
+.profile-page {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+/* ── Hero card ──────────────────────────────────────────── */
+
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-7);
+}
+
+.profile-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-azure));
+  color: #fff;
+  font-size: 1.875rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.28);
+  user-select: none;
+}
+
+.profile-hero__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-hero__name {
+  color: var(--color-text);
+  font-size: 1.625rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.profile-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.profile-hero__xp-wrap {
+  max-width: 360px;
+  margin-top: var(--space-4);
+}
+
+.profile-hero__xp-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.profile-hero__quick {
+  display: flex;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.profile-quick-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.profile-quick-stat svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.profile-quick-stat strong {
+  color: var(--color-text);
+}
+
+/* ── Summary stat row ───────────────────────────────────── */
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap-md);
+}
+
+/* ── Two-column body ────────────────────────────────────── */
+
+.profile-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--gap-md);
+  align-items: start;
+}
+
+.profile-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.profile-side {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+/* ── Favorite deck card ─────────────────────────────────── */
+
+.profile-deck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.profile-deck__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.profile-deck__title {
+  color: var(--color-text);
+  font-size: 1.0625rem;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.profile-deck__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.profile-deck__progress-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* ── Achievement showcase ───────────────────────────────── */
+
+.profile-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.profile-showcase__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.profile-showcase__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  text-align: center;
+}
+
+.profile-showcase__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.profile-showcase__title {
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.profile-showcase__cat {
+  color: var(--color-text-muted);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* ── Recent Activity ────────────────────────────────────── */
+
+.profile-activity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.profile-activity__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-activity__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-activity__row:last-child {
+  border-bottom: none;
+}
+
+.profile-activity__deck {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-activity__date {
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.profile-activity__right {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.profile-activity__xp {
+  color: var(--color-primary);
+  font-size: 0.8125rem;
+  font-weight: 900;
+}
+
+.profile-activity__acc {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .profile-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-side {
+    position: static;
+  }
+}
+
+@media (max-width: 860px) {
+  .profile-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

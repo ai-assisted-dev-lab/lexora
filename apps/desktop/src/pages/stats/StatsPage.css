@@ -1,0 +1,289 @@
+/* ═══════════════════════════════════════════════════════════
+   STATS PAGE
+═══════════════════════════════════════════════════════════ */
+
+.stats-page {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+/* ── Hero ───────────────────────────────────────────────── */
+
+.stats-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-7);
+}
+
+.stats-hero__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--color-azure);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stats-hero h2 {
+  color: var(--color-text);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.stats-hero > div > p {
+  max-width: 520px;
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.stats-hero__xp-box {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-glass);
+  color: var(--color-primary);
+}
+
+.stats-hero__xp-value {
+  color: var(--color-text);
+  font-size: 1.375rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stats-hero__xp-sublabel {
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* ── Summary stat cards ─────────────────────────────────── */
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap-md);
+}
+
+/* ── Charts row ─────────────────────────────────────────── */
+
+.stats-charts-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: var(--gap-md);
+  align-items: start;
+}
+
+.stats-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+/* ── Weekly chart (CSS bar chart) ───────────────────────── */
+
+.weekly-chart {
+  width: 100%;
+}
+
+.weekly-chart__bars {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+  height: 150px;
+  padding-top: var(--space-6);
+}
+
+.weekly-chart__col {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.weekly-chart__val {
+  position: absolute;
+  top: -18px;
+  color: var(--color-text-subtle);
+  font-size: 0.625rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-chart__track {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  align-items: flex-end;
+}
+
+.weekly-chart__bar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+  background: var(--color-primary);
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.weekly-chart__col:hover .weekly-chart__bar {
+  opacity: 0.85;
+}
+
+.weekly-chart__bar--today {
+  background: var(--color-azure);
+  opacity: 1;
+}
+
+.weekly-chart__label {
+  padding-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.weekly-chart__label--today {
+  color: var(--color-primary);
+  font-weight: 850;
+}
+
+/* ── Mastery distribution ───────────────────────────────── */
+
+.stats-mastery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stats-mastery__row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stats-mastery__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.stats-mastery__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.stats-mastery__track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+}
+
+.stats-mastery__fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+
+.stats-mastery__count {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Weak topics ────────────────────────────────────────── */
+
+.stats-weak-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.stats-weak-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.stats-weak-table th {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+}
+
+.stats-weak-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.stats-weak-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.stats-weak-table__topic {
+  color: var(--color-text);
+  font-weight: 850;
+}
+
+.stats-weak-table__deck {
+  color: var(--color-text-muted);
+}
+
+.stats-weak-table__count {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  .stats-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .stats-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-summary {
+    grid-template-columns: 1fr;
+  }
+}

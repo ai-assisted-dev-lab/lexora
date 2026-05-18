@@ -1,13 +1,488 @@
-import { Settings2 } from "lucide-react";
+import "./settings/SettingsPage.css";
 
-import { PlaceholderPage } from "./PlaceholderPage";
+import {
+  Bell,
+  BookOpen,
+  HardDrive,
+  Mic,
+  RotateCcw,
+  User,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useState } from "react";
+import type { ReactNode } from "react";
+
+import { Badge, Button, Card, SectionHeader } from "@/components/ui";
+
+// ── Primitive helpers ────────────────────────────────────────────────────────
+
+type SettingsSection =
+  | "account"
+  | "learning"
+  | "review"
+  | "pronunciation"
+  | "notifications"
+  | "backup";
+
+interface SettingsRowProps {
+  label: string;
+  description?: string;
+  children?: ReactNode;
+}
+
+function SettingsRow({ label, description, children }: SettingsRowProps) {
+  return (
+    <div className="settings-row">
+      <div className="settings-row__text">
+        <span className="settings-row__label">{label}</span>
+        {description && (
+          <span className="settings-row__desc">{description}</span>
+        )}
+      </div>
+      {children && <div className="settings-row__control">{children}</div>}
+    </div>
+  );
+}
+
+interface ToggleProps {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  "aria-label": string;
+}
+
+function Toggle({ checked, onChange, "aria-label": ariaLabel }: ToggleProps) {
+  return (
+    <label className="settings-toggle" aria-label={ariaLabel}>
+      <input
+        type="checkbox"
+        className="settings-toggle__input"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="settings-toggle__track" aria-hidden="true" />
+    </label>
+  );
+}
+
+// ── Section components ────────────────────────────────────────────────────────
+
+function AccountSection() {
+  const [displayName, setDisplayName] = useState("Minh Quân");
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title="Account"
+        description="Display name, language pair, and data reset."
+      />
+      <Card className="settings-group">
+        <SettingsRow
+          label="Display Name"
+          description="Shown in the profile and leaderboard."
+        >
+          <input
+            className="settings-input settings-input--wide"
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            aria-label="Display name"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Language Pair"
+          description="The source and target language for all decks."
+        >
+          <span className="settings-locked">English ↔ Vietnamese</span>
+          <Badge variant="muted">Locked</Badge>
+        </SettingsRow>
+        <SettingsRow
+          label="Interface Language"
+          description="Language used for menus and labels."
+        >
+          <select className="settings-select" aria-label="Interface language">
+            <option value="vi">Vietnamese</option>
+            <option value="en">English</option>
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="Reset Learning Data"
+          description="Permanently clears all FSRS progress and review history."
+        >
+          <Button variant="danger" size="sm" disabled>
+            Reset Data
+          </Button>
+        </SettingsRow>
+      </Card>
+    </div>
+  );
+}
+
+function LearningSection() {
+  const [dailyGoal, setDailyGoal] = useState("30");
+  const [sessionLimit, setSessionLimit] = useState("25");
+  const [cefrTarget, setCefrTarget] = useState("B2");
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [showHints, setShowHints] = useState(true);
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title="Learning Preferences"
+        description="Daily targets, session length, and study behaviour."
+      />
+      <Card className="settings-group">
+        <SettingsRow
+          label="Daily Study Goal"
+          description="Target minutes of active study per day."
+        >
+          <select
+            className="settings-select"
+            value={dailyGoal}
+            onChange={(e) => setDailyGoal(e.target.value)}
+            aria-label="Daily study goal"
+          >
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="60">60 minutes</option>
+            <option value="90">90 minutes</option>
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="Session Card Limit"
+          description="Maximum cards reviewed in a single session."
+        >
+          <select
+            className="settings-select"
+            value={sessionLimit}
+            onChange={(e) => setSessionLimit(e.target.value)}
+            aria-label="Session card limit"
+          >
+            <option value="10">10 cards</option>
+            <option value="25">25 cards</option>
+            <option value="50">50 cards</option>
+            <option value="100">100 cards</option>
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="CEFR Target Level"
+          description="Guides deck recommendations and difficulty calibration."
+        >
+          <select
+            className="settings-select"
+            value={cefrTarget}
+            onChange={(e) => setCefrTarget(e.target.value)}
+            aria-label="CEFR target level"
+          >
+            {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="Auto-advance on Correct"
+          description="Skip the confirmation step when your answer is correct."
+        >
+          <Toggle
+            checked={autoAdvance}
+            onChange={setAutoAdvance}
+            aria-label="Toggle auto-advance on correct answer"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Show Vietnamese Hints"
+          description="Display a brief Vietnamese gloss below the English prompt."
+        >
+          <Toggle
+            checked={showHints}
+            onChange={setShowHints}
+            aria-label="Toggle Vietnamese hints"
+          />
+        </SettingsRow>
+      </Card>
+    </div>
+  );
+}
+
+function ReviewSection() {
+  const [newPerDay, setNewPerDay] = useState("10");
+  const [reviewCap, setReviewCap] = useState("50");
+  const [prioritiseWeak, setPrioritiseWeak] = useState(true);
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title="Smart Review Mix"
+        description="FSRS scheduling parameters for your daily review queue."
+      />
+      <p className="settings-note">
+        FSRS-powered scheduling activates in Milestone 2. These settings are
+        saved but not yet applied to the review engine.
+      </p>
+      <Card className="settings-group">
+        <SettingsRow
+          label="New Cards per Day"
+          description="How many fresh vocabulary items to introduce daily."
+        >
+          <input
+            className="settings-input"
+            type="number"
+            min={1}
+            max={100}
+            value={newPerDay}
+            onChange={(e) => setNewPerDay(e.target.value)}
+            aria-label="New cards per day"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Review Cap per Session"
+          description="Upper limit on FSRS-scheduled reviews in one sitting."
+        >
+          <input
+            className="settings-input"
+            type="number"
+            min={10}
+            max={500}
+            value={reviewCap}
+            onChange={(e) => setReviewCap(e.target.value)}
+            aria-label="Review cap per session"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Prioritise Weak Words"
+          description="Bump low-retention words to the front of the queue."
+        >
+          <Toggle
+            checked={prioritiseWeak}
+            onChange={setPrioritiseWeak}
+            aria-label="Toggle prioritise weak words"
+          />
+        </SettingsRow>
+      </Card>
+    </div>
+  );
+}
+
+function PronunciationSection() {
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [feedback, setFeedback] = useState("medium");
+  const [accent, setAccent] = useState("american");
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title="Pronunciation"
+        description="Audio playback and recording feedback preferences."
+      />
+      <Card className="settings-group">
+        <SettingsRow
+          label="Auto-play Audio on Reveal"
+          description="Plays the word's audio automatically when a card flips."
+        >
+          <Toggle
+            checked={autoPlay}
+            onChange={setAutoPlay}
+            aria-label="Toggle auto-play audio"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Recording Feedback Sensitivity"
+          description="Controls how strictly your pronunciation is evaluated."
+        >
+          <select
+            className="settings-select"
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            aria-label="Recording feedback sensitivity"
+          >
+            <option value="off">Off</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="Target Accent"
+          description="Reference accent used for pronunciation scoring."
+        >
+          <select
+            className="settings-select"
+            value={accent}
+            onChange={(e) => setAccent(e.target.value)}
+            aria-label="Target accent"
+          >
+            <option value="american">American English</option>
+            <option value="british">British English</option>
+            <option value="neutral">Neutral / Global</option>
+          </select>
+        </SettingsRow>
+      </Card>
+    </div>
+  );
+}
+
+function NotificationsSection() {
+  const [reminder, setReminder] = useState(true);
+  const [reminderTime, setReminderTime] = useState("20:00");
+  const [streakAlert, setStreakAlert] = useState(true);
+  const [achievementNotif, setAchievementNotif] = useState(true);
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title="Notifications"
+        description="Control when and how Lexora gets your attention."
+      />
+      <p className="settings-note">
+        OS-level notifications require platform permission — this will be wired
+        up in Milestone 2.
+      </p>
+      <Card className="settings-group">
+        <SettingsRow
+          label="Daily Reminder"
+          description="A push notification to start your study session."
+        >
+          <input
+            className="settings-input"
+            type="time"
+            value={reminderTime}
+            onChange={(e) => setReminderTime(e.target.value)}
+            disabled={!reminder}
+            aria-label="Reminder time"
+          />
+          <Toggle
+            checked={reminder}
+            onChange={setReminder}
+            aria-label="Toggle daily reminder"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Streak Alerts"
+          description="Notifies you when your streak is at risk of breaking."
+        >
+          <Toggle
+            checked={streakAlert}
+            onChange={setStreakAlert}
+            aria-label="Toggle streak alerts"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Achievement Notifications"
+          description="Celebrates newly unlocked badges."
+        >
+          <Toggle
+            checked={achievementNotif}
+            onChange={setAchievementNotif}
+            aria-label="Toggle achievement notifications"
+          />
+        </SettingsRow>
+      </Card>
+    </div>
+  );
+}
+
+function BackupSection() {
+  const [exportFormat, setExportFormat] = useState("sqlite");
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title="Backup &amp; Export"
+        description="Protect your learning data and export it for archiving."
+      />
+      <p className="settings-note">
+        Automated backup and restore will be available in Milestone 2.
+      </p>
+      <Card className="settings-group">
+        <SettingsRow
+          label="Last Backup"
+          description="Date and time of the most recent successful backup."
+        >
+          <span className="settings-backup-meta">Never</span>
+        </SettingsRow>
+        <SettingsRow
+          label="Back Up Now"
+          description="Create a full snapshot of your SQLite database."
+        >
+          <Button variant="soft" size="sm" disabled>
+            Back Up Now
+          </Button>
+        </SettingsRow>
+        <SettingsRow
+          label="Export Format"
+          description="File format used when exporting your learning data."
+        >
+          <select
+            className="settings-select"
+            value={exportFormat}
+            onChange={(e) => setExportFormat(e.target.value)}
+            aria-label="Export format"
+          >
+            <option value="sqlite">SQLite (.db)</option>
+            <option value="json">JSON (.json)</option>
+            <option value="csv">CSV (.csv)</option>
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="Export Data"
+          description="Download your vocabulary and review history."
+        >
+          <Button variant="soft" size="sm" disabled>
+            Export Data
+          </Button>
+        </SettingsRow>
+      </Card>
+    </div>
+  );
+}
+
+// ── Nav config ────────────────────────────────────────────────────────────────
+
+interface NavItem {
+  id: SettingsSection;
+  label: string;
+  Icon: LucideIcon;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { id: "account", label: "Account", Icon: User },
+  { id: "learning", label: "Learning", Icon: BookOpen },
+  { id: "review", label: "Smart Review", Icon: RotateCcw },
+  { id: "pronunciation", label: "Pronunciation", Icon: Mic },
+  { id: "notifications", label: "Notifications", Icon: Bell },
+  { id: "backup", label: "Backup", Icon: HardDrive },
+];
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export function SettingsPage() {
+  const [active, setActive] = useState<SettingsSection>("account");
+
   return (
-    <PlaceholderPage
-      title="Settings"
-      description="Preferences, daily goals, notifications, and backup options."
-      Icon={Settings2}
-    />
+    <div className="settings-page">
+      <nav className="settings-nav" aria-label="Settings sections">
+        {NAV_ITEMS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            className={`settings-nav__item${active === id ? " settings-nav__item--active" : ""}`}
+            aria-pressed={active === id}
+            onClick={() => setActive(id)}
+          >
+            <Icon size={15} aria-hidden="true" />
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      <main aria-label="Settings content">
+        {active === "account" && <AccountSection />}
+        {active === "learning" && <LearningSection />}
+        {active === "review" && <ReviewSection />}
+        {active === "pronunciation" && <PronunciationSection />}
+        {active === "notifications" && <NotificationsSection />}
+        {active === "backup" && <BackupSection />}
+      </main>
+    </div>
   );
 }
