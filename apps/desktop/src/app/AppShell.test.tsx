@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "./AppShell";
@@ -18,21 +19,27 @@ vi.mock("@tauri-apps/api/window", () => ({
 
 afterEach(cleanup);
 
+function renderShell(ui: React.ReactNode = null, path = "/discover") {
+  return render(
+    <MemoryRouter initialEntries={[path]}>{ui ?? <AppShell />}</MemoryRouter>,
+  );
+}
+
 describe("AppShell", () => {
   it("renders the title bar banner landmark", () => {
-    render(<AppShell />);
+    renderShell();
     expect(screen.getByRole("banner")).toBeInTheDocument();
   });
 
   it("renders the sidebar navigation", () => {
-    render(<AppShell />);
+    renderShell();
     expect(
       screen.getByRole("navigation", { name: "Main navigation" }),
     ).toBeInTheDocument();
   });
 
   it("renders all primary nav items", () => {
-    render(<AppShell />);
+    renderShell();
     const nav = screen.getByRole("navigation", { name: "Main navigation" });
     expect(nav).toHaveTextContent("Discover");
     expect(nav).toHaveTextContent("My Library");
@@ -43,35 +50,41 @@ describe("AppShell", () => {
   });
 
   it("renders the main content region", () => {
-    render(<AppShell />);
+    renderShell();
     expect(screen.getByRole("main")).toBeInTheDocument();
   });
 
   it("renders children inside the main content area", () => {
     render(
-      <AppShell>
-        <p>Test child content</p>
-      </AppShell>,
+      <MemoryRouter initialEntries={["/discover"]}>
+        <AppShell>
+          <p>Test child content</p>
+        </AppShell>
+      </MemoryRouter>,
     );
     expect(screen.getByText("Test child content")).toBeInTheDocument();
   });
 
   it("renders the right panel by default", () => {
-    render(<AppShell />);
+    renderShell();
     expect(
       screen.getByRole("complementary", { name: "Widgets" }),
     ).toBeInTheDocument();
   });
 
   it("hides the right panel when showRightPanel is false", () => {
-    render(<AppShell showRightPanel={false} />);
+    render(
+      <MemoryRouter initialEntries={["/discover"]}>
+        <AppShell showRightPanel={false} />
+      </MemoryRouter>,
+    );
     expect(
       screen.queryByRole("complementary", { name: "Widgets" }),
     ).not.toBeInTheDocument();
   });
 
   it("renders the search input in the header", () => {
-    render(<AppShell />);
+    renderShell();
     expect(
       screen.getByRole("searchbox", { name: "Search decks and words" }),
     ).toBeInTheDocument();

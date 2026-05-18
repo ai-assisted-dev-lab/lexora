@@ -32,6 +32,7 @@
   font-size: 14px;
   font-weight: 500;
   cursor: default;
+  text-decoration: none;
   transition:
     background-color 120ms ease,
     color 120ms ease;

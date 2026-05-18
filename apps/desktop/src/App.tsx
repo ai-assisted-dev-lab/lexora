@@ -1,14 +1,9 @@
-import { AppShell } from "./app/AppShell";
+import { RouterProvider } from "react-router-dom";
+
+import { router } from "./router";
 
 function App() {
-  return (
-    <AppShell>
-      <div className="splash">
-        <div className="wordmark">Lexora</div>
-        <p className="subtitle">Premium vocabulary learning platform</p>
-      </div>
-    </AppShell>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

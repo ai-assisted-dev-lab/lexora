@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "../App";
 
-/* ── Mock Tauri window API (required because App renders TitleBar) ─────── */
+/* ── Mock Tauri window API ───────────────────────────────────────────── */
 
 vi.mock("@tauri-apps/api/window", () => ({
   getCurrentWindow: () => ({
@@ -19,18 +19,15 @@ vi.mock("@tauri-apps/api/window", () => ({
 afterEach(cleanup);
 
 describe("App", () => {
-  it("renders the splash wordmark", () => {
+  it("renders the main navigation sidebar", async () => {
     render(<App />);
-    // App renders "Lexora" in both TitleBar and the splash — target the splash
     expect(
-      screen.getByText("Lexora", { selector: ".wordmark" }),
+      await screen.findByRole("navigation", { name: "Main navigation" }),
     ).toBeInTheDocument();
   });
 
-  it("renders the subtitle", () => {
+  it("renders the title bar", async () => {
     render(<App />);
-    expect(
-      screen.getByText("Premium vocabulary learning platform"),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("banner")).toBeInTheDocument();
   });
 });

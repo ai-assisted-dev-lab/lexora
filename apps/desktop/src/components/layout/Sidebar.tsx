@@ -1,63 +1,48 @@
 import "./Sidebar.css";
 
 import type { LucideIcon } from "lucide-react";
-import {
-  BarChart2,
-  BookOpen,
-  Brain,
-  Compass,
-  Settings2,
-  Trophy,
-} from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
 
-interface NavItem {
-  id: string;
+import { SIDEBAR_BOTTOM_ITEMS, SIDEBAR_MAIN_ITEMS } from "@/router/routes";
+
+interface SidebarLinkProps {
+  path: string;
   label: string;
-  Icon: LucideIcon;
+  Icon?: LucideIcon;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: "discover", label: "Discover", Icon: Compass },
-  { id: "library", label: "My Library", Icon: BookOpen },
-  { id: "review", label: "Review", Icon: Brain },
-  { id: "stats", label: "Stats", Icon: BarChart2 },
-  { id: "achievements", label: "Achievements", Icon: Trophy },
-];
+function SidebarLink({ path, label, Icon }: SidebarLinkProps) {
+  const { pathname } = useLocation();
+  const isActive = pathname === path;
 
-const BOTTOM_ITEMS: NavItem[] = [
-  { id: "settings", label: "Settings", Icon: Settings2 },
-];
+  return (
+    <NavLink
+      to={path}
+      className={`sidebar__nav-item${isActive ? " sidebar__nav-item--active" : ""}`}
+      aria-current={isActive ? "page" : undefined}
+    >
+      {Icon && (
+        <Icon className="sidebar__nav-icon" size={20} aria-hidden="true" />
+      )}
+      {label}
+    </NavLink>
+  );
+}
 
 export function Sidebar() {
-  // Placeholder: Discover is active until routing is implemented
-  const activeId = "discover";
-
   return (
     <nav className="sidebar" aria-label="Main navigation">
       <div className="sidebar__section">
-        {NAV_ITEMS.map(({ id, label, Icon }) => (
-          <div
-            key={id}
-            className={`sidebar__nav-item${id === activeId ? " sidebar__nav-item--active" : ""}`}
-            aria-current={id === activeId ? "page" : undefined}
-          >
-            <Icon className="sidebar__nav-icon" size={20} aria-hidden="true" />
-            {label}
-          </div>
+        {SIDEBAR_MAIN_ITEMS.map(({ path, label, icon: Icon }) => (
+          <SidebarLink key={path} path={path} label={label} Icon={Icon} />
         ))}
       </div>
 
       <div className="sidebar__divider" />
 
       <div className="sidebar__section sidebar__section--bottom">
-        {BOTTOM_ITEMS.map(({ id, label, Icon }) => (
-          <div
-            key={id}
-            className={`sidebar__nav-item${id === activeId ? " sidebar__nav-item--active" : ""}`}
-          >
-            <Icon className="sidebar__nav-icon" size={20} aria-hidden="true" />
-            {label}
-          </div>
+        {SIDEBAR_BOTTOM_ITEMS.map(({ path, label, icon: Icon }) => (
+          <SidebarLink key={path} path={path} label={label} Icon={Icon} />
         ))}
       </div>
     </nav>

@@ -1,11 +1,17 @@
 import "./Header.css";
 
 import { Bell, Search } from "lucide-react";
+import { useLocation } from "react-router-dom";
+
+import { getPageLabel } from "@/router/routes";
 
 export function Header() {
+  const { pathname } = useLocation();
+  const title = getPageLabel(pathname);
+
   return (
     <div className="page-header" aria-label="Page header">
-      <h1 className="page-header__title">Discover</h1>
+      <h1 className="page-header__title">{title}</h1>
 
       <div className="page-header__search" role="search">
         <Search size={16} aria-hidden="true" />
