@@ -114,8 +114,7 @@ export function Sidebar() {
             <div className="sidebar__profile-info">
               <span className="sidebar__profile-name">User</span>
               <span className="sidebar__profile-streak">
-                <Flame size={11} aria-hidden="true" />
-                0 day streak
+                <Flame size={11} aria-hidden="true" />0 day streak
               </span>
             </div>
           )}

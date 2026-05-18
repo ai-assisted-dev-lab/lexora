@@ -44,9 +44,10 @@ describe("Sidebar — nav items", () => {
 
   it("marks the active route with aria-current", () => {
     renderSidebar("/library");
-    expect(
-      screen.getByRole("link", { name: /my library/i }),
-    ).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /my library/i })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it("does not mark inactive routes with aria-current", () => {
@@ -85,9 +86,10 @@ describe("Sidebar — collapse behavior", () => {
     const user = userEvent.setup();
     renderSidebar();
     await user.click(screen.getByRole("button", { name: "Collapse sidebar" }));
-    expect(
-      screen.getByRole("link", { name: "Discover" }),
-    ).toHaveAttribute("title", "Discover");
+    expect(screen.getByRole("link", { name: "Discover" })).toHaveAttribute(
+      "title",
+      "Discover",
+    );
   });
 
   it("re-expands on second toggle click", async () => {
