@@ -14,6 +14,7 @@ import type { ReactNode } from "react";
 
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
 import { useAppInfo } from "@/hooks/useAppInfo";
+import { useDbHealth } from "@/hooks/useDbHealth";
 
 // ── Primitive helpers ────────────────────────────────────────────────────────
 
@@ -394,6 +395,7 @@ function NotificationsSection() {
 
 function BackupSection() {
   const [exportFormat, setExportFormat] = useState("sqlite");
+  const dbHealth = useDbHealth();
 
   return (
     <div className="settings-content">
@@ -405,6 +407,18 @@ function BackupSection() {
         Automated backup and restore will be available in Milestone 2.
       </p>
       <Card className="settings-group">
+        <SettingsRow
+          label="Database"
+          description={
+            dbHealth
+              ? dbHealth.dbPath
+              : "Local SQLite database — path available in the running app."
+          }
+        >
+          <span className="settings-locked" aria-label="Database status">
+            {dbHealth ? `SQLite ${dbHealth.sqliteVersion}` : "—"}
+          </span>
+        </SettingsRow>
         <SettingsRow
           label="Last Backup"
           description="Date and time of the most recent successful backup."

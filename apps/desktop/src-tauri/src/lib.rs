@@ -6,10 +6,27 @@ mod dto;
 mod errors;
 mod filesystem;
 
+use tauri::Manager;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![commands::info::get_app_info])
+        .setup(|app| {
+            // Resolve and create the app-data directory.
+            let app_data_dir = app.path().app_data_dir()?;
+            std::fs::create_dir_all(&app_data_dir)?;
+
+            // Open (or create) the per-user SQLite database.
+            let paths = filesystem::AppPaths { app_data_dir };
+            let db = db::open(&paths.user_db())?;
+            app.manage(db);
+
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::info::get_app_info,
+            commands::db::db_health_check,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
