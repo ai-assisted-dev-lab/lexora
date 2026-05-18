@@ -13,6 +13,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
+import { useAppInfo } from "@/hooks/useAppInfo";
 
 // ── Primitive helpers ────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ function Toggle({ checked, onChange, "aria-label": ariaLabel }: ToggleProps) {
 
 function AccountSection() {
   const [displayName, setDisplayName] = useState("Minh Quân");
+  const appInfo = useAppInfo();
 
   return (
     <div className="settings-content">
@@ -111,6 +113,14 @@ function AccountSection() {
           <Button variant="danger" size="sm" disabled>
             Reset Data
           </Button>
+        </SettingsRow>
+        <SettingsRow
+          label="App Version"
+          description="Currently installed build of Lexora."
+        >
+          <span className="settings-locked" aria-label="App version">
+            {appInfo ? `v${appInfo.version} (${appInfo.environment})` : "—"}
+          </span>
         </SettingsRow>
       </Card>
     </div>
