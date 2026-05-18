@@ -3,6 +3,7 @@
   /* Layout dimensions */
   --title-bar-h: 40px;
   --sidebar-w: 220px;
+  --sidebar-collapsed-w: 56px;
   --header-h: 56px;
   --right-panel-w: 280px;
   --page-pad: 24px;
