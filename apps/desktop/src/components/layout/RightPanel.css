@@ -1,0 +1,76 @@
+/* ── Right Panel ─────────────────────────────────────────────────────── */
+.right-panel {
+  width: var(--right-panel-w);
+  height: 100%;
+  background: var(--color-surface-raised);
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--page-pad) var(--gap-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  flex-shrink: 0;
+}
+
+/* Foundation for hiding at narrower widths */
+@media (max-width: 1279px) {
+  .right-panel {
+    display: none;
+  }
+}
+
+.right-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.right-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+/* ── Widget cards ────────────────────────────────────────────────────── */
+.right-panel__widget {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--gap-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.right-panel__widget-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: var(--gap-md);
+}
+
+/* Daily goal ring placeholder */
+.right-panel__goal-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 6px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  margin: 0 auto var(--gap-md);
+}
+
+.right-panel__stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 3px 0;
+}
+
+.right-panel__stat-value {
+  font-weight: 700;
+  color: var(--color-accent);
+}

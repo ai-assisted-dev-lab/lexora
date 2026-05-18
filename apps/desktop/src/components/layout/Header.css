@@ -1,0 +1,115 @@
+/* ── Page Header ─────────────────────────────────────────────────────── */
+.page-header {
+  height: var(--header-h);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  padding: 0 var(--page-pad);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.page-header__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+/* Search bar */
+.page-header__search {
+  flex: 1;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 12px;
+  height: 36px;
+  color: var(--color-text-subtle);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.page-header__search:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.page-header__search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--color-text);
+  outline: none;
+  font-family: inherit;
+  user-select: text;
+}
+
+.page-header__search-input::placeholder {
+  color: var(--color-text-subtle);
+}
+
+/* Right-side actions */
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-left: auto;
+}
+
+.page-header__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  cursor: default;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+  outline: none;
+}
+
+.page-header__icon-btn:hover {
+  background: var(--color-canvas);
+  color: var(--color-text);
+}
+
+.page-header__icon-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.page-header__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: default;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.page-header__avatar:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
