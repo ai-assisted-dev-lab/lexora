@@ -1,3 +1,4 @@
+pub mod encryption;
 pub mod migrations;
 
 use std::path::{Path, PathBuf};
@@ -20,6 +21,10 @@ pub struct DbConn {
 /// Opens (or creates) a SQLite database file at `path` and applies baseline
 /// runtime pragmas. Returns an error if the file cannot be opened or if pragma
 /// setup fails.
+///
+/// When compiled with `--features sqlcipher` the connection is keyed with a
+/// 256-bit random key retrieved from the OS credential store before any other
+/// operation, making the database file opaque to raw file readers.
 pub fn open(path: &Path) -> Result<DbConn, AppError> {
     let conn = Connection::open(path).map_err(|e| {
         AppError::Internal(format!(
@@ -27,6 +32,17 @@ pub fn open(path: &Path) -> Result<DbConn, AppError> {
             path.display()
         ))
     })?;
+
+    // Encryption key must be the very first pragma applied; SQLCipher refuses
+    // any query on an unkeyed connection opened against an encrypted file.
+    #[cfg(feature = "sqlcipher")]
+    {
+        let key = encryption::get_or_create_key()?;
+        conn.execute_batch(&format!("PRAGMA key = \"x'{key}'\";\n"))
+            .map_err(|e| {
+                AppError::Internal(format!("Failed to apply database encryption key: {e}"))
+            })?;
+    }
 
     // WAL — allows concurrent reads while a write is in progress.
     // foreign_keys — enforce referential integrity at the SQLite layer.

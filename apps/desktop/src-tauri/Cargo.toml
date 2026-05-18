@@ -10,6 +10,22 @@ edition = "2021"
 name = "lexora_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+# ── Features ─────────────────────────────────────────────────────────────────
+#
+# sqlcipher — Replaces the bundled vanilla SQLite with SQLCipher (AES-256 at
+#             rest). Also bundles a vendored OpenSSL so no system libraries are
+#             required. Activating this feature requires Perl and NASM on the
+#             build machine (needed by OpenSSL's own configure step).
+#
+#             To enable: `cargo build --features sqlcipher`
+#             In release CI: set LEXORA_SQLCIPHER=1 and pass --features sqlcipher
+#
+# Default build is unencrypted. All encryption plumbing is compiled and tested
+# regardless; only the PRAGMA key application is gated on this feature.
+[features]
+default = []
+sqlcipher = ["rusqlite/bundled-sqlcipher-vendored-openssl"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
@@ -19,6 +35,12 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"
 rusqlite = { version = "0.31", features = ["bundled"] }
+# OS-native credential store (Windows Credential Manager / macOS Keychain /
+# Linux Secret Service). Used to persist the per-install DB encryption key.
+keyring = "2"
+# OS CSPRNG for key generation. Thin wrapper around platform primitives;
+# no heavy C compilation required.
+getrandom = "0.2"
 
 [profile.dev]
 incremental = true

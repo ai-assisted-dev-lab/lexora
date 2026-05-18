@@ -88,11 +88,27 @@ Approaches that were explicitly considered and rejected.
 
 ## Open Questions (To Be Resolved in Later Prompts)
 
-| Question                             | Status | Target Prompt |
-| ------------------------------------ | ------ | ------------- |
-| SQLCipher key derivation strategy    | Open   | Prompt 19     |
-| Audio package format and compression | Open   | Prompt 44     |
-| Backup archive format                | Open   | Prompt 54     |
-| Update server hosting                | Open   | Prompt 56     |
-| Installer type (.msi vs NSIS)        | Open   | Prompt 58     |
-| First-run owner setup flow           | Open   | Prompt 21     |
+| Question                             | Status                | Target Prompt |
+| ------------------------------------ | --------------------- | ------------- |
+| SQLCipher key derivation strategy    | Resolved — Prompt 22  | Prompt 22     |
+| Audio package format and compression | Open                  | Prompt 44     |
+| Backup archive format                | Open                  | Prompt 54     |
+| Update server hosting                | Open                  | Prompt 56     |
+| Installer type (.msi vs NSIS)        | Open                  | Prompt 58     |
+| First-run owner setup flow           | Open                  | Prompt 21     |
+
+### SQLCipher key derivation strategy (Resolved)
+
+**Decision:** Use a 256-bit random key (no passphrase KDF) stored in the OS
+native credential store via the `keyring` crate. Key is applied to SQLCipher
+using the raw-key pragma form (`PRAGMA key = "x'<hex>'"`) as the very first
+operation on the connection.
+
+**Rationale:** A random high-entropy key does not benefit from PBKDF2
+stretching; skipping the KDF reduces open latency and removes the need for a
+user-visible passphrase. The OS keychain provides tamper-evident storage that
+is scoped to the user's OS account — appropriate for a single-user local app.
+
+**Limitation:** Encryption is not active by default. The `sqlcipher` Cargo
+feature must be passed at build time. See `docs/SECURITY.md` for activation
+steps and full threat model.
