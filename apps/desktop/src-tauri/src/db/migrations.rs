@@ -14,11 +14,18 @@ struct Migration {
 
 /// All migrations in ascending version order.
 /// Add new entries at the END of this slice; never renumber existing ones.
-static MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "initial_metadata",
-    sql: include_str!("../../migrations/0001_initial_metadata.sql"),
-}];
+static MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "initial_metadata",
+        sql: include_str!("../../migrations/0001_initial_metadata.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "core_schema",
+        sql: include_str!("../../migrations/0002_core_schema.sql"),
+    },
+];
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -171,5 +178,177 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM app_metadata", [], |row| row.get(0))
             .expect("app_metadata should exist after migration 1");
         assert!(n > 0, "app_metadata should have at least one seed row");
+    }
+
+    // ── Migration 2 — core schema ─────────────────────────────────────────────
+
+    fn tables_in(conn: &Connection) -> Vec<String> {
+        let mut stmt = conn
+            .prepare(
+                "SELECT name FROM sqlite_master \
+                 WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name != 'schema_migrations'",
+            )
+            .expect("prepare table list");
+        stmt.query_map([], |row| row.get::<_, String>(0))
+            .expect("query tables")
+            .filter_map(|r| r.ok())
+            .collect()
+    }
+
+    #[test]
+    fn migration_002_creates_all_core_tables() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        let tables = tables_in(&conn);
+        for expected in &[
+            "packs",
+            "decks",
+            "users",
+            "user_settings",
+            "deck_subscriptions",
+            "words",
+            "senses",
+            "examples",
+            "pronunciations",
+            "word_relations",
+            "deck_words",
+            "data_provenance",
+        ] {
+            assert!(
+                tables.iter().any(|t| t == expected),
+                "expected table '{expected}' to exist after migration 2; found: {tables:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn migration_002_fts5_tables_exist() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        // FTS5 virtual tables appear in sqlite_master as type='table'.
+        let all: Vec<String> = {
+            let mut stmt = conn
+                .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+                .expect("prepare");
+            stmt.query_map([], |row| row.get::<_, String>(0))
+                .expect("query")
+                .filter_map(|r| r.ok())
+                .collect()
+        };
+        assert!(
+            all.iter().any(|t| t == "words_fts"),
+            "words_fts virtual table should exist"
+        );
+        assert!(
+            all.iter().any(|t| t == "senses_fts"),
+            "senses_fts virtual table should exist"
+        );
+    }
+
+    #[test]
+    fn migration_002_enforces_user_role_check() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        // Valid role should succeed.
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('alice', 'hash', 'owner')",
+            [],
+        )
+        .expect("valid role insert should succeed");
+
+        // Invalid role must be rejected by the CHECK constraint.
+        let err = conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('bob', 'hash', 'admin')",
+            [],
+        );
+        assert!(err.is_err(), "invalid role 'admin' should be rejected");
+    }
+
+    #[test]
+    fn migration_002_fk_cascade_delete_word_removes_senses() {
+        let mut conn = in_memory();
+        // Foreign key enforcement requires a specific pragma.
+        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute(
+            "INSERT INTO words (headword) VALUES ('test')",
+            [],
+        )
+        .expect("insert word");
+        let word_id: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+
+        conn.execute(
+            "INSERT INTO senses (word_id, sense_index, definition_en) VALUES (?1, 0, 'a test')",
+            rusqlite::params![word_id],
+        )
+        .expect("insert sense");
+
+        let count_before: i64 = conn
+            .query_row("SELECT COUNT(*) FROM senses", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count_before, 1);
+
+        conn.execute("DELETE FROM words WHERE id = ?1", rusqlite::params![word_id])
+            .expect("delete word");
+
+        let count_after: i64 = conn
+            .query_row("SELECT COUNT(*) FROM senses", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count_after, 0, "CASCADE DELETE should remove child senses");
+    }
+
+    #[test]
+    fn migration_002_unique_sense_index_within_word() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute("INSERT INTO words (headword) VALUES ('run')", [])
+            .unwrap();
+        let word_id: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+
+        conn.execute(
+            "INSERT INTO senses (word_id, sense_index, definition_en) VALUES (?1, 0, 'move fast')",
+            rusqlite::params![word_id],
+        )
+        .expect("first sense insert");
+
+        let dup = conn.execute(
+            "INSERT INTO senses (word_id, sense_index, definition_en) VALUES (?1, 0, 'duplicate')",
+            rusqlite::params![word_id],
+        );
+        assert!(
+            dup.is_err(),
+            "duplicate (word_id, sense_index) should violate UNIQUE constraint"
+        );
+    }
+
+    #[test]
+    fn migration_002_word_self_relation_rejected() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute("INSERT INTO words (headword) VALUES ('fast')", [])
+            .unwrap();
+        let word_id: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+
+        let err = conn.execute(
+            "INSERT INTO word_relations (from_word_id, to_word_id, relation_type) \
+             VALUES (?1, ?1, 'synonym')",
+            rusqlite::params![word_id],
+        );
+        assert!(
+            err.is_err(),
+            "self-referential word relation should be rejected by CHECK constraint"
+        );
     }
 }
