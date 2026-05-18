@@ -1,0 +1,17 @@
+# Normalize all text files to LF in the repository and on checkout.
+# This overrides core.autocrlf and ensures consistent line endings
+# across Windows, macOS, and Linux contributors and CI runners.
+* text=auto eol=lf
+
+# Windows batch scripts require CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Explicitly binary — never apply line-ending conversion
+*.ico binary
+*.png binary
+*.icns binary
+*.msi binary
+*.exe binary
+*.zip binary
+*.tar.gz binary

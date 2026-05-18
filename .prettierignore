@@ -1,0 +1,15 @@
+# Generated lockfiles
+pnpm-lock.yaml
+
+# Rust build artifacts
+**/src-tauri/target/
+**/src-tauri/gen/
+
+# Generated binary-like icon assets
+**/src-tauri/icons/*.png
+**/src-tauri/icons/*.ico
+**/src-tauri/icons/*.icns
+**/src-tauri/icons/mipmap-*/
+
+# Coverage output
+coverage/

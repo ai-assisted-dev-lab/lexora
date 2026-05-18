@@ -50,11 +50,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # ── JavaScript / TypeScript ───────────────────────────────────────────
       - name: Format check
         run: pnpm format:check
 
       - name: Lint
-        # --if-present skips workspaces that have no lint script yet
         run: pnpm -r --if-present lint
 
       - name: Typecheck
@@ -63,6 +63,19 @@ jobs:
       - name: Unit tests
         run: pnpm -r --if-present test
 
-      # E2E tests are only run once apps/desktop is scaffolded
+      # ── Rust ─────────────────────────────────────────────────────────────
+      - name: Rust format check
+        run: cargo fmt --check
+        working-directory: apps/desktop/src-tauri
+
+      - name: Rust compilation check
+        run: cargo check
+        working-directory: apps/desktop/src-tauri
+
+      - name: Rust lint (Clippy)
+        run: cargo clippy -- -D warnings
+        working-directory: apps/desktop/src-tauri
+
+      # E2E tests — enabled once Playwright tests exist
       # - name: E2E tests
       #   run: pnpm test:e2e

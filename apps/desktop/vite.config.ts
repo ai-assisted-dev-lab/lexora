@@ -1,10 +1,18 @@
-import { defineConfig } from "vite";
+import { fileURLToPath, URL } from "node:url";
+
 import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
   plugins: [react()],
+
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
 
   // Tauri: prevent vite from obscuring rust errors
   clearScreen: false,

@@ -2,7 +2,7 @@
 
 A premium Windows desktop vocabulary learning platform for English–Vietnamese learners. Offline-first, locally installed, with FSRS-powered spaced repetition and a Steam-inspired library feel.
 
-> **Status:** Repository skeleton initialized. Tauri application scaffold is next.
+> **Status:** Repository skeleton and Tauri 2 app scaffold complete. UI shell is next.
 
 ---
 
@@ -63,31 +63,63 @@ lexora/
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 20
-- [pnpm](https://pnpm.io/) >= 9
-- [Rust](https://rustup.rs/) (stable toolchain)
+- [pnpm](https://pnpm.io/) >= 9 — `npm install -g pnpm`
+- [Rust](https://rustup.rs/) stable toolchain
 - Windows 10/11 64-bit (primary development target)
+- [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (pre-installed on Windows 11)
 
 ---
 
 ## Setup
 
 ```bash
-# Install dependencies
+# Install all workspace dependencies
 pnpm install
 
-# Start development (once apps/desktop is scaffolded)
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Run all tests
-pnpm test
-
-# Lint and typecheck
-pnpm lint
-pnpm typecheck
+# Generate app icons from the source SVG (only needed once, or after changing source.svg)
+pnpm --filter desktop icons:generate
 ```
+
+---
+
+## Scripts
+
+### Root workspace
+
+| Command             | Description                                           |
+| ------------------- | ----------------------------------------------------- |
+| `pnpm dev`          | Start the Tauri desktop app in development mode       |
+| `pnpm build`        | Production build (Vite bundle + Tauri binary)         |
+| `pnpm lint`         | Run ESLint across all workspace packages              |
+| `pnpm typecheck`    | Run TypeScript type checks across all packages        |
+| `pnpm test`         | Run all unit tests across all packages                |
+| `pnpm test:e2e`     | Run Playwright end-to-end tests                       |
+| `pnpm format`       | Auto-format all files with Prettier                   |
+| `pnpm format:check` | Check formatting without modifying files (used in CI) |
+| `pnpm clean`        | Remove all build artifacts and `node_modules`         |
+
+### Desktop app (`apps/desktop`)
+
+| Command                                | Description                                                 |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `pnpm --filter desktop dev`            | Start Vite dev server only                                  |
+| `pnpm --filter desktop tauri:dev`      | Start full Tauri app in dev mode                            |
+| `pnpm --filter desktop tauri:build`    | Build production Tauri binary + installer                   |
+| `pnpm --filter desktop lint`           | ESLint (TypeScript, React hooks, import sort)               |
+| `pnpm --filter desktop typecheck`      | TypeScript check (no emit)                                  |
+| `pnpm --filter desktop test`           | Vitest unit tests (single run)                              |
+| `pnpm --filter desktop test:watch`     | Vitest unit tests (watch mode)                              |
+| `pnpm --filter desktop test:coverage`  | Vitest with V8 coverage report                              |
+| `pnpm --filter desktop icons:generate` | Regenerate all icon sizes from `src-tauri/icons/source.svg` |
+
+### Rust (run from `apps/desktop/`)
+
+| Command                                | Description                             |
+| -------------------------------------- | --------------------------------------- |
+| `pnpm --filter desktop rust:fmt`       | Auto-format Rust code with `cargo fmt`  |
+| `pnpm --filter desktop rust:fmt:check` | Check Rust formatting (used in CI)      |
+| `pnpm --filter desktop rust:check`     | Check Rust compilation without building |
+| `pnpm --filter desktop rust:lint`      | Run Clippy with warnings as errors      |
 
 ---
 
