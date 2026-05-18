@@ -8,21 +8,21 @@ A premium Windows desktop vocabulary learning platform for English–Vietnamese 
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Desktop shell | Tauri 2 |
-| UI | React 18 + TypeScript + Vite |
-| Components | shadcn/ui + Tailwind CSS |
-| Animations | Framer Motion |
-| State | Zustand |
-| Data fetching | TanStack Query |
-| Database | SQLite + SQLCipher (encrypted, local) |
-| Search | SQLite FTS5 + fuzzy ranking |
-| Review engine | FSRS (Rust) |
-| Charts | Recharts |
-| Icons | Lucide React |
-| Package manager | pnpm (workspaces) |
-| Testing | Vitest + React Testing Library + Playwright + Rust tests |
+| Layer           | Technology                                               |
+| --------------- | -------------------------------------------------------- |
+| Desktop shell   | Tauri 2                                                  |
+| UI              | React 18 + TypeScript + Vite                             |
+| Components      | shadcn/ui + Tailwind CSS                                 |
+| Animations      | Framer Motion                                            |
+| State           | Zustand                                                  |
+| Data fetching   | TanStack Query                                           |
+| Database        | SQLite + SQLCipher (encrypted, local)                    |
+| Search          | SQLite FTS5 + fuzzy ranking                              |
+| Review engine   | FSRS (Rust)                                              |
+| Charts          | Recharts                                                 |
+| Icons           | Lucide React                                             |
+| Package manager | pnpm (workspaces)                                        |
+| Testing         | Vitest + React Testing Library + Playwright + Rust tests |
 
 ---
 

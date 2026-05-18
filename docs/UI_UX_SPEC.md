@@ -24,18 +24,18 @@ This is **not** a copy of Steam's dark interface. It borrows Steam's structural 
 
 ## Color Palette
 
-| Role | Description | Approximate Range |
-|---|---|---|
-| Background | White to pale blue | `#F8FAFF` – `#EFF5FF` |
-| Surface / Card | White to soft blue-tinted white | `#FFFFFF` – `#F0F6FF` |
-| Primary accent | Sky blue to azure | `#3B82F6` – `#2563EB` |
-| Secondary accent | Soft cyan | `#06B6D4` – `#0891B2` |
-| Muted text | Blue-gray | `#64748B` – `#475569` |
-| Body text | Dark blue-gray | `#1E293B` – `#334155` |
-| Border/Divider | Very pale blue | `#DBEAFE` – `#BFDBFE` |
-| Danger/Error | Soft red | `#EF4444` |
-| Success | Soft green | `#22C55E` |
-| Warning | Amber | `#F59E0B` |
+| Role             | Description                     | Approximate Range     |
+| ---------------- | ------------------------------- | --------------------- |
+| Background       | White to pale blue              | `#F8FAFF` – `#EFF5FF` |
+| Surface / Card   | White to soft blue-tinted white | `#FFFFFF` – `#F0F6FF` |
+| Primary accent   | Sky blue to azure               | `#3B82F6` – `#2563EB` |
+| Secondary accent | Soft cyan                       | `#06B6D4` – `#0891B2` |
+| Muted text       | Blue-gray                       | `#64748B` – `#475569` |
+| Body text        | Dark blue-gray                  | `#1E293B` – `#334155` |
+| Border/Divider   | Very pale blue                  | `#DBEAFE` – `#BFDBFE` |
+| Danger/Error     | Soft red                        | `#EF4444`             |
+| Success          | Soft green                      | `#22C55E`             |
+| Warning          | Amber                           | `#F59E0B`             |
 
 All colors are defined as CSS custom properties in the Tailwind config. No hardcoded hex values in components.
 
@@ -94,6 +94,7 @@ All colors are defined as CSS custom properties in the Tailwind config. No hardc
 - No collapse in V1 (full sidebar always visible)
 
 **Navigation items (learner):**
+
 - Home / Discover
 - My Library
 - Review (Smart Review)
@@ -102,6 +103,7 @@ All colors are defined as CSS custom properties in the Tailwind config. No hardc
 - Settings
 
 **Navigation items (owner, additional):**
+
 - Data Studio (visible only to owner role)
 
 ---
@@ -212,16 +214,16 @@ Built on **shadcn/ui** components, customized with Lexora tokens:
 
 ## Screens — V1 Inventory
 
-| Screen | Route |
-|---|---|
-| Login | `/login` |
-| Discover | `/` or `/discover` |
-| My Library | `/library` |
-| Deck Detail | `/deck/:id` |
-| Word Detail | `/word/:id` |
-| Smart Review | `/review` |
-| Session Summary | `/review/summary` |
-| Stats | `/stats` |
-| Achievements | `/achievements` |
-| Settings | `/settings` |
+| Screen              | Route                  |
+| ------------------- | ---------------------- |
+| Login               | `/login`               |
+| Discover            | `/` or `/discover`     |
+| My Library          | `/library`             |
+| Deck Detail         | `/deck/:id`            |
+| Word Detail         | `/word/:id`            |
+| Smart Review        | `/review`              |
+| Session Summary     | `/review/summary`      |
+| Stats               | `/stats`               |
+| Achievements        | `/achievements`        |
+| Settings            | `/settings`            |
 | Admin / Data Studio | `/studio` (owner only) |

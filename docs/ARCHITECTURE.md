@@ -26,22 +26,22 @@
 
 ## Technology Decisions (Locked)
 
-| Concern | Choice |
-|---|---|
-| Desktop shell | Tauri 2 |
-| UI framework | React 18 + TypeScript |
-| Build tool | Vite |
-| UI components | shadcn/ui + Tailwind CSS |
-| Animations | Framer Motion |
-| Global state | Zustand |
-| Data fetching/cache | TanStack Query |
-| Database | SQLite with SQLCipher encryption |
-| Search | SQLite FTS5 + fuzzy ranking |
-| FSRS engine | Real FSRS algorithm (Rust implementation) |
-| Charts | Recharts |
-| Icons | Lucide React |
-| Package manager | pnpm |
-| Testing | Vitest + React Testing Library + Playwright + Rust tests |
+| Concern             | Choice                                                   |
+| ------------------- | -------------------------------------------------------- |
+| Desktop shell       | Tauri 2                                                  |
+| UI framework        | React 18 + TypeScript                                    |
+| Build tool          | Vite                                                     |
+| UI components       | shadcn/ui + Tailwind CSS                                 |
+| Animations          | Framer Motion                                            |
+| Global state        | Zustand                                                  |
+| Data fetching/cache | TanStack Query                                           |
+| Database            | SQLite with SQLCipher encryption                         |
+| Search              | SQLite FTS5 + fuzzy ranking                              |
+| FSRS engine         | Real FSRS algorithm (Rust implementation)                |
+| Charts              | Recharts                                                 |
+| Icons               | Lucide React                                             |
+| Package manager     | pnpm                                                     |
+| Testing             | Vitest + React Testing Library + Playwright + Rust tests |
 
 ---
 
@@ -59,17 +59,17 @@
 
 ## Rust Native Layer Responsibilities
 
-| Responsibility | Notes |
-|---|---|
-| SQLite operations | All reads and writes go through Rust; UI never touches the DB directly |
-| Encryption | SQLCipher key management; key never exposed to JS layer |
-| FSRS scheduling | Algorithm runs in Rust for correctness and performance |
-| Auth / role validation | Role checks enforced in Rust, not only in UI |
-| Audio file management | Index bundled/cached audio, serve to frontend |
-| Backup serialization | Export/import learning state as encrypted archive |
-| Content package management | Unpack and apply vocabulary/audio package updates |
-| Update checks | Tauri updater integration |
-| Notification dispatch | Windows toast via Tauri notification plugin |
+| Responsibility             | Notes                                                                  |
+| -------------------------- | ---------------------------------------------------------------------- |
+| SQLite operations          | All reads and writes go through Rust; UI never touches the DB directly |
+| Encryption                 | SQLCipher key management; key never exposed to JS layer                |
+| FSRS scheduling            | Algorithm runs in Rust for correctness and performance                 |
+| Auth / role validation     | Role checks enforced in Rust, not only in UI                           |
+| Audio file management      | Index bundled/cached audio, serve to frontend                          |
+| Backup serialization       | Export/import learning state as encrypted archive                      |
+| Content package management | Unpack and apply vocabulary/audio package updates                      |
+| Update checks              | Tauri updater integration                                              |
+| Notification dispatch      | Windows toast via Tauri notification plugin                            |
 
 ---
 
@@ -87,14 +87,17 @@
 ## Database Architecture
 
 ### Engine
+
 SQLite 3 with SQLCipher encryption. Database file lives in Tauri's app data directory.
 
 ### Access Pattern
+
 - All DB access is via Rust command handlers
 - The JS/TS layer never receives raw SQL or query-builder access
 - Typed command inputs and outputs (serde JSON) form the IPC contract
 
 ### Schema Design Principles
+
 - Normalized core entities (users, decks, words, senses)
 - Denormalized caches for FSRS card state (avoid recomputing on read)
 - FTS5 virtual tables for full-text search on headwords, definitions, examples
@@ -159,11 +162,11 @@ Admin access is enforced at multiple layers:
 
 ## Testing Strategy
 
-| Layer | Tool |
-|---|---|
-| Rust unit tests | `cargo test` |
-| Rust integration tests | Tauri test harness |
-| React component tests | Vitest + React Testing Library |
-| End-to-end tests | Playwright |
-| Type safety | TypeScript strict mode |
-| Linting | ESLint + Clippy |
+| Layer                  | Tool                           |
+| ---------------------- | ------------------------------ |
+| Rust unit tests        | `cargo test`                   |
+| Rust integration tests | Tauri test harness             |
+| React component tests  | Vitest + React Testing Library |
+| End-to-end tests       | Playwright                     |
+| Type safety            | TypeScript strict mode         |
+| Linting                | ESLint + Clippy                |

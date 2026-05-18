@@ -12,11 +12,11 @@ Lexora is a premium Windows desktop vocabulary learning platform for English–V
 
 ## Target Users
 
-| Persona | Description |
-|---|---|
-| Primary | Vietnamese speakers learning English at B1–C1 level, studying independently |
-| Secondary | English speakers learning Vietnamese, educators preparing word packs |
-| Owner/Admin | The single platform owner managing vocabulary content via Data Studio |
+| Persona     | Description                                                                 |
+| ----------- | --------------------------------------------------------------------------- |
+| Primary     | Vietnamese speakers learning English at B1–C1 level, studying independently |
+| Secondary   | English speakers learning Vietnamese, educators preparing word packs        |
+| Owner/Admin | The single platform owner managing vocabulary content via Data Studio       |
 
 Lexora is **not** designed for casual mobile use, classroom management, or enterprise LMS scenarios in V1.
 
@@ -54,6 +54,7 @@ All core learning features must function without any network connection:
 - Stats and analytics
 
 Network is **optional** and used only for:
+
 - Application updater
 - Content and audio package downloads
 - Online TTS fallback (when local audio is unavailable)
@@ -73,24 +74,24 @@ Network is **optional** and used only for:
 
 ## Main Modules — V1 Scope
 
-| Module | Description |
-|---|---|
-| Auth | Local login, role separation (owner vs. learner) |
-| Discover | Catalog of available decks/packs with hero banner and shelves |
-| Deck Library | User's personal collection of installed decks |
-| Deck Detail | Deck metadata, word list preview, study actions |
-| Word Detail | Full vocabulary entry with definitions, examples, audio, relations |
-| Smart Review | FSRS-scheduled flashcard session |
-| Study Sessions | Timed/untimed study, session summary, streak updates |
-| Pronunciation | Audio playback from bundled/downloaded packages |
-| Achievements | Badge/milestone system with unlock triggers |
-| Gamification | XP, Level, Streak, Daily Goal tracking |
-| Stats/Analytics | Learning curves, retention rates, session history charts |
-| Settings | User preferences, study goals, notification config |
-| Backup/Restore | Export and import of local learning data |
-| Admin/Data Studio | Owner-only content management, word pack authoring |
-| Notifications | Windows toast notifications for streak, goals, reminders |
-| Updater | Auto-update checks for app and content packages |
+| Module            | Description                                                        |
+| ----------------- | ------------------------------------------------------------------ |
+| Auth              | Local login, role separation (owner vs. learner)                   |
+| Discover          | Catalog of available decks/packs with hero banner and shelves      |
+| Deck Library      | User's personal collection of installed decks                      |
+| Deck Detail       | Deck metadata, word list preview, study actions                    |
+| Word Detail       | Full vocabulary entry with definitions, examples, audio, relations |
+| Smart Review      | FSRS-scheduled flashcard session                                   |
+| Study Sessions    | Timed/untimed study, session summary, streak updates               |
+| Pronunciation     | Audio playback from bundled/downloaded packages                    |
+| Achievements      | Badge/milestone system with unlock triggers                        |
+| Gamification      | XP, Level, Streak, Daily Goal tracking                             |
+| Stats/Analytics   | Learning curves, retention rates, session history charts           |
+| Settings          | User preferences, study goals, notification config                 |
+| Backup/Restore    | Export and import of local learning data                           |
+| Admin/Data Studio | Owner-only content management, word pack authoring                 |
+| Notifications     | Windows toast notifications for streak, goals, reminders           |
+| Updater           | Auto-update checks for app and content packages                    |
 
 ---
 

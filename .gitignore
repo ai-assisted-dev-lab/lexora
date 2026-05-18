@@ -14,6 +14,12 @@ build/
 **/src-tauri/target/
 **/src-tauri/gen/
 
+# Generated Tauri mobile icon variants (kept: windows icons, png set, icns, ico)
+**/src-tauri/icons/AppIcon-*.png
+**/src-tauri/icons/mipmap-*/
+**/src-tauri/icons/Square*.png
+**/src-tauri/icons/StoreLogo.png
+
 # Generated installers and bundles
 *.msi
 *.nsis
