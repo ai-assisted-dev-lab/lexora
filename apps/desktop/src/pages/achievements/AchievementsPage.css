@@ -1,0 +1,383 @@
+/* ═══════════════════════════════════════════════════════════════
+   TIER VARIABLES  (scoped to any element with data-tier)
+═══════════════════════════════════════════════════════════════ */
+
+[data-tier="bronze"] {
+  --tier: #c07838;
+  --tier-soft: rgba(192, 120, 56, 0.1);
+  --tier-glow: rgba(192, 120, 56, 0.18);
+}
+
+[data-tier="silver"] {
+  --tier: #7a95a8;
+  --tier-soft: rgba(122, 149, 168, 0.1);
+  --tier-glow: rgba(122, 149, 168, 0.14);
+}
+
+[data-tier="gold"] {
+  --tier: #c8941c;
+  --tier-soft: rgba(200, 148, 28, 0.1);
+  --tier-glow: rgba(200, 148, 28, 0.22);
+}
+
+[data-tier="platinum"] {
+  --tier: #7e5fd4;
+  --tier-soft: rgba(126, 95, 212, 0.12);
+  --tier-glow: rgba(126, 95, 212, 0.22);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE
+═══════════════════════════════════════════════════════════════ */
+
+.achievements-page {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO / SUMMARY CARD
+═══════════════════════════════════════════════════════════════ */
+
+.achievements-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-7);
+}
+
+.achievements-hero__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--color-azure);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.achievements-hero h2 {
+  color: var(--color-text);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.achievements-hero > div > p {
+  max-width: 540px;
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.achievements-hero__stats {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.achievements-hero__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.achievements-hero__stat-value {
+  color: var(--color-text);
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.achievements-hero__stat-label {
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.achievements-hero__divider {
+  width: 1px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--color-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RECENTLY UNLOCKED SHELF
+═══════════════════════════════════════════════════════════════ */
+
+.achievements-recent {
+  display: flex;
+  gap: var(--gap-md);
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.achievements-recent::-webkit-scrollbar {
+  display: none;
+}
+
+.achievements-recent .achievement-card {
+  min-width: 210px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FILTER TABS
+═══════════════════════════════════════════════════════════════ */
+
+.achievements-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACHIEVEMENT GRID
+═══════════════════════════════════════════════════════════════ */
+
+.achievements-count {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACHIEVEMENT CARD
+═══════════════════════════════════════════════════════════════ */
+
+.achievement-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: center;
+  overflow: hidden;
+  transition:
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.achievement-card[data-state="unlocked"] {
+  border-color: color-mix(in srgb, var(--tier) 22%, var(--color-border));
+}
+
+.achievement-card[data-state="unlocked"]:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Thin tier-colored top accent for unlocked cards */
+.achievement-card[data-state="unlocked"]::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 48px;
+  height: 2px;
+  content: "";
+  transform: translateX(-50%);
+  border-radius: 0 0 2px 2px;
+  background: var(--tier);
+  opacity: 0.7;
+}
+
+/* Dim locked cards overall */
+.achievement-card[data-state="locked"] {
+  opacity: 0.6;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BADGE
+═══════════════════════════════════════════════════════════════ */
+
+.achievement-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--tier);
+  background: var(--tier-soft);
+  color: var(--tier);
+  transition: box-shadow 0.2s ease;
+}
+
+.achievement-card[data-state="unlocked"] .achievement-badge {
+  box-shadow:
+    0 0 0 3px var(--tier-soft),
+    0 0 14px var(--tier-glow);
+}
+
+/* Locked badge: desaturate via filter */
+.achievement-card[data-state="locked"] .achievement-badge {
+  filter: grayscale(1);
+}
+
+/* Hidden badge: neutral styling */
+.achievement-card[data-state="hidden"] .achievement-badge {
+  border-color: var(--color-border);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARD CONTENT
+═══════════════════════════════════════════════════════════════ */
+
+.achievement-card__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.achievement-card__title {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.achievement-card[data-state="hidden"] .achievement-card__title {
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+}
+
+.achievement-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.achievement-card__category {
+  color: var(--color-azure);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.achievement-card__tier {
+  color: var(--tier);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+/* Locked / hidden tiers use muted color */
+.achievement-card[data-state="locked"] .achievement-card__tier,
+.achievement-card[data-state="hidden"] .achievement-card__tier {
+  color: var(--color-text-muted);
+}
+
+.achievement-card__description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS
+═══════════════════════════════════════════════════════════════ */
+
+.achievement-card__progress {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.achievement-card__progress .lx-progress {
+  width: 100%;
+}
+
+.achievement-card__progress-label {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARD FOOTER
+═══════════════════════════════════════════════════════════════ */
+
+.achievement-card__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-border);
+}
+
+.achievement-card__xp {
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.achievement-card__status {
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.achievement-card__status--unlocked {
+  color: var(--color-success);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1280px) {
+  .achievements-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .achievements-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .achievements-hero__stats {
+    justify-content: flex-start;
+  }
+
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+}
