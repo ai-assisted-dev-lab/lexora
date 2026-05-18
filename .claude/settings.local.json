@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem D:\\\\Programming\\\\Github\\\\ai-assisted-dev-lab\\\\lexora\\\\docs)",
+      "Bash(Select-Object Name, Length)"
+    ]
+  }
+}
