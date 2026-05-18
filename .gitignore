@@ -10,9 +10,14 @@ dist/
 dist-ssr/
 build/
 
-# Tauri
-src-tauri/target/
-src-tauri/gen/
+# Rust / Tauri build artifacts
+**/src-tauri/target/
+**/src-tauri/gen/
+
+# Generated installers and bundles
+*.msi
+*.nsis
+bundle/
 
 # SQLite databases
 *.db
@@ -53,3 +58,10 @@ vite.config.ts.timestamp-*
 
 # Test coverage
 coverage/
+*.lcov
+
+# Seed tool temp outputs
+data/seed/temp/
+
+# Turbo (future)
+.turbo/
