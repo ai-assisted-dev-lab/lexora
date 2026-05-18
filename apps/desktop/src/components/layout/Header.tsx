@@ -1,9 +1,37 @@
 import "./Header.css";
 
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 import { getPageLabel } from "@/router/routes";
+
+import { SearchBar } from "./SearchBar";
+import { UserProfile } from "./UserProfile";
+
+interface NotificationButtonProps {
+  count?: number;
+}
+
+function NotificationButton({ count = 0 }: NotificationButtonProps) {
+  return (
+    <div className="page-header__notif">
+      <button
+        className="page-header__icon-btn"
+        aria-label={
+          count > 0 ? `Notifications, ${count} unread` : "Notifications"
+        }
+        title="Notifications"
+      >
+        <Bell size={20} aria-hidden="true" />
+      </button>
+      {count > 0 && (
+        <span className="page-header__badge" aria-hidden="true">
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </div>
+  );
+}
 
 export function Header() {
   const { pathname } = useLocation();
@@ -13,33 +41,11 @@ export function Header() {
     <div className="page-header" aria-label="Page header">
       <h1 className="page-header__title">{title}</h1>
 
-      <div className="page-header__search" role="search">
-        <Search size={16} aria-hidden="true" />
-        <input
-          className="page-header__search-input"
-          type="search"
-          placeholder="Search decks and words…"
-          aria-label="Search decks and words"
-        />
-      </div>
+      <SearchBar />
 
       <div className="page-header__actions">
-        <button
-          className="page-header__icon-btn"
-          aria-label="Notifications"
-          title="Notifications"
-        >
-          <Bell size={20} aria-hidden="true" />
-        </button>
-
-        <div
-          className="page-header__avatar"
-          role="button"
-          aria-label="User menu"
-          tabIndex={0}
-        >
-          U
-        </div>
+        <NotificationButton count={0} />
+        <UserProfile />
       </div>
     </div>
   );

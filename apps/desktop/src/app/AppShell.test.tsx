@@ -86,7 +86,7 @@ describe("AppShell", () => {
   it("renders the search input in the header", () => {
     renderShell();
     expect(
-      screen.getByRole("searchbox", { name: "Search decks and words" }),
+      screen.getByRole("searchbox", { name: "Search words, decks, topics" }),
     ).toBeInTheDocument();
   });
 });
