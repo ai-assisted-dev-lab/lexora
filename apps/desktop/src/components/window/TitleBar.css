@@ -1,0 +1,100 @@
+/* ── Title Bar Shell ─────────────────────────────────────────────────── */
+.title-bar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  background: #ffffff;
+  border-bottom: 1px solid #dbeafe;
+  flex-shrink: 0;
+  /* Prevent text selection during drag */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Draggable Region ────────────────────────────────────────────────── */
+.title-bar__drag {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  /* Cursor stays default (arrow) — not a text area */
+  cursor: default;
+}
+
+/* ── Brand / Wordmark ────────────────────────────────────────────────── */
+.title-bar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  pointer-events: none; /* brand is decorative — drag passes through */
+}
+
+.title-bar__logo {
+  width: 18px;
+  height: 18px;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.title-bar__wordmark {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
+/* ── Window Control Buttons ──────────────────────────────────────────── */
+.title-bar__controls {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  /* Ensure buttons sit above the drag region in event handling */
+  position: relative;
+  z-index: 1;
+}
+
+.title-bar__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Standard Windows title bar button width */
+  width: 46px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: default;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
+  /* Remove default button outline — custom focus ring below */
+  outline: none;
+}
+
+.title-bar__btn:hover {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.title-bar__btn:active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.title-bar__btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+/* Close button uses the universal red hover convention */
+.title-bar__btn--close:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.title-bar__btn--close:active {
+  background: #dc2626;
+  color: #ffffff;
+}
