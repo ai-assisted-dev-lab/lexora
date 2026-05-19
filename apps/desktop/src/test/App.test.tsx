@@ -16,6 +16,17 @@ vi.mock("@tauri-apps/api/window", () => ({
   }),
 }));
 
+/* ── Mock Tauri IPC (get_current_session returns an authenticated owner) */
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn().mockImplementation((cmd: string) => {
+    if (cmd === "get_current_session") {
+      return Promise.resolve({ userId: 1, username: "owner", role: "owner" });
+    }
+    return Promise.resolve(undefined);
+  }),
+}));
+
 afterEach(cleanup);
 
 describe("App", () => {

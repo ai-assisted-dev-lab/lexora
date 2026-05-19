@@ -1,10 +1,11 @@
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
-/**
- * Placeholder auth guard. When real auth is implemented, check the auth
- * store here and replace <Outlet /> with <Navigate to="/login" replace />
- * when the user is not authenticated.
- */
+import { useAuth } from "@/store/authContext";
+
 export function ProtectedRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return null;
+  if (!user) return <Navigate to="/login" replace />;
   return <Outlet />;
 }

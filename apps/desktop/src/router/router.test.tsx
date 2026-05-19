@@ -2,6 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { AuthContext, type AuthContextValue } from "@/store/authContext";
+
 import { routeTree } from "./index";
 import { getPageLabel, ROUTE_CONFIGS } from "./routes";
 
@@ -20,9 +22,20 @@ vi.mock("@tauri-apps/api/window", () => ({
 
 afterEach(cleanup);
 
-function renderRoute(path: string) {
+const ownerAuth: AuthContextValue = {
+  user: { userId: 1, username: "owner", role: "owner" },
+  isLoading: false,
+  login: vi.fn(),
+  logout: vi.fn().mockResolvedValue(undefined),
+};
+
+function renderRoute(path: string, auth: AuthContextValue = ownerAuth) {
   const testRouter = createMemoryRouter(routeTree, { initialEntries: [path] });
-  render(<RouterProvider router={testRouter} />);
+  render(
+    <AuthContext.Provider value={auth}>
+      <RouterProvider router={testRouter} />
+    </AuthContext.Provider>,
+  );
 }
 
 /* ── Route metadata ──────────────────────────────────────────────────── */
@@ -102,7 +115,7 @@ describe("Route smoke tests", () => {
   }
 
   it("renders /login", async () => {
-    renderRoute("/login");
+    renderRoute("/login", { ...ownerAuth, user: null });
     expect(
       await screen.findByRole("heading", {
         level: 1,

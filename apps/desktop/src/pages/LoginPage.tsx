@@ -2,13 +2,14 @@ import "./pages.css";
 
 import { motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { TitleBar } from "@/components/window/TitleBar";
 import { loginUser } from "@/services/commands/auth";
 import { formatTauriError } from "@/services/tauri";
+import { useAuth } from "@/store/authContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -64,12 +65,21 @@ function LexoraLogoMark() {
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { login, isLoading: authLoading, user } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/home", { replace: true });
+    }
+  }, [authLoading, user, navigate]);
+
+  if (authLoading) return null;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -84,7 +94,8 @@ export function LoginPage() {
 
     setIsLoading(true);
     try {
-      await loginUser(username.trim(), password);
+      const result = await loginUser(username.trim(), password);
+      login(result);
       navigate("/home", { replace: true });
     } catch (err) {
       setError(formatTauriError(err));
@@ -243,8 +254,9 @@ export function LoginPage() {
 
           {/* First-run hint */}
           <p className="login-page__setup-hint">
-            <strong>First time?</strong> The first account you create becomes
-            the owner with full access.
+            <strong>First time?</strong> Use the default accounts:{" "}
+            <strong>owner</strong> or <strong>learner</strong> (password matches
+            username).
           </p>
         </motion.div>
       </div>
