@@ -4,6 +4,8 @@ import { Loader2, Square, Volume2, VolumeX } from "lucide-react";
 
 import { Card } from "@/components/ui";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
+import type { PronunciationSettings } from "@/services/commands/settings";
 import type { WordPronunciationDto } from "@/services/commands/words";
 
 function stripDelimiters(ipa: string): string {
@@ -15,8 +17,8 @@ function countSyllables(ipa: string): number {
 }
 
 function detectStress(ipa: string): string | null {
-  const hasPrimary = ipa.includes("ˈ"); // ˈ primary stress
-  const hasSecondary = ipa.includes("ˌ"); // ˌ secondary stress
+  const hasPrimary = ipa.includes("Ëˆ");
+  const hasSecondary = ipa.includes("ËŒ");
   if (hasPrimary && hasSecondary) return "Primary & secondary stress";
   if (hasPrimary) return "Primary stress";
   if (hasSecondary) return "Secondary stress";
@@ -53,17 +55,23 @@ function AccentBlock({ label, ipa }: AccentBlockProps) {
 }
 
 interface AudioRecordCardProps {
+  fallbackText: string;
   record: WordPronunciationDto;
+  settings: PronunciationSettings;
 }
 
-function AudioRecordCard({ record }: AudioRecordCardProps) {
+function AudioRecordCard({
+  fallbackText,
+  record,
+  settings,
+}: AudioRecordCardProps) {
   const { state, play, stop } = useAudioPlayer();
 
   function handleToggle() {
     if (state === "playing") {
       stop();
     } else {
-      void play(record.audioPath);
+      void play({ audioPath: record.audioPath, fallbackText, settings });
     }
   }
 
@@ -101,7 +109,62 @@ function AudioRecordCard({ record }: AudioRecordCardProps) {
         )}
         {state === "error" && (
           <p className="pronunciation-panel__audio-error">
-            Not in local cache — add files to the audio_cache directory.
+            Local audio and TTS fallback are unavailable.
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+interface FallbackAudioCardProps {
+  fallbackText: string;
+  settings: PronunciationSettings;
+}
+
+function FallbackAudioCard({ fallbackText, settings }: FallbackAudioCardProps) {
+  const { state, play, stop } = useAudioPlayer();
+
+  function handleToggle() {
+    if (state === "playing") {
+      stop();
+    } else {
+      void play({ fallbackText, settings });
+    }
+  }
+
+  const isPlaying = state === "playing";
+  const isLoading = state === "loading";
+
+  return (
+    <Card className="pronunciation-panel__audio-record" variant="compact">
+      <button
+        className="pronunciation-panel__play-btn"
+        type="button"
+        aria-label={`${isPlaying ? "Stop" : "Play"} TTS fallback`}
+        disabled={isLoading}
+        onClick={handleToggle}
+      >
+        {isLoading ? (
+          <Loader2
+            size={18}
+            className="pronunciation-panel__spinner"
+            aria-hidden="true"
+          />
+        ) : isPlaying ? (
+          <Square size={18} aria-hidden="true" />
+        ) : state === "error" ? (
+          <VolumeX size={18} aria-hidden="true" />
+        ) : (
+          <Volume2 size={18} aria-hidden="true" />
+        )}
+      </button>
+      <div className="pronunciation-panel__audio-info">
+        <strong>TTS fallback</strong>
+        <p>Uses the configured browser/OS voice when local audio is missing.</p>
+        {state === "error" && (
+          <p className="pronunciation-panel__audio-error">
+            TTS fallback is disabled or unavailable.
           </p>
         )}
       </div>
@@ -110,16 +173,27 @@ function AudioRecordCard({ record }: AudioRecordCardProps) {
 }
 
 export interface PronunciationPanelProps {
+  headword: string;
   ipaUk: string | null | undefined;
   ipaUs: string | null | undefined;
   pronunciations: WordPronunciationDto[];
 }
 
 export function PronunciationPanel({
+  headword,
   ipaUk,
   ipaUs,
   pronunciations,
 }: PronunciationPanelProps) {
+  const { settings } = usePronunciationSettings();
+  const orderedPronunciations = [...pronunciations].sort((a, b) => {
+    const preferred = settings.pronunciationAccent;
+    if (preferred === "neutral") return a.id - b.id;
+    if (a.dialect === preferred && b.dialect !== preferred) return -1;
+    if (b.dialect === preferred && a.dialect !== preferred) return 1;
+    return a.id - b.id;
+  });
+
   return (
     <div className="pronunciation-panel">
       <div className="pronunciation-panel__accents">
@@ -129,13 +203,16 @@ export function PronunciationPanel({
 
       <div className="pronunciation-panel__audio">
         <p className="pronunciation-panel__audio-header">Audio records</p>
-        {pronunciations.length === 0 ? (
-          <p className="pronunciation-panel__audio-empty">
-            No local audio metadata has been assigned yet.
-          </p>
+        {orderedPronunciations.length === 0 ? (
+          <FallbackAudioCard fallbackText={headword} settings={settings} />
         ) : (
-          pronunciations.map((record) => (
-            <AudioRecordCard key={record.id} record={record} />
+          orderedPronunciations.map((record) => (
+            <AudioRecordCard
+              key={record.id}
+              fallbackText={headword}
+              record={record}
+              settings={settings}
+            />
           ))
         )}
       </div>

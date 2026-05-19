@@ -22,7 +22,13 @@ import { useNavigate } from "react-router-dom";
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
 import { useAppInfo } from "@/hooks/useAppInfo";
 import { useDbHealth } from "@/hooks/useDbHealth";
+import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
 import { useSchemaVersion } from "@/hooks/useSchemaVersion";
+import type {
+  AudioFallbackBehavior,
+  AudioPriority,
+  PronunciationAccent,
+} from "@/services/commands/settings";
 import {
   exportDeckToJson,
   getImportExportSchema,
@@ -296,56 +302,123 @@ function ReviewSection() {
 }
 
 function PronunciationSection() {
-  const [autoPlay, setAutoPlay] = useState(true);
-  const [feedback, setFeedback] = useState("medium");
-  const [accent, setAccent] = useState("american");
+  const { error, isLoading, save, settings } = usePronunciationSettings();
+
+  function updateSettings(
+    patch: Partial<{
+      audioAutoplay: boolean;
+      pronunciationAccent: PronunciationAccent;
+      pronunciationSpeed: number;
+      audioPriority: AudioPriority;
+      audioFallbackBehavior: AudioFallbackBehavior;
+    }>,
+  ) {
+    void save({
+      audioAutoplay: settings.audioAutoplay,
+      pronunciationAccent: settings.pronunciationAccent,
+      pronunciationSpeed: settings.pronunciationSpeed,
+      audioPriority: settings.audioPriority,
+      audioFallbackBehavior: settings.audioFallbackBehavior,
+      ...patch,
+    }).catch(() => {});
+  }
 
   return (
     <div className="settings-content">
       <SectionHeader
         title="Pronunciation"
-        description="Audio playback and recording feedback preferences."
+        description="Accent, speed, and fallback rules for word audio."
       />
+      {error && <p className="settings-note">{error}</p>}
       <Card className="settings-group">
         <SettingsRow
           label="Auto-play Audio on Reveal"
           description="Plays the word's audio automatically when a card flips."
         >
           <Toggle
-            checked={autoPlay}
-            onChange={setAutoPlay}
+            checked={settings.audioAutoplay}
+            onChange={(audioAutoplay) => updateSettings({ audioAutoplay })}
             aria-label="Toggle auto-play audio"
           />
         </SettingsRow>
         <SettingsRow
-          label="Recording Feedback Sensitivity"
-          description="Controls how strictly your pronunciation is evaluated."
+          label="Default Accent"
+          description="Used to pick local pronunciation records and browser voices."
         >
           <select
             className="settings-select"
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            aria-label="Recording feedback sensitivity"
+            value={settings.pronunciationAccent}
+            onChange={(e) =>
+              updateSettings({
+                pronunciationAccent: e.target.value as PronunciationAccent,
+              })
+            }
+            aria-label="Default pronunciation accent"
+            disabled={isLoading}
           >
-            <option value="off">Off</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            <option value="us">American English</option>
+            <option value="uk">British English</option>
+            <option value="neutral">Neutral English</option>
           </select>
         </SettingsRow>
         <SettingsRow
-          label="Target Accent"
-          description="Reference accent used for pronunciation scoring."
+          label="Playback Speed"
+          description="Applies to browser/OS TTS voices where supported."
         >
           <select
             className="settings-select"
-            value={accent}
-            onChange={(e) => setAccent(e.target.value)}
-            aria-label="Target accent"
+            value={settings.pronunciationSpeed.toString()}
+            onChange={(e) =>
+              updateSettings({ pronunciationSpeed: Number(e.target.value) })
+            }
+            aria-label="Pronunciation playback speed"
+            disabled={isLoading}
           >
-            <option value="american">American English</option>
-            <option value="british">British English</option>
-            <option value="neutral">Neutral / Global</option>
+            <option value="0.75">0.75x</option>
+            <option value="0.9">0.9x</option>
+            <option value="1">1.0x</option>
+            <option value="1.15">1.15x</option>
+            <option value="1.3">1.3x</option>
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="Audio Priority"
+          description="Choose whether local bundled audio or TTS is tried first."
+        >
+          <select
+            className="settings-select"
+            value={settings.audioPriority}
+            onChange={(e) =>
+              updateSettings({ audioPriority: e.target.value as AudioPriority })
+            }
+            aria-label="Audio priority"
+            disabled={isLoading}
+          >
+            <option value="local_first">Local audio first</option>
+            <option value="tts_first">TTS first</option>
+          </select>
+        </SettingsRow>
+        <SettingsRow
+          label="Fallback Behavior"
+          description="Used when local audio is missing or TTS is preferred."
+        >
+          <select
+            className="settings-select"
+            value={settings.audioFallbackBehavior}
+            onChange={(e) =>
+              updateSettings({
+                audioFallbackBehavior: e.target
+                  .value as AudioFallbackBehavior,
+              })
+            }
+            aria-label="Audio fallback behavior"
+            disabled={isLoading}
+          >
+            <option value="browser_tts">Browser / OS TTS</option>
+            <option value="online_then_browser">
+              Online provider, then browser
+            </option>
+            <option value="disabled">No fallback</option>
           </select>
         </SettingsRow>
       </Card>

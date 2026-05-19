@@ -105,7 +105,20 @@ function renderWordDetail(path = "/word/1") {
 describe("WordDetailPage", () => {
   beforeEach(() => {
     invokeMock.mockReset();
-    invokeMock.mockResolvedValue(wordDetail);
+    invokeMock.mockImplementation((command: string) => {
+      if (command === "get_pronunciation_settings") {
+        return Promise.resolve({
+          userId: 1,
+          audioAutoplay: true,
+          pronunciationAccent: "us",
+          pronunciationSpeed: 1,
+          audioPriority: "local_first",
+          audioFallbackBehavior: "browser_tts",
+          updatedAt: "2026-05-20T00:00:00Z",
+        });
+      }
+      return Promise.resolve(wordDetail);
+    });
   });
 
   it("loads real word core fields, IPA, and review state", async () => {
@@ -187,13 +200,29 @@ describe("WordDetailPage", () => {
     expect(
       screen.getByRole("link", { name: "Back to Library" }),
     ).toHaveAttribute("href", "/library");
-    expect(invokeMock).not.toHaveBeenCalled();
+    expect(invokeMock).not.toHaveBeenCalledWith(
+      "get_word_detail",
+      expect.anything(),
+    );
   });
 
   it("shows a not-found state for missing local words", async () => {
-    invokeMock.mockRejectedValueOnce({
-      kind: "NotFound",
-      message: "Word 999 was not found",
+    invokeMock.mockImplementation((command: string) => {
+      if (command === "get_pronunciation_settings") {
+        return Promise.resolve({
+          userId: 1,
+          audioAutoplay: true,
+          pronunciationAccent: "us",
+          pronunciationSpeed: 1,
+          audioPriority: "local_first",
+          audioFallbackBehavior: "browser_tts",
+          updatedAt: "2026-05-20T00:00:00Z",
+        });
+      }
+      return Promise.reject({
+        kind: "NotFound",
+        message: "Word 999 was not found",
+      });
     });
 
     renderWordDetail("/word/999");

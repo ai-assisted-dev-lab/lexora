@@ -35,6 +35,7 @@ import {
   PronunciationPanel,
 } from "@/components/pronunciation/PronunciationPanel";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
 import { SenseList } from "./word-detail/SenseList";
 import type { WordDetailTab, WordSense } from "./word-detail/types";
 
@@ -139,6 +140,7 @@ export function WordDetailPage() {
   const { error, isLoading, notFound, word } = useWordDetail(wordId);
   const [activeTab, setActiveTab] = useState<WordDetailTab>("overview");
   const { state: audioState, play: playAudio, stop: stopAudio } = useAudioPlayer();
+  const { settings: pronunciationSettings } = usePronunciationSettings();
 
   const activeTabLabel = useMemo(
     () => tabs.find((tab) => tab.id === activeTab)?.label ?? "Overview",
@@ -146,14 +148,23 @@ export function WordDetailPage() {
   );
 
   const handleHeroPlay = useCallback(() => {
-    const primary = word?.pronunciations[0];
-    if (!primary) return;
+    if (!word) return;
+    const preferred = pronunciationSettings.pronunciationAccent;
+    const primary =
+      preferred === "neutral"
+        ? word.pronunciations[0]
+        : (word.pronunciations.find((item) => item.dialect === preferred) ??
+          word.pronunciations[0]);
     if (audioState === "playing") {
       stopAudio();
     } else {
-      void playAudio(primary.audioPath);
+      void playAudio({
+        audioPath: primary?.audioPath,
+        fallbackText: word.headword,
+        settings: pronunciationSettings,
+      });
     }
-  }, [audioState, playAudio, stopAudio, word]);
+  }, [audioState, playAudio, pronunciationSettings, stopAudio, word]);
 
   if (isLoading) {
     return (
@@ -250,7 +261,11 @@ export function WordDetailPage() {
               }
               type="button"
               variant="icon"
-              disabled={!primaryAudio || audioState === "loading"}
+              disabled={
+                audioState === "loading" ||
+                (!primaryAudio &&
+                  pronunciationSettings.audioFallbackBehavior === "disabled")
+              }
               onClick={handleHeroPlay}
             >
               {audioState === "loading" ? (
@@ -332,6 +347,7 @@ export function WordDetailPage() {
 
         {activeTab === "pronunciation" && (
           <PronunciationPanel
+            headword={word.headword}
             ipaUk={word.ipaUk}
             ipaUs={word.ipaUs}
             pronunciations={word.pronunciations}

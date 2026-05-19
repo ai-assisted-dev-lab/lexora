@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { readCachedAudio } from "@/services/commands/audio";
+import { defaultPronunciationSettings } from "@/services/commands/settings";
+import type { PronunciationSettings } from "@/services/commands/settings";
+import { playTtsFallback, stopBrowserTts } from "@/services/tts";
 
 export type AudioPlayState = "idle" | "loading" | "playing" | "error";
+
+export interface AudioPlayRequest {
+  audioPath?: string | null;
+  fallbackText?: string | null;
+  settings?: PronunciationSettings;
+}
 
 function guessMediaType(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
@@ -49,53 +58,93 @@ export function useAudioPlayer() {
       URL.revokeObjectURL(blobUrlRef.current);
       blobUrlRef.current = null;
     }
+    stopBrowserTts();
   }, []);
 
+  const playLocalAudio = useCallback(async (audioPath: string) => {
+    let url: string;
+
+    if (audioPath.startsWith("http://") || audioPath.startsWith("https://")) {
+      url = audioPath;
+    } else {
+      const base64 = await readCachedAudio(audioPath);
+      const mediaType = guessMediaType(audioPath);
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: mediaType });
+      url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
+    }
+
+    const audio = new Audio();
+    audioRef.current = audio;
+
+    await new Promise<void>((resolve, reject) => {
+      audio.oncanplay = () => {
+        setState("playing");
+        audio.play().then(resolve).catch(reject);
+      };
+      audio.onerror = () => reject(new Error("Audio element load error"));
+      audio.src = url;
+      audio.load();
+    });
+
+    audio.onended = () => {
+      setState("idle");
+      cleanUp();
+    };
+  }, [cleanUp]);
+
+  const playFallbackTts = useCallback(
+    async (text: string, settings: PronunciationSettings) => {
+      setState("playing");
+      await playTtsFallback(text, settings.audioFallbackBehavior, {
+        accent: settings.pronunciationAccent,
+        speed: settings.pronunciationSpeed,
+      });
+      setState("idle");
+    },
+    [],
+  );
+
   const play = useCallback(
-    async (audioPath: string) => {
+    async (request: string | AudioPlayRequest) => {
       cleanUp();
       setState("loading");
 
-      try {
-        let url: string;
+      const normalized =
+        typeof request === "string" ? { audioPath: request } : request;
+      const settings = normalized.settings ?? defaultPronunciationSettings;
+      const audioPath = normalized.audioPath;
+      const fallbackText = normalized.fallbackText?.trim();
 
-        if (
-          audioPath.startsWith("http://") ||
-          audioPath.startsWith("https://")
-        ) {
-          url = audioPath;
-        } else {
-          const base64 = await readCachedAudio(audioPath);
-          const mediaType = guessMediaType(audioPath);
-          const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-          const blob = new Blob([bytes], { type: mediaType });
-          url = URL.createObjectURL(blob);
-          blobUrlRef.current = url;
+      async function tryFallback() {
+        if (!fallbackText) throw new Error("No fallback text available.");
+        await playFallbackTts(fallbackText, settings);
+      }
+
+      try {
+        if (settings.audioPriority === "tts_first" && fallbackText) {
+          await tryFallback();
+          return;
         }
 
-        const audio = new Audio();
-        audioRef.current = audio;
+        if (audioPath) {
+          try {
+            await playLocalAudio(audioPath);
+            return;
+          } catch {
+            cleanUp();
+            setState("loading");
+          }
+        }
 
-        await new Promise<void>((resolve, reject) => {
-          audio.oncanplay = () => {
-            setState("playing");
-            audio.play().then(resolve).catch(reject);
-          };
-          audio.onerror = () => reject(new Error("Audio element load error"));
-          audio.src = url;
-          audio.load();
-        });
-
-        audio.onended = () => {
-          setState("idle");
-          cleanUp();
-        };
+        await tryFallback();
       } catch {
         setState("error");
         cleanUp();
       }
     },
-    [cleanUp],
+    [cleanUp, playFallbackTts, playLocalAudio],
   );
 
   const stop = useCallback(() => {

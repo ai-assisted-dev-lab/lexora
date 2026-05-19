@@ -45,6 +45,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "multiple_choice_mode",
         sql: include_str!("../../migrations/0006_multiple_choice_mode.sql"),
     },
+    Migration {
+        version: 7,
+        name: "pronunciation_settings",
+        sql: include_str!("../../migrations/0007_pronunciation_settings.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────

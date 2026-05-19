@@ -76,6 +76,26 @@ describe("SettingsPage", () => {
             ],
             csvNotes: ["UTF-8 with a header row is required."],
           });
+        case "get_pronunciation_settings":
+          return Promise.resolve({
+            userId: 1,
+            audioAutoplay: true,
+            pronunciationAccent: "us",
+            pronunciationSpeed: 1,
+            audioPriority: "local_first",
+            audioFallbackBehavior: "browser_tts",
+            updatedAt: "2026-05-20T00:00:00Z",
+          });
+        case "update_pronunciation_settings":
+          return Promise.resolve({
+            userId: 1,
+            audioAutoplay: true,
+            pronunciationAccent: "uk",
+            pronunciationSpeed: 1,
+            audioPriority: "local_first",
+            audioFallbackBehavior: "browser_tts",
+            updatedAt: "2026-05-20T00:00:00Z",
+          });
         case "list_exportable_decks":
           return Promise.resolve({
             decks: [
@@ -197,6 +217,27 @@ describe("SettingsPage", () => {
     expect(screen.getByLabelText("Toggle daily reminder")).toBeInTheDocument();
     expect(screen.getByLabelText("Toggle streak alerts")).toBeInTheDocument();
     expect(screen.getByText(/OS-level notifications/i)).toBeInTheDocument();
+  });
+
+  it("saves pronunciation settings changes", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("button", { name: /Pronunciation/i }));
+    await user.selectOptions(
+      await screen.findByLabelText("Default pronunciation accent"),
+      "uk",
+    );
+
+    expect(invokeMock).toHaveBeenCalledWith("update_pronunciation_settings", {
+      input: {
+        audioAutoplay: true,
+        pronunciationAccent: "uk",
+        pronunciationSpeed: 1,
+        audioPriority: "local_first",
+        audioFallbackBehavior: "browser_tts",
+      },
+    });
   });
 
   it("shows the Backup section with import/export controls", async () => {

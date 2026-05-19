@@ -67,6 +67,8 @@ pub fn run() {
             commands::auth::logout_user,
             commands::auth::get_current_session,
             commands::auth::init_default_accounts,
+            commands::settings::get_pronunciation_settings,
+            commands::settings::update_pronunciation_settings,
             commands::admin::get_admin_stats,
             commands::audio::get_audio_cache_path,
             commands::audio::check_audio_cached,
