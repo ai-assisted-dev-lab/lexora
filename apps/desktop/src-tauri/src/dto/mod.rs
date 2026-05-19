@@ -1,4 +1,5 @@
 pub mod achievements;
+pub mod admin;
 pub mod analytics;
 /// Data-transfer objects (DTOs) serialised over the Tauri IPC bridge.
 ///

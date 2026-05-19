@@ -60,6 +60,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "achievement_events",
         sql: include_str!("../../migrations/0009_achievement_events.sql"),
     },
+    Migration {
+        version: 10,
+        name: "admin_vocabulary_fields",
+        sql: include_str!("../../migrations/0010_admin_vocabulary_fields.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────
