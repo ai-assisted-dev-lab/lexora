@@ -75,6 +75,12 @@ export interface StartFlashcardSessionInputDto {
   mode: "flashcard";
 }
 
+export interface StartMultipleChoiceSessionInputDto {
+  deckId?: number | null;
+  sessionLength: number;
+  mode: "multiple_choice";
+}
+
 export interface ReviewCardStateInputDto {
   due: string;
   stability: number;
@@ -92,6 +98,17 @@ export interface SubmitFlashcardReviewInputDto {
   sessionId: number;
   reviewCardId: number;
   vocabularyItemId: number;
+  rating: "again" | "hard" | "good" | "easy";
+  reviewedAt: string;
+  responseTimeMs?: number;
+  nextState: ReviewCardStateInputDto;
+}
+
+export interface SubmitMultipleChoiceReviewInputDto {
+  sessionId: number;
+  reviewCardId: number;
+  vocabularyItemId: number;
+  selectedVocabularyItemId: number;
   rating: "again" | "hard" | "good" | "easy";
   reviewedAt: string;
   responseTimeMs?: number;
@@ -127,6 +144,46 @@ export interface StudySessionDto {
   queue: SmartReviewQueueDto;
 }
 
+export interface MultipleChoiceOptionDto {
+  vocabularyItemId: number;
+  label: string;
+}
+
+export interface MultipleChoiceQuestionDto {
+  position: number;
+  category: "due" | "weak" | "new";
+  card: ReviewCardDto;
+  headword: string;
+  partOfSpeech: string | null;
+  ipaUk: string | null;
+  ipaUs: string | null;
+  definitionEn: string | null;
+  definitionVi: string | null;
+  exampleSentenceEn: string | null;
+  exampleSentenceVi: string | null;
+  additionalSenseCount: number;
+  options: MultipleChoiceOptionDto[];
+  correctVocabularyItemId: number;
+}
+
+export interface MultipleChoiceSessionDto {
+  sessionId: number;
+  userId: number;
+  deckId: number | null;
+  mode: "multiple_choice";
+  startedAt: string;
+  endedAt: string | null;
+  totalItems: number;
+  reviewedCount: number;
+  correctCount: number;
+  againCount: number;
+  hardCount: number;
+  goodCount: number;
+  easyCount: number;
+  queue: SmartReviewQueueDto;
+  questions: MultipleChoiceQuestionDto[];
+}
+
 export interface SubmitReviewResultDto {
   session: StudySessionProgressDto;
   card: ReviewCardDto;
@@ -142,7 +199,7 @@ export interface StudySessionSummaryDto {
   sessionId: number;
   userId: number;
   deckId: number | null;
-  mode: "flashcard";
+  mode: "flashcard" | "multiple_choice";
   startedAt: string;
   endedAt: string;
   totalItems: number;
@@ -183,10 +240,26 @@ export function startFlashcardSession(
   return invoke<StudySessionDto>("start_flashcard_session", { input });
 }
 
+export function startMultipleChoiceSession(
+  input: StartMultipleChoiceSessionInputDto,
+): Promise<MultipleChoiceSessionDto> {
+  return invoke<MultipleChoiceSessionDto>("start_multiple_choice_session", {
+    input,
+  });
+}
+
 export function submitFlashcardReview(
   input: SubmitFlashcardReviewInputDto,
 ): Promise<SubmitReviewResultDto> {
   return invoke<SubmitReviewResultDto>("submit_flashcard_review", { input });
+}
+
+export function submitMultipleChoiceReview(
+  input: SubmitMultipleChoiceReviewInputDto,
+): Promise<SubmitReviewResultDto> {
+  return invoke<SubmitReviewResultDto>("submit_multiple_choice_review", {
+    input,
+  });
 }
 
 export function completeStudySession(

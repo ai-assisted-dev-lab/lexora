@@ -4,17 +4,19 @@ use tauri::State;
 use crate::auth;
 use crate::db::DbConn;
 use crate::dto::review::{
-    CompleteStudySessionInputDto, EnsureReviewCardsForDeckDto, ReviewCardDto,
-    ReviewCardStateInputDto, SmartReviewQueueDto, SmartReviewQueueItemDto,
-    SmartReviewQueueRequestDto, SmartReviewQueueSummaryDto, StartFlashcardSessionInputDto,
+    CompleteStudySessionInputDto, EnsureReviewCardsForDeckDto, MultipleChoiceOptionDto,
+    MultipleChoiceQuestionDto, MultipleChoiceSessionDto, ReviewCardDto, ReviewCardStateInputDto,
+    SmartReviewQueueDto, SmartReviewQueueItemDto, SmartReviewQueueRequestDto,
+    SmartReviewQueueSummaryDto, StartFlashcardSessionInputDto, StartMultipleChoiceSessionInputDto,
     StudySessionDto, StudySessionProgressDto, StudySessionSummaryDto,
-    SubmitFlashcardReviewInputDto, SubmitReviewResultDto,
+    SubmitFlashcardReviewInputDto, SubmitMultipleChoiceReviewInputDto, SubmitReviewResultDto,
 };
 use crate::errors::AppError;
 
 const SQLITE_UTC_NOW: &str = "strftime('%Y-%m-%dT%H:%M:%SZ', 'now')";
 const SMART_REVIEW_MODE: &str = "smart_review";
 const FLASHCARD_MODE: &str = "flashcard";
+const MULTIPLE_CHOICE_MODE: &str = "multiple_choice";
 
 fn review_card_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ReviewCardDto> {
     Ok(ReviewCardDto {
@@ -85,6 +87,33 @@ impl QueueCandidate {
             additional_sense_count: self.additional_sense_count,
         }
     }
+}
+
+#[derive(Clone, Debug)]
+struct MultipleChoiceOptionCandidate {
+    vocabulary_item_id: i64,
+    label: String,
+}
+
+fn primary_option_label(
+    definition_vi: Option<&str>,
+    definition_en: Option<&str>,
+    headword: &str,
+) -> String {
+    definition_vi
+        .or(definition_en)
+        .unwrap_or(headword)
+        .trim()
+        .to_string()
+}
+
+fn normalize_option_label(label: &str) -> String {
+    label.trim().to_lowercase()
+}
+
+fn stable_option_sort_key(question_word_id: i64, option: &MultipleChoiceOptionDto) -> i64 {
+    (option.vocabulary_item_id * 31 + question_word_id * 17 + option.label.len() as i64)
+        .rem_euclid(997)
 }
 
 fn query_review_card(
@@ -233,6 +262,134 @@ fn query_queue_candidates(
         })?;
 
     Ok(rows)
+}
+
+fn query_multiple_choice_option_candidates(
+    conn: &Connection,
+    target_word_id: i64,
+    deck_id: Option<i64>,
+    limit: i64,
+) -> Result<Vec<MultipleChoiceOptionCandidate>, AppError> {
+    let mut candidates = Vec::new();
+    let scoped_sql = "
+        SELECT DISTINCT w.id,
+               COALESCE(
+                   NULLIF((
+                       SELECT s.definition_vi
+                       FROM   senses s
+                       WHERE  s.word_id = w.id
+                       ORDER  BY s.sense_index, s.id
+                       LIMIT  1
+                   ), ''),
+                   NULLIF((
+                       SELECT s.definition_en
+                       FROM   senses s
+                       WHERE  s.word_id = w.id
+                       ORDER  BY s.sense_index, s.id
+                       LIMIT  1
+                   ), ''),
+                   w.headword
+               ) AS label
+        FROM   words target
+        JOIN   words w ON w.id != target.id
+        JOIN   deck_words dw ON dw.word_id = w.id
+        WHERE  target.id = ?1
+          AND  (?2 IS NULL OR dw.deck_id = ?2)
+        ORDER  BY
+               CASE WHEN w.part_of_speech IS target.part_of_speech THEN 0 ELSE 1 END,
+               CASE WHEN w.cefr_level IS target.cefr_level THEN 0 ELSE 1 END,
+               dw.position ASC,
+               w.id ASC
+        LIMIT  ?3";
+
+    read_option_candidates(
+        conn,
+        scoped_sql,
+        params![target_word_id, deck_id, limit],
+        &mut candidates,
+    )?;
+
+    if candidates.len() < limit as usize {
+        let fallback_sql = "
+            SELECT DISTINCT w.id,
+                   COALESCE(
+                       NULLIF((
+                           SELECT s.definition_vi
+                           FROM   senses s
+                           WHERE  s.word_id = w.id
+                           ORDER  BY s.sense_index, s.id
+                           LIMIT  1
+                       ), ''),
+                       NULLIF((
+                           SELECT s.definition_en
+                           FROM   senses s
+                           WHERE  s.word_id = w.id
+                           ORDER  BY s.sense_index, s.id
+                           LIMIT  1
+                       ), ''),
+                       w.headword
+                   ) AS label
+            FROM   words target
+            JOIN   words w ON w.id != target.id
+            WHERE  target.id = ?1
+            ORDER  BY
+                   CASE WHEN w.part_of_speech IS target.part_of_speech THEN 0 ELSE 1 END,
+                   CASE WHEN w.cefr_level IS target.cefr_level THEN 0 ELSE 1 END,
+                   w.frequency_rank IS NULL,
+                   w.frequency_rank ASC,
+                   w.id ASC
+            LIMIT  ?2";
+        read_option_candidates(
+            conn,
+            fallback_sql,
+            params![target_word_id, limit * 3],
+            &mut candidates,
+        )?;
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    let mut unique = Vec::new();
+    for candidate in candidates {
+        let normalized = normalize_option_label(&candidate.label);
+        if normalized.is_empty() || !seen.insert(normalized) {
+            continue;
+        }
+        unique.push(candidate);
+        if unique.len() == limit as usize {
+            break;
+        }
+    }
+
+    Ok(unique)
+}
+
+fn read_option_candidates<P: rusqlite::Params>(
+    conn: &Connection,
+    sql: &str,
+    params: P,
+    candidates: &mut Vec<MultipleChoiceOptionCandidate>,
+) -> Result<(), AppError> {
+    let mut stmt = conn.prepare(sql).map_err(|e| {
+        AppError::Internal(format!(
+            "Failed to prepare multiple choice distractor query: {e}"
+        ))
+    })?;
+
+    let rows = stmt
+        .query_map(params, |row| {
+            Ok(MultipleChoiceOptionCandidate {
+                vocabulary_item_id: row.get(0)?,
+                label: row.get(1)?,
+            })
+        })
+        .map_err(|e| AppError::Internal(format!("Failed to query distractors: {e}")))?;
+
+    for row in rows {
+        candidates
+            .push(row.map_err(|e| AppError::Internal(format!("Failed to read distractor: {e}")))?);
+    }
+
+    Ok(())
 }
 
 fn query_review_cards_for_deck(
@@ -607,14 +764,31 @@ fn generated_at(conn: &Connection, now_sql: &str) -> Result<String, AppError> {
 }
 
 fn validate_flashcard_start_input(input: &StartFlashcardSessionInputDto) -> Result<(), AppError> {
-    if input.mode != FLASHCARD_MODE {
+    validate_study_session_start(input.mode.as_str(), FLASHCARD_MODE, input.session_length)
+}
+
+fn validate_multiple_choice_start_input(
+    input: &StartMultipleChoiceSessionInputDto,
+) -> Result<(), AppError> {
+    validate_study_session_start(
+        input.mode.as_str(),
+        MULTIPLE_CHOICE_MODE,
+        input.session_length,
+    )
+}
+
+fn validate_study_session_start(
+    submitted_mode: &str,
+    expected_mode: &str,
+    session_length: i64,
+) -> Result<(), AppError> {
+    if submitted_mode != expected_mode {
         return Err(AppError::Validation(format!(
-            "Unsupported study mode '{}'. Only '{FLASHCARD_MODE}' is available.",
-            input.mode
+            "Unsupported study mode '{submitted_mode}'. Only '{expected_mode}' is available."
         )));
     }
 
-    if !(1..=200).contains(&input.session_length) {
+    if !(1..=200).contains(&session_length) {
         return Err(AppError::Validation(
             "sessionLength must be between 1 and 200".to_string(),
         ));
@@ -745,6 +919,7 @@ fn query_session_progress(
     conn: &Connection,
     session_id: i64,
     user_id: i64,
+    mode: &str,
 ) -> Result<StudySessionProgressDto, AppError> {
     conn.query_row(
         "SELECT id, total_items, cards_studied, cards_correct,
@@ -752,8 +927,8 @@ fn query_session_progress(
          FROM   study_sessions
          WHERE  id = ?1
            AND  user_id = ?2
-           AND  session_type = 'flashcard'",
-        params![session_id, user_id],
+           AND  session_type = ?3",
+        params![session_id, user_id, mode],
         |row| {
             Ok(StudySessionProgressDto {
                 session_id: row.get(0)?,
@@ -769,8 +944,8 @@ fn query_session_progress(
         },
     )
     .optional()
-    .map_err(|e| AppError::Internal(format!("Failed to query flashcard session: {e}")))?
-    .ok_or_else(|| AppError::NotFound(format!("Flashcard session {session_id} was not found")))
+    .map_err(|e| AppError::Internal(format!("Failed to query {mode} session: {e}")))?
+    .ok_or_else(|| AppError::NotFound(format!("{mode} session {session_id} was not found")))
 }
 
 fn start_flashcard_session_for_user_at(
@@ -823,6 +998,135 @@ fn start_flashcard_session_for_user_at(
     })
 }
 
+fn build_multiple_choice_question(
+    conn: &Connection,
+    item: &SmartReviewQueueItemDto,
+    deck_id: Option<i64>,
+) -> Result<Option<MultipleChoiceQuestionDto>, AppError> {
+    let correct_label = primary_option_label(
+        item.definition_vi.as_deref(),
+        item.definition_en.as_deref(),
+        &item.headword,
+    );
+    if correct_label.is_empty() {
+        return Ok(None);
+    }
+
+    let distractors =
+        query_multiple_choice_option_candidates(conn, item.card.vocabulary_item_id, deck_id, 8)?;
+    let mut seen = std::collections::HashSet::new();
+    seen.insert(normalize_option_label(&correct_label));
+
+    let mut options = vec![MultipleChoiceOptionDto {
+        vocabulary_item_id: item.card.vocabulary_item_id,
+        label: correct_label,
+    }];
+
+    for distractor in distractors {
+        if options.len() == 4 {
+            break;
+        }
+        let normalized = normalize_option_label(&distractor.label);
+        if normalized.is_empty() || !seen.insert(normalized) {
+            continue;
+        }
+        options.push(MultipleChoiceOptionDto {
+            vocabulary_item_id: distractor.vocabulary_item_id,
+            label: distractor.label,
+        });
+    }
+
+    if options.len() < 4 {
+        return Ok(None);
+    }
+
+    options.sort_by_key(|option| stable_option_sort_key(item.card.vocabulary_item_id, option));
+
+    Ok(Some(MultipleChoiceQuestionDto {
+        position: item.position,
+        category: item.category.clone(),
+        card: item.card.clone(),
+        headword: item.headword.clone(),
+        part_of_speech: item.part_of_speech.clone(),
+        ipa_uk: item.ipa_uk.clone(),
+        ipa_us: item.ipa_us.clone(),
+        definition_en: item.definition_en.clone(),
+        definition_vi: item.definition_vi.clone(),
+        example_sentence_en: item.example_sentence_en.clone(),
+        example_sentence_vi: item.example_sentence_vi.clone(),
+        additional_sense_count: item.additional_sense_count,
+        options,
+        correct_vocabulary_item_id: item.card.vocabulary_item_id,
+    }))
+}
+
+fn build_multiple_choice_questions(
+    conn: &Connection,
+    queue: &SmartReviewQueueDto,
+) -> Result<Vec<MultipleChoiceQuestionDto>, AppError> {
+    let mut questions = Vec::new();
+    for item in &queue.items {
+        if let Some(mut question) = build_multiple_choice_question(conn, item, queue.deck_id)? {
+            question.position = questions.len() as i64;
+            questions.push(question);
+        }
+    }
+
+    Ok(questions)
+}
+
+fn start_multiple_choice_session_for_user_at(
+    conn: &Connection,
+    user_id: i64,
+    input: StartMultipleChoiceSessionInputDto,
+    now_sql: &str,
+) -> Result<MultipleChoiceSessionDto, AppError> {
+    validate_multiple_choice_start_input(&input)?;
+
+    let queue = generate_smart_review_queue_for_user_at(
+        conn,
+        user_id,
+        SmartReviewQueueRequestDto {
+            deck_id: input.deck_id,
+            session_length: input.session_length,
+            due_ratio: 0.7,
+            weak_ratio: 0.2,
+            new_ratio: 0.1,
+            mode: SMART_REVIEW_MODE.to_string(),
+        },
+        now_sql,
+    )?;
+    let questions = build_multiple_choice_questions(conn, &queue)?;
+    let started_at = generated_at(conn, now_sql)?;
+
+    conn.execute(
+        "INSERT INTO study_sessions (
+             user_id, deck_id, session_type, started_at, total_items
+         )
+         VALUES (?1, ?2, 'multiple_choice', ?3, ?4)",
+        params![user_id, input.deck_id, started_at, questions.len() as i64],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to create multiple choice session: {e}")))?;
+
+    Ok(MultipleChoiceSessionDto {
+        session_id: conn.last_insert_rowid(),
+        user_id,
+        deck_id: input.deck_id,
+        mode: MULTIPLE_CHOICE_MODE.to_string(),
+        started_at,
+        ended_at: None,
+        total_items: questions.len() as i64,
+        reviewed_count: 0,
+        correct_count: 0,
+        again_count: 0,
+        hard_count: 0,
+        good_count: 0,
+        easy_count: 0,
+        queue,
+        questions,
+    })
+}
+
 fn submit_flashcard_review_for_user(
     conn: &Connection,
     user_id: i64,
@@ -838,7 +1142,7 @@ fn submit_flashcard_review_for_user(
     }
     validate_review_transition(&existing_card, &input.next_state, &input.reviewed_at)?;
 
-    let progress = query_session_progress(conn, input.session_id, user_id)?;
+    let progress = query_session_progress(conn, input.session_id, user_id, FLASHCARD_MODE)?;
     if progress.ended_at.is_some() {
         return Err(AppError::Validation(format!(
             "Flashcard session {} is already completed.",
@@ -962,7 +1266,149 @@ fn submit_flashcard_review_for_user(
     .map_err(|e| AppError::Internal(format!("Failed to update flashcard session: {e}")))?;
 
     let card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
-    let session = query_session_progress(conn, input.session_id, user_id)?;
+    let session = query_session_progress(conn, input.session_id, user_id, FLASHCARD_MODE)?;
+
+    Ok(SubmitReviewResultDto {
+        session,
+        card,
+        rating: input.rating,
+        reviewed_at: input.reviewed_at,
+    })
+}
+
+fn submit_multiple_choice_review_for_user(
+    conn: &Connection,
+    user_id: i64,
+    input: SubmitMultipleChoiceReviewInputDto,
+) -> Result<SubmitReviewResultDto, AppError> {
+    validate_review_state(&input.next_state)?;
+    let numeric_rating = rating_value(&input.rating)?;
+    let existing_card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
+    if existing_card.vocabulary_item_id != input.vocabulary_item_id {
+        return Err(AppError::Validation(
+            "Review card does not match the submitted vocabulary item.".to_string(),
+        ));
+    }
+    validate_review_transition(&existing_card, &input.next_state, &input.reviewed_at)?;
+
+    let progress = query_session_progress(conn, input.session_id, user_id, MULTIPLE_CHOICE_MODE)?;
+    if progress.ended_at.is_some() {
+        return Err(AppError::Validation(format!(
+            "Multiple choice session {} is already completed.",
+            input.session_id
+        )));
+    }
+
+    let state_before = state_json(&state_from_card(&existing_card))?;
+    let state_after = state_json(&input.next_state)?;
+
+    let updated = conn
+        .execute(
+            "UPDATE review_cards
+             SET due = ?1,
+                 stability = ?2,
+                 difficulty = ?3,
+                 elapsed_days = ?4,
+                 scheduled_days = ?5,
+                 learning_steps = ?6,
+                 reps = ?7,
+                 lapses = ?8,
+                 state = ?9,
+                 last_review = ?10,
+                 updated_at = ?11
+             WHERE id = ?12
+               AND user_id = ?13
+               AND word_id = ?14",
+            params![
+                input.next_state.due,
+                input.next_state.stability,
+                input.next_state.difficulty,
+                input.next_state.elapsed_days,
+                input.next_state.scheduled_days,
+                input.next_state.learning_steps,
+                input.next_state.reps,
+                input.next_state.lapses,
+                input.next_state.state,
+                input.next_state.last_review,
+                input.reviewed_at,
+                input.review_card_id,
+                user_id,
+                input.vocabulary_item_id,
+            ],
+        )
+        .map_err(|e| AppError::Internal(format!("Failed to update review card: {e}")))?;
+
+    if updated != 1 {
+        return Err(AppError::NotFound(format!(
+            "Review card {} was not found",
+            input.review_card_id
+        )));
+    }
+
+    let is_correct = input.selected_vocabulary_item_id == input.vocabulary_item_id;
+    let result = if is_correct { "pass" } else { "fail" };
+    let response_time_ms = input.response_time_ms.unwrap_or(0);
+
+    conn.execute(
+        "INSERT INTO review_logs (
+             user_id, word_id, review_card_id, deck_id, session_id, rating,
+             result, mode, state_before, state_after, review_duration_ms,
+             response_time_ms, reviewed_at
+         )
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'multiple_choice', ?8, ?9, ?10, ?11, ?12)",
+        params![
+            user_id,
+            input.vocabulary_item_id,
+            input.review_card_id,
+            existing_card.deck_id,
+            input.session_id,
+            numeric_rating,
+            result,
+            state_before,
+            state_after,
+            response_time_ms,
+            input.response_time_ms,
+            input.reviewed_at,
+        ],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to write multiple choice review log: {e}")))?;
+
+    let correct_increment = if is_correct { 1 } else { 0 };
+    let (again_increment, hard_increment, good_increment, easy_increment) =
+        match input.rating.as_str() {
+            "again" => (1, 0, 0, 0),
+            "hard" => (0, 1, 0, 0),
+            "good" => (0, 0, 1, 0),
+            "easy" => (0, 0, 0, 1),
+            _ => unreachable!("rating validated above"),
+        };
+
+    conn.execute(
+        "UPDATE study_sessions
+         SET cards_studied = cards_studied + 1,
+             cards_correct = cards_correct + ?1,
+             again_count = again_count + ?2,
+             hard_count = hard_count + ?3,
+             good_count = good_count + ?4,
+             easy_count = easy_count + ?5
+         WHERE id = ?6
+           AND user_id = ?7
+           AND session_type = 'multiple_choice'
+           AND ended_at IS NULL",
+        params![
+            correct_increment,
+            again_increment,
+            hard_increment,
+            good_increment,
+            easy_increment,
+            input.session_id,
+            user_id,
+        ],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to update multiple choice session: {e}")))?;
+
+    let card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
+    let session = query_session_progress(conn, input.session_id, user_id, MULTIPLE_CHOICE_MODE)?;
 
     Ok(SubmitReviewResultDto {
         session,
@@ -985,7 +1431,7 @@ fn complete_study_session_for_user_at(
          SET ended_at = COALESCE(ended_at, ?1)
          WHERE id = ?2
            AND user_id = ?3
-           AND session_type = 'flashcard'",
+           AND session_type IN ('flashcard', 'multiple_choice')",
         params![ended_at, input.session_id, user_id],
     )
     .map_err(|e| AppError::Internal(format!("Failed to complete flashcard session: {e}")))?;
@@ -1001,7 +1447,7 @@ fn complete_study_session_for_user_at(
          FROM   study_sessions
          WHERE  id = ?2
            AND  user_id = ?3
-           AND  session_type = 'flashcard'",
+           AND  session_type IN ('flashcard', 'multiple_choice')",
         params![ended_at, input.session_id, user_id],
         |row| {
             let total_items: i64 = row.get(6)?;
@@ -1033,13 +1479,8 @@ fn complete_study_session_for_user_at(
         },
     )
     .optional()
-    .map_err(|e| AppError::Internal(format!("Failed to summarize flashcard session: {e}")))?
-    .ok_or_else(|| {
-        AppError::NotFound(format!(
-            "Flashcard session {} was not found",
-            input.session_id
-        ))
-    })
+    .map_err(|e| AppError::Internal(format!("Failed to summarize study session: {e}")))?
+    .ok_or_else(|| AppError::NotFound(format!("Study session {} was not found", input.session_id)))
 }
 
 fn smart_queue_summary(
@@ -1169,6 +1610,20 @@ pub fn start_flashcard_session(
 }
 
 #[tauri::command]
+pub fn start_multiple_choice_session(
+    input: StartMultipleChoiceSessionInputDto,
+    db: State<'_, DbConn>,
+) -> Result<MultipleChoiceSessionDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    start_multiple_choice_session_for_user_at(&conn, user.id, input, SQLITE_UTC_NOW)
+}
+
+#[tauri::command]
 pub fn submit_flashcard_review(
     input: SubmitFlashcardReviewInputDto,
     db: State<'_, DbConn>,
@@ -1180,6 +1635,20 @@ pub fn submit_flashcard_review(
     let user = auth::require_session(&conn)?;
 
     submit_flashcard_review_for_user(&conn, user.id, input)
+}
+
+#[tauri::command]
+pub fn submit_multiple_choice_review(
+    input: SubmitMultipleChoiceReviewInputDto,
+    db: State<'_, DbConn>,
+) -> Result<SubmitReviewResultDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    submit_multiple_choice_review_for_user(&conn, user.id, input)
 }
 
 #[tauri::command]
@@ -1265,6 +1734,17 @@ mod tests {
         }
     }
 
+    fn multiple_choice_start(
+        deck_id: Option<i64>,
+        session_length: i64,
+    ) -> StartMultipleChoiceSessionInputDto {
+        StartMultipleChoiceSessionInputDto {
+            deck_id,
+            session_length,
+            mode: MULTIPLE_CHOICE_MODE.to_string(),
+        }
+    }
+
     fn next_state_for(card: &ReviewCardDto, rating: &str) -> ReviewCardStateInputDto {
         ReviewCardStateInputDto {
             due: "2026-01-02T00:00:00Z".to_string(),
@@ -1308,6 +1788,24 @@ mod tests {
             rating: rating.to_string(),
             reviewed_at: "2026-01-01T00:00:00Z".to_string(),
             response_time_ms: Some(1500),
+            next_state: next_state_for(card, rating),
+        }
+    }
+
+    fn submit_choice_input(
+        session_id: i64,
+        card: &ReviewCardDto,
+        selected_vocabulary_item_id: i64,
+        rating: &str,
+    ) -> SubmitMultipleChoiceReviewInputDto {
+        SubmitMultipleChoiceReviewInputDto {
+            session_id,
+            review_card_id: card.id,
+            vocabulary_item_id: card.vocabulary_item_id,
+            selected_vocabulary_item_id,
+            rating: rating.to_string(),
+            reviewed_at: "2026-01-01T00:00:00Z".to_string(),
+            response_time_ms: Some(900),
             next_state: next_state_for(card, rating),
         }
     }
@@ -1754,6 +2252,130 @@ mod tests {
         assert_eq!(summary.correct_count, 1);
         assert_eq!(summary.accuracy, 100);
         assert_eq!(summary.time_spent_seconds, 120);
+    }
+
+    #[test]
+    fn start_multiple_choice_session_generates_four_unique_options() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+
+        let session = start_multiple_choice_session_for_user_at(
+            &conn,
+            user_id,
+            multiple_choice_start(Some(deck_id), 3),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start multiple choice");
+
+        assert!(session.session_id > 0);
+        assert_eq!(session.mode, MULTIPLE_CHOICE_MODE);
+        assert_eq!(session.total_items, session.questions.len() as i64);
+        assert!(!session.questions.is_empty());
+
+        for question in &session.questions {
+            let labels = question
+                .options
+                .iter()
+                .map(|option| normalize_option_label(&option.label))
+                .collect::<std::collections::HashSet<_>>();
+            assert_eq!(question.options.len(), 4);
+            assert_eq!(labels.len(), 4);
+            assert!(question.options.iter().any(|option| {
+                option.vocabulary_item_id == question.correct_vocabulary_item_id
+            }));
+        }
+    }
+
+    #[test]
+    fn submit_multiple_choice_review_updates_card_and_writes_log() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+        let session = start_multiple_choice_session_for_user_at(
+            &conn,
+            user_id,
+            multiple_choice_start(Some(deck_id), 1),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start multiple choice");
+        let question = &session.questions[0];
+
+        let result = submit_multiple_choice_review_for_user(
+            &conn,
+            user_id,
+            submit_choice_input(
+                session.session_id,
+                &question.card,
+                question.correct_vocabulary_item_id,
+                "good",
+            ),
+        )
+        .expect("submit multiple choice");
+
+        assert_eq!(result.card.reps, question.card.reps + 1);
+        assert_eq!(result.session.reviewed_count, 1);
+        assert_eq!(result.session.correct_count, 1);
+        assert_eq!(result.session.good_count, 1);
+
+        let log: (String, String, Option<i64>) = conn
+            .query_row(
+                "SELECT mode, result, response_time_ms
+                 FROM review_logs
+                 WHERE session_id = ?1",
+                params![session.session_id],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            )
+            .expect("review log");
+
+        assert_eq!(log.0, "multiple_choice");
+        assert_eq!(log.1, "pass");
+        assert_eq!(log.2, Some(900));
+    }
+
+    #[test]
+    fn incorrect_multiple_choice_answer_logs_fail_and_again_count() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+        let session = start_multiple_choice_session_for_user_at(
+            &conn,
+            user_id,
+            multiple_choice_start(Some(deck_id), 1),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start multiple choice");
+        let question = &session.questions[0];
+        let wrong_option = question
+            .options
+            .iter()
+            .find(|option| option.vocabulary_item_id != question.correct_vocabulary_item_id)
+            .expect("wrong option");
+
+        let result = submit_multiple_choice_review_for_user(
+            &conn,
+            user_id,
+            submit_choice_input(
+                session.session_id,
+                &question.card,
+                wrong_option.vocabulary_item_id,
+                "again",
+            ),
+        )
+        .expect("submit incorrect multiple choice");
+
+        assert_eq!(result.session.reviewed_count, 1);
+        assert_eq!(result.session.correct_count, 0);
+        assert_eq!(result.session.again_count, 1);
+
+        let logged_result: String = conn
+            .query_row(
+                "SELECT result FROM review_logs WHERE session_id = ?1",
+                params![session.session_id],
+                |row| row.get(0),
+            )
+            .expect("review log");
+        assert_eq!(logged_result, "fail");
     }
 
     #[test]

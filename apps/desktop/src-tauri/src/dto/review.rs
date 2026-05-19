@@ -89,6 +89,14 @@ pub struct StartFlashcardSessionInputDto {
     pub mode: String,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StartMultipleChoiceSessionInputDto {
+    pub deck_id: Option<i64>,
+    pub session_length: i64,
+    pub mode: String,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewCardStateInputDto {
@@ -118,6 +126,19 @@ pub struct SubmitFlashcardReviewInputDto {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SubmitMultipleChoiceReviewInputDto {
+    pub session_id: i64,
+    pub review_card_id: i64,
+    pub vocabulary_item_id: i64,
+    pub selected_vocabulary_item_id: i64,
+    pub rating: String,
+    pub reviewed_at: String,
+    pub response_time_ms: Option<i64>,
+    pub next_state: ReviewCardStateInputDto,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompleteStudySessionInputDto {
     pub session_id: i64,
 }
@@ -139,6 +160,52 @@ pub struct StudySessionDto {
     pub good_count: i64,
     pub easy_count: i64,
     pub queue: SmartReviewQueueDto,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct MultipleChoiceOptionDto {
+    pub vocabulary_item_id: i64,
+    pub label: String,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct MultipleChoiceQuestionDto {
+    pub position: i64,
+    pub category: String,
+    pub card: ReviewCardDto,
+    pub headword: String,
+    pub part_of_speech: Option<String>,
+    pub ipa_uk: Option<String>,
+    pub ipa_us: Option<String>,
+    pub definition_en: Option<String>,
+    pub definition_vi: Option<String>,
+    pub example_sentence_en: Option<String>,
+    pub example_sentence_vi: Option<String>,
+    pub additional_sense_count: i64,
+    pub options: Vec<MultipleChoiceOptionDto>,
+    pub correct_vocabulary_item_id: i64,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct MultipleChoiceSessionDto {
+    pub session_id: i64,
+    pub user_id: i64,
+    pub deck_id: Option<i64>,
+    pub mode: String,
+    pub started_at: String,
+    pub ended_at: Option<String>,
+    pub total_items: i64,
+    pub reviewed_count: i64,
+    pub correct_count: i64,
+    pub again_count: i64,
+    pub hard_count: i64,
+    pub good_count: i64,
+    pub easy_count: i64,
+    pub queue: SmartReviewQueueDto,
+    pub questions: Vec<MultipleChoiceQuestionDto>,
 }
 
 #[derive(Debug, Serialize, PartialEq)]

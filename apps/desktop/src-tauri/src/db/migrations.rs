@@ -40,6 +40,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "flashcard_sessions",
         sql: include_str!("../../migrations/0005_flashcard_sessions.sql"),
     },
+    Migration {
+        version: 6,
+        name: "multiple_choice_mode",
+        sql: include_str!("../../migrations/0006_multiple_choice_mode.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────

@@ -73,8 +73,8 @@ function buildStudyModes(deck: DeckDetailDto): StudyMode[] {
       title: "Flashcards",
     },
     {
-      description: "Route to the placeholder for recognition practice.",
-      estimate: "Placeholder",
+      description: "Choose the right Vietnamese meaning from plausible options.",
+      estimate: `${Math.min(deck.wordCount, 20)} questions`,
       href: studyHref(deck.id, "multiple-choice"),
       Icon: ClipboardCheck,
       title: "Multiple Choice",
@@ -246,7 +246,7 @@ export function DeckDetailPage() {
           <section className="deck-detail-section" aria-label="Study modes">
             <SectionHeader
               title="Choose a Study Mode"
-              description="Flashcard sessions now use the local Smart Review queue."
+              description="Flashcards and Multiple Choice use the local Smart Review queue."
             />
             <div className="deck-detail-mode-grid">
               {studyModes.map((mode) => (

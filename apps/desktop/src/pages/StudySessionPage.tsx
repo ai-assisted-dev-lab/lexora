@@ -33,12 +33,17 @@ import {
 } from "@/components/ui";
 import {
   completeStudySession,
+  type MultipleChoiceOptionDto,
+  type MultipleChoiceQuestionDto,
+  type MultipleChoiceSessionDto,
   type ReviewCardDto,
   type SmartReviewQueueItemDto,
   startFlashcardSession,
+  startMultipleChoiceSession,
   type StudySessionDto,
   type StudySessionSummaryDto,
   submitFlashcardReview,
+  submitMultipleChoiceReview,
 } from "@/services/commands/review";
 import { formatTauriError } from "@/services/tauri";
 
@@ -52,6 +57,8 @@ const flashcardModeAliases = new Set([
   "continue",
   "learn",
 ]);
+
+const multipleChoiceModeAliases = new Set(["multiple-choice", "multiple_choice"]);
 
 const ratingButtons: Array<{
   label: string;
@@ -125,33 +132,52 @@ export function StudySessionPage() {
     DEFAULT_SESSION_LENGTH;
   const mode = searchParams.get("mode") ?? "flashcard";
   const isFlashcardMode = flashcardModeAliases.has(mode);
+  const isMultipleChoiceMode = multipleChoiceModeAliases.has(mode);
+  const studyMode = isMultipleChoiceMode ? "multiple_choice" : "flashcard";
+  const isSupportedMode = isFlashcardMode || isMultipleChoiceMode;
 
   const [session, setSession] = useState<StudySessionDto | null>(null);
+  const [multipleChoiceSession, setMultipleChoiceSession] =
+    useState<MultipleChoiceSessionDto | null>(null);
   const [summary, setSummary] = useState<StudySessionSummaryDto | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isLoading, setIsLoading] = useState(isFlashcardMode);
+  const [selectedOption, setSelectedOption] =
+    useState<MultipleChoiceOptionDto | null>(null);
+  const [choiceFeedback, setChoiceFeedback] = useState<{
+    isCorrect: boolean;
+    rating: LexoraReviewRating;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(isSupportedMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cardStartedAtMs, setCardStartedAtMs] = useState(() => Date.now());
   const isSubmittingRef = useRef(false);
 
   const currentItem = session?.queue.items[currentIndex] ?? null;
+  const currentQuestion =
+    multipleChoiceSession?.questions[currentIndex] ?? null;
+  const currentCard = currentItem ?? currentQuestion;
   const isComplete = summary !== null;
-  const totalItems = session?.totalItems ?? 0;
-  const reviewedCount = summary?.reviewedCount ?? session?.reviewedCount ?? 0;
-  const scopeLabel = session?.deckId
-    ? `Deck ${session.deckId}`
+  const activeSession = multipleChoiceSession ?? session;
+  const totalItems = activeSession?.totalItems ?? 0;
+  const reviewedCount =
+    summary?.reviewedCount ?? activeSession?.reviewedCount ?? 0;
+  const scopeLabel = activeSession?.deckId
+    ? `Deck ${activeSession.deckId}`
     : "All installed decks";
-  const exitHref = session?.deckId ? `/library/${session.deckId}` : "/review";
+  const exitHref = activeSession?.deckId
+    ? `/library/${activeSession.deckId}`
+    : "/review";
   const progressValue = isComplete
     ? totalItems
-    : reviewedCount + (isFlipped && currentItem ? 0.5 : 0);
+    : reviewedCount +
+      ((isFlipped && currentItem) || choiceFeedback ? 0.5 : 0);
 
   const startSession = useCallback(async () => {
-    if (!isFlashcardMode) {
+    if (!isSupportedMode) {
       setIsLoading(false);
-      setError("Only Flashcard mode is available for real sessions right now.");
+      setError("This study mode is not available for real sessions right now.");
       return;
     }
 
@@ -159,26 +185,41 @@ export function StudySessionPage() {
     setError(null);
     setSummary(null);
     setSession(null);
+    setMultipleChoiceSession(null);
     setCurrentIndex(0);
     setIsFlipped(false);
+    setSelectedOption(null);
+    setChoiceFeedback(null);
 
     try {
-      const result = await startFlashcardSession({
-        deckId,
-        sessionLength,
-        mode: "flashcard",
-      });
-      if (!result || !Array.isArray(result.queue?.items)) {
-        throw new Error("Flashcard session response was invalid.");
+      if (studyMode === "multiple_choice") {
+        const result = await startMultipleChoiceSession({
+          deckId,
+          sessionLength,
+          mode: "multiple_choice",
+        });
+        if (!result || !Array.isArray(result.questions)) {
+          throw new Error("Multiple choice session response was invalid.");
+        }
+        setMultipleChoiceSession(result);
+      } else {
+        const result = await startFlashcardSession({
+          deckId,
+          sessionLength,
+          mode: "flashcard",
+        });
+        if (!result || !Array.isArray(result.queue?.items)) {
+          throw new Error("Flashcard session response was invalid.");
+        }
+        setSession(result);
       }
-      setSession(result);
       setCardStartedAtMs(Date.now());
     } catch (e) {
       setError(errorMessage(e));
     } finally {
       setIsLoading(false);
     }
-  }, [deckId, isFlashcardMode, sessionLength]);
+  }, [deckId, isSupportedMode, sessionLength, studyMode]);
 
   useEffect(() => {
     let isActive = true;
@@ -278,6 +319,111 @@ export function StudySessionPage() {
     ],
   );
 
+  const submitMultipleChoiceOption = useCallback(
+    async (option: MultipleChoiceOptionDto) => {
+      if (
+        !multipleChoiceSession ||
+        !currentQuestion ||
+        selectedOption ||
+        isSubmittingRef.current ||
+        summary
+      ) {
+        return;
+      }
+
+      const isCorrect =
+        option.vocabularyItemId === currentQuestion.correctVocabularyItemId;
+      const rating: LexoraReviewRating = isCorrect ? "good" : "again";
+
+      setSelectedOption(option);
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        const reviewedAt = new Date();
+        const scheduling = scheduleReview({
+          card: toReviewCardState(currentQuestion.card),
+          rating,
+          reviewedAt,
+        });
+        const responseTimeMs = Math.max(0, Date.now() - cardStartedAtMs);
+
+        const result = await submitMultipleChoiceReview({
+          sessionId: multipleChoiceSession.sessionId,
+          reviewCardId: currentQuestion.card.id,
+          vocabularyItemId: currentQuestion.card.vocabularyItemId,
+          selectedVocabularyItemId: option.vocabularyItemId,
+          rating,
+          reviewedAt: scheduling.reviewedAt,
+          responseTimeMs,
+          nextState: scheduling.next,
+        });
+
+        setMultipleChoiceSession((current) =>
+          current
+            ? {
+                ...current,
+                reviewedCount: result.session.reviewedCount,
+                correctCount: result.session.correctCount,
+                againCount: result.session.againCount,
+                hardCount: result.session.hardCount,
+                goodCount: result.session.goodCount,
+                easyCount: result.session.easyCount,
+                endedAt: result.session.endedAt,
+              }
+            : current,
+        );
+        setChoiceFeedback({ isCorrect, rating });
+      } catch (e) {
+        setSelectedOption(null);
+        setChoiceFeedback(null);
+        setError(errorMessage(e));
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }
+    },
+    [
+      cardStartedAtMs,
+      currentQuestion,
+      multipleChoiceSession,
+      selectedOption,
+      summary,
+    ],
+  );
+
+  const continueMultipleChoice = useCallback(async () => {
+    if (!multipleChoiceSession || !choiceFeedback || isSubmittingRef.current) {
+      return;
+    }
+
+    const isLastQuestion =
+      currentIndex >= multipleChoiceSession.questions.length - 1;
+    if (isLastQuestion) {
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        const completed = await completeStudySession({
+          sessionId: multipleChoiceSession.sessionId,
+        });
+        setSummary(completed);
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    setCurrentIndex((index) => index + 1);
+    setSelectedOption(null);
+    setChoiceFeedback(null);
+    setCardStartedAtMs(Date.now());
+  }, [choiceFeedback, currentIndex, multipleChoiceSession]);
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (isTextEntryTarget(event.target)) {
@@ -290,13 +436,29 @@ export function StudySessionPage() {
         return;
       }
 
-      if (!currentItem || isSubmitting || isComplete) {
+      if ((!currentItem && !currentQuestion) || isSubmitting || isComplete) {
         return;
       }
 
-      if (event.code === "Space") {
+      if (event.code === "Space" && currentItem) {
         event.preventDefault();
         setIsFlipped((current) => !current);
+        return;
+      }
+
+      if (event.code === "Space" && choiceFeedback) {
+        event.preventDefault();
+        void continueMultipleChoice();
+        return;
+      }
+
+      if (currentQuestion && !choiceFeedback) {
+        const optionIndex = Number(event.key) - 1;
+        const option = currentQuestion.options[optionIndex];
+        if (option) {
+          event.preventDefault();
+          void submitMultipleChoiceOption(option);
+        }
         return;
       }
 
@@ -310,12 +472,16 @@ export function StudySessionPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
+    choiceFeedback,
+    continueMultipleChoice,
+    currentQuestion,
     currentItem,
     exitHref,
     isComplete,
     isFlipped,
     isSubmitting,
     navigate,
+    submitMultipleChoiceOption,
     submitRating,
   ]);
 
@@ -325,28 +491,32 @@ export function StudySessionPage() {
         label: "Queue",
         value: totalItems.toString(),
         meta:
-          session === null
+          activeSession === null
             ? "Loading"
-            : `${session.queue?.summary.dueCount ?? 0} due / ${
-                session.queue?.summary.weakCount ?? 0
-              } weak / ${session.queue?.summary.newCount ?? 0} new`,
+            : `${activeSession.queue?.summary.dueCount ?? 0} due / ${
+                activeSession.queue?.summary.weakCount ?? 0
+              } weak / ${activeSession.queue?.summary.newCount ?? 0} new`,
       },
       {
         label: "Reviewed",
         value: reviewedCount.toString(),
-        meta: `${session?.againCount ?? 0} again / ${session?.goodCount ?? 0} good`,
+        meta: `${activeSession?.againCount ?? 0} again / ${
+          activeSession?.goodCount ?? 0
+        } good`,
       },
       {
         label: "Accuracy",
         value: summary
           ? `${summary.accuracy}%`
           : totalItems > 0
-            ? `${Math.round(((session?.correctCount ?? 0) * 100) / totalItems)}%`
+            ? `${Math.round(
+                ((activeSession?.correctCount ?? 0) * 100) / totalItems,
+              )}%`
             : "0%",
-        meta: "Good or Easy",
+        meta: studyMode === "multiple_choice" ? "Correct choices" : "Good or Easy",
       },
     ],
-    [reviewedCount, session, summary, totalItems],
+    [activeSession, reviewedCount, studyMode, summary, totalItems],
   );
 
   return (
@@ -361,11 +531,19 @@ export function StudySessionPage() {
       <Card className="study-session-header" variant="glass">
         <div>
           <p className="study-session-header__eyebrow">{scopeLabel}</p>
-          <h1>{isComplete ? "Session Summary" : "Flashcard Session"}</h1>
+          <h1>
+            {isComplete
+              ? "Session Summary"
+              : studyMode === "multiple_choice"
+                ? "Multiple Choice Session"
+                : "Flashcard Session"}
+          </h1>
           <p>
             {isComplete
               ? "Your saved session summary is ready."
-              : "Study real vocabulary cards from the Smart Review queue."}
+              : studyMode === "multiple_choice"
+                ? "Choose the Vietnamese meaning and save each result to review history."
+                : "Study real vocabulary cards from the Smart Review queue."}
           </p>
         </div>
         <div className="study-session-header__meta">
@@ -405,14 +583,14 @@ export function StudySessionPage() {
         </Card>
       )}
 
-      {!isLoading && error && !currentItem && !summary && (
+      {!isLoading && error && !currentCard && !summary && (
         <Card className="study-session-state-card" variant="glass">
           <EmptyState
             title="Could not start flashcards"
             description={error}
             icon={<AlertCircle size={28} aria-hidden="true" />}
             actions={
-              isFlashcardMode ? (
+              isSupportedMode ? (
                 <Button type="button" variant="primary" onClick={startSession}>
                   <RotateCcw size={16} aria-hidden="true" />
                   Try again
@@ -427,7 +605,10 @@ export function StudySessionPage() {
         </Card>
       )}
 
-      {!isLoading && !error && session && session.queue.items.length === 0 && (
+      {!isLoading &&
+        !error &&
+        activeSession &&
+        totalItems === 0 && (
         <Card className="study-session-state-card" variant="glass">
           <EmptyState
             title="No cards ready"
@@ -444,7 +625,7 @@ export function StudySessionPage() {
 
       {summary && <SessionSummary summary={summary} exitHref={exitHref} />}
 
-      {!isLoading && currentItem && !summary && (
+      {!isLoading && currentCard && !summary && (
         <div className="study-session-layout">
           <main className="study-session-main">
             {error && (
@@ -457,10 +638,14 @@ export function StudySessionPage() {
             <Card className="study-card-shell" variant="hero">
               <div className="study-card-shell__topline">
                 <div className="study-card-shell__badges">
-                  <Badge>Flashcard</Badge>
-                  <Badge variant="muted">{currentItem.category}</Badge>
+                  <Badge>
+                    {studyMode === "multiple_choice"
+                      ? "Multiple Choice"
+                      : "Flashcard"}
+                  </Badge>
+                  <Badge variant="muted">{currentCard.category}</Badge>
                 </div>
-                {(currentItem.ipaUk || currentItem.ipaUs) && (
+                {(currentCard.ipaUk || currentCard.ipaUs) && (
                   <button
                     className="study-card-shell__audio"
                     type="button"
@@ -472,12 +657,23 @@ export function StudySessionPage() {
                 )}
               </div>
 
-              <FlashcardView
-                flipped={isFlipped}
-                item={currentItem}
-                onFlip={() => setIsFlipped((current) => !current)}
-              />
-              {isFlipped && (
+              {currentItem ? (
+                <FlashcardView
+                  flipped={isFlipped}
+                  item={currentItem}
+                  onFlip={() => setIsFlipped((current) => !current)}
+                />
+              ) : currentQuestion ? (
+                <MultipleChoiceView
+                  feedback={choiceFeedback}
+                  isSubmitting={isSubmitting}
+                  onContinue={continueMultipleChoice}
+                  onSelect={submitMultipleChoiceOption}
+                  question={currentQuestion}
+                  selectedOption={selectedOption}
+                />
+              ) : null}
+              {currentItem && isFlipped && (
                 <div className="study-card-shell__detail-row">
                   <Button asChild variant="secondary" size="sm">
                     <Link to={`/word/${currentItem.card.vocabularyItemId}`}>
@@ -488,20 +684,25 @@ export function StudySessionPage() {
               )}
             </Card>
 
-            <div className="study-rating-row" aria-label="Review rating buttons">
-              {ratingButtons.map((rating) => (
-                <Button
-                  key={rating.rating}
-                  type="button"
-                  variant={rating.variant}
-                  disabled={!isFlipped || isSubmitting}
-                  onClick={() => void submitRating(rating.rating)}
-                >
-                  {rating.label}
-                  <kbd>{rating.hint}</kbd>
-                </Button>
-              ))}
-            </div>
+            {currentItem && (
+              <div
+                className="study-rating-row"
+                aria-label="Review rating buttons"
+              >
+                {ratingButtons.map((rating) => (
+                  <Button
+                    key={rating.rating}
+                    type="button"
+                    variant={rating.variant}
+                    disabled={!isFlipped || isSubmitting}
+                    onClick={() => void submitRating(rating.rating)}
+                  >
+                    {rating.label}
+                    <kbd>{rating.hint}</kbd>
+                  </Button>
+                ))}
+              </div>
+            )}
           </main>
 
           <aside className="study-session-side" aria-label="Session support">
@@ -509,7 +710,11 @@ export function StudySessionPage() {
               <Keyboard size={20} aria-hidden="true" />
               <div>
                 <strong>Shortcut hints</strong>
-                <p>Space flips. 1-4 rate after the answer is visible. Esc exits.</p>
+                <p>
+                  {studyMode === "multiple_choice"
+                    ? "1-4 chooses an option. Space continues after feedback. Esc exits."
+                    : "Space flips. 1-4 rate after the answer is visible. Esc exits."}
+                </p>
               </div>
             </Card>
             <Card className="study-session-widget" variant="compact">
@@ -604,6 +809,96 @@ function FlashcardView({ flipped, item, onFlip }: FlashcardViewProps) {
         </div>
       </motion.div>
     </button>
+  );
+}
+
+interface MultipleChoiceViewProps {
+  feedback: { isCorrect: boolean; rating: LexoraReviewRating } | null;
+  isSubmitting: boolean;
+  onContinue: () => void;
+  onSelect: (option: MultipleChoiceOptionDto) => void;
+  question: MultipleChoiceQuestionDto;
+  selectedOption: MultipleChoiceOptionDto | null;
+}
+
+function MultipleChoiceView({
+  feedback,
+  isSubmitting,
+  onContinue,
+  onSelect,
+  question,
+  selectedOption,
+}: MultipleChoiceViewProps) {
+  const ipaValues = [
+    question.ipaUk ? `UK ${question.ipaUk}` : null,
+    question.ipaUs ? `US ${question.ipaUs}` : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="choice-card">
+      <p className="study-card-label">Choose the Vietnamese meaning</p>
+      <h2>{question.headword}</h2>
+      <div className="flashcard__meta">
+        {question.partOfSpeech && <span>{question.partOfSpeech}</span>}
+        {ipaValues.map((ipa) => (
+          <span key={ipa}>{ipa}</span>
+        ))}
+      </div>
+      {question.definitionEn && (
+        <p className="choice-card__definition">{question.definitionEn}</p>
+      )}
+      <div className="choice-card__grid" aria-label="Multiple choice options">
+        {question.options.map((option, index) => {
+          const isSelected =
+            selectedOption?.vocabularyItemId === option.vocabularyItemId;
+          const isCorrect =
+            option.vocabularyItemId === question.correctVocabularyItemId;
+          return (
+            <button
+              key={option.vocabularyItemId}
+              className="choice-card__option"
+              type="button"
+              data-selected={isSelected}
+              data-correct={feedback ? isCorrect : undefined}
+              data-result={
+                feedback && isSelected
+                  ? feedback.isCorrect
+                    ? "correct"
+                    : "incorrect"
+                  : undefined
+              }
+              data-vocabulary-item-id={option.vocabularyItemId}
+              disabled={isSubmitting || Boolean(selectedOption)}
+              onClick={() => onSelect(option)}
+            >
+              <span>{option.label}</span>
+              <kbd>{index + 1}</kbd>
+            </button>
+          );
+        })}
+      </div>
+      {feedback && (
+        <div
+          className="choice-card__feedback"
+          data-result={feedback.isCorrect ? "correct" : "incorrect"}
+          role="status"
+        >
+          <strong>{feedback.isCorrect ? "Correct" : "Not quite"}</strong>
+          <span>
+            Saved as {feedback.rating === "good" ? "Good" : "Again"}.
+          </span>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={isSubmitting}
+            onClick={onContinue}
+          >
+            Continue
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 

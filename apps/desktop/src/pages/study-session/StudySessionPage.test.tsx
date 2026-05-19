@@ -96,12 +96,68 @@ function sessionFixture(items = [firstQueueItem, secondQueueItem]) {
   };
 }
 
+const multipleChoiceQuestion = {
+  position: 0,
+  category: "new",
+  card: baseCard,
+  headword: "elaborate",
+  partOfSpeech: "verb",
+  ipaUk: "/iËˆlÃ¦bÉ™reÉªt/",
+  ipaUs: "/iËˆlÃ¦bÉ™reÉªt/",
+  definitionEn: "To explain something in more detail.",
+  definitionVi: "trÃ¬nh bÃ y chi tiáº¿t",
+  exampleSentenceEn: "Could you elaborate on your answer?",
+  exampleSentenceVi: "Báº¡n cÃ³ thá»ƒ trÃ¬nh bÃ y chi tiáº¿t hÆ¡n cÃ¢u tráº£ lá»i khÃ´ng?",
+  additionalSenseCount: 1,
+  options: [
+    { vocabularyItemId: 103, label: "pháº£n Ä‘á»‘i máº¡nh máº½" },
+    { vocabularyItemId: 101, label: "trÃ¬nh bÃ y chi tiáº¿t" },
+    { vocabularyItemId: 104, label: "ráº¥t nhanh" },
+    { vocabularyItemId: 105, label: "yÃªn láº·ng" },
+  ],
+  correctVocabularyItemId: 101,
+};
+
+function multipleChoiceSessionFixture(questions = [multipleChoiceQuestion]) {
+  return {
+    sessionId: 88,
+    userId: 1,
+    deckId: 1,
+    mode: "multiple_choice",
+    startedAt: "2026-01-01T00:00:00.000Z",
+    endedAt: null,
+    totalItems: questions.length,
+    reviewedCount: 0,
+    correctCount: 0,
+    againCount: 0,
+    hardCount: 0,
+    goodCount: 0,
+    easyCount: 0,
+    queue: sessionFixture([firstQueueItem]).queue,
+    questions,
+  };
+}
+
 function progress(reviewedCount: number, rating: string) {
   return {
     sessionId: 77,
     totalItems: 2,
     reviewedCount,
     correctCount: rating === "hard" ? 0 : 1,
+    againCount: rating === "again" ? 1 : 0,
+    hardCount: rating === "hard" ? 1 : 0,
+    goodCount: rating === "good" ? 1 : 0,
+    easyCount: rating === "easy" ? 1 : 0,
+    endedAt: null,
+  };
+}
+
+function multipleChoiceProgress(reviewedCount: number, rating: string, correct: boolean) {
+  return {
+    sessionId: 88,
+    totalItems: 1,
+    reviewedCount,
+    correctCount: correct ? 1 : 0,
     againCount: rating === "again" ? 1 : 0,
     hardCount: rating === "hard" ? 1 : 0,
     goodCount: rating === "good" ? 1 : 0,
@@ -166,6 +222,52 @@ function setupDefaultCommands(items = [firstQueueItem, secondQueueItem]) {
   });
 }
 
+function setupMultipleChoiceCommands() {
+  invokeMock.mockImplementation((command: string, args: unknown) => {
+    if (command === "start_multiple_choice_session") {
+      return Promise.resolve(clone(multipleChoiceSessionFixture()));
+    }
+
+    if (command === "submit_multiple_choice_review") {
+      const input = (
+        args as {
+          input: {
+            rating: string;
+            selectedVocabularyItemId: number;
+            nextState: unknown;
+          };
+        }
+      ).input;
+      const correct = input.selectedVocabularyItemId === 101;
+
+      return Promise.resolve({
+        session: multipleChoiceProgress(1, input.rating, correct),
+        card: {
+          ...baseCard,
+          ...(input.nextState as Record<string, unknown>),
+        },
+        rating: input.rating,
+        reviewedAt: "2026-01-01T00:00:00.000Z",
+      });
+    }
+
+    if (command === "complete_study_session") {
+      return Promise.resolve({
+        ...clone(summaryFixture(1)),
+        sessionId: 88,
+        mode: "multiple_choice",
+        reviewedCount: 1,
+        correctCount: 1,
+        goodCount: 1,
+        hardCount: 0,
+        accuracy: 100,
+      });
+    }
+
+    return Promise.reject(new Error(`Unexpected command ${command}`));
+  });
+}
+
 function renderSession(path = "/study/session?deckId=1&mode=flashcard") {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -177,6 +279,19 @@ function renderSession(path = "/study/session?deckId=1&mode=flashcard") {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+async function clickMultipleChoiceOptionById(vocabularyItemId: number) {
+  const buttons = await screen.findAllByRole("button");
+  const option = buttons.find(
+    (button) =>
+      button.classList.contains("choice-card__option") &&
+      button.dataset.vocabularyItemId === String(vocabularyItemId),
+  );
+  if (!option) {
+    throw new Error(`Option ${vocabularyItemId} was not found`);
+  }
+  fireEvent.click(option);
 }
 
 afterEach(cleanup);
@@ -320,6 +435,94 @@ describe("StudySessionPage", () => {
         "This scope has no due, weak, or new vocabulary cards available right now.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("starts a multiple choice session and renders four unique options", async () => {
+    setupMultipleChoiceCommands();
+
+    renderSession("/study/session?deckId=1&mode=multiple-choice");
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Multiple Choice Session",
+      }),
+    ).toBeInTheDocument();
+    expect(invokeMock).toHaveBeenCalledWith("start_multiple_choice_session", {
+      input: { deckId: 1, sessionLength: 20, mode: "multiple_choice" },
+    });
+    expect(screen.getByText("Choose the Vietnamese meaning")).toBeInTheDocument();
+    const options = screen.getAllByRole("button").filter((button) =>
+      button.classList.contains("choice-card__option"),
+    );
+    expect(options).toHaveLength(4);
+    expect(new Set(options.map((option) => option.textContent))).toHaveProperty(
+      "size",
+      4,
+    );
+  });
+
+  it("maps a correct multiple choice answer to Good and persists the review", async () => {
+    setupMultipleChoiceCommands();
+
+    renderSession("/study/session?deckId=1&mode=multiple-choice");
+
+    await clickMultipleChoiceOptionById(101);
+
+    expect(await screen.findByText("Correct")).toBeInTheDocument();
+    expect(screen.getByText("Saved as Good.")).toBeInTheDocument();
+
+    const submitCall = invokeMock.mock.calls.find(
+      ([command]) => command === "submit_multiple_choice_review",
+    );
+    expect(submitCall).toBeDefined();
+    expect(submitCall?.[1]).toMatchObject({
+      input: {
+        sessionId: 88,
+        reviewCardId: 10,
+        vocabularyItemId: 101,
+        selectedVocabularyItemId: 101,
+        rating: "good",
+        nextState: {
+          reps: 1,
+        },
+      },
+    });
+  });
+
+  it("maps an incorrect multiple choice answer to Again", async () => {
+    setupMultipleChoiceCommands();
+
+    renderSession("/study/session?deckId=1&mode=multiple-choice");
+
+    await clickMultipleChoiceOptionById(104);
+
+    expect(await screen.findByText("Not quite")).toBeInTheDocument();
+    expect(screen.getByText("Saved as Again.")).toBeInTheDocument();
+
+    const submitCall = invokeMock.mock.calls.find(
+      ([command]) => command === "submit_multiple_choice_review",
+    );
+    expect(submitCall?.[1]).toMatchObject({
+      input: {
+        selectedVocabularyItemId: 104,
+        rating: "again",
+      },
+    });
+  });
+
+  it("completes a multiple choice session after feedback continues", async () => {
+    setupMultipleChoiceCommands();
+
+    renderSession("/study/session?deckId=1&mode=multiple-choice");
+
+    await clickMultipleChoiceOptionById(101);
+    fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
+
+    expect(await screen.findByText("Session complete")).toBeInTheDocument();
+    expect(invokeMock).toHaveBeenCalledWith("complete_study_session", {
+      input: { sessionId: 88 },
+    });
   });
 
   it("submitting multiple ratings completes with a real session summary", async () => {
