@@ -8,9 +8,10 @@ use crate::dto::review::{
     MultipleChoiceQuestionDto, MultipleChoiceSessionDto, ReviewCardDto, ReviewCardStateInputDto,
     SmartReviewQueueDto, SmartReviewQueueItemDto, SmartReviewQueueRequestDto,
     SmartReviewQueueSummaryDto, StartFlashcardSessionInputDto, StartMultipleChoiceSessionInputDto,
-    StartTypeAnswerSessionInputDto, StudySessionDto, StudySessionProgressDto,
-    StudySessionSummaryDto, SubmitFlashcardReviewInputDto, SubmitMultipleChoiceReviewInputDto,
-    SubmitReviewResultDto, SubmitTypeAnswerReviewInputDto,
+    StartTypeAnswerSessionInputDto, StartWeakWordsDrillInputDto, StudySessionDto,
+    StudySessionProgressDto, StudySessionSummaryDto, SubmitFlashcardReviewInputDto,
+    SubmitMultipleChoiceReviewInputDto, SubmitReviewResultDto, SubmitTypeAnswerReviewInputDto,
+    WeakWordsDto,
 };
 use crate::errors::AppError;
 
@@ -19,6 +20,7 @@ const SMART_REVIEW_MODE: &str = "smart_review";
 const FLASHCARD_MODE: &str = "flashcard";
 const MULTIPLE_CHOICE_MODE: &str = "multiple_choice";
 const TYPE_ANSWER_MODE: &str = "type_answer";
+const WEAK_DRILL_MODE: &str = "weak_drill";
 
 fn review_card_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ReviewCardDto> {
     Ok(ReviewCardDto {
@@ -956,6 +958,224 @@ fn query_session_progress(
     .ok_or_else(|| AppError::NotFound(format!("{mode} session {session_id} was not found")))
 }
 
+fn query_flashcard_or_weak_drill_session_progress(
+    conn: &Connection,
+    session_id: i64,
+    user_id: i64,
+) -> Result<StudySessionProgressDto, AppError> {
+    conn.query_row(
+        "SELECT id, total_items, cards_studied, cards_correct,
+                again_count, hard_count, good_count, easy_count, ended_at
+         FROM   study_sessions
+         WHERE  id = ?1
+           AND  user_id = ?2
+           AND  session_type IN ('flashcard', 'weak_drill')",
+        params![session_id, user_id],
+        |row| {
+            Ok(StudySessionProgressDto {
+                session_id: row.get(0)?,
+                total_items: row.get(1)?,
+                reviewed_count: row.get(2)?,
+                correct_count: row.get(3)?,
+                again_count: row.get(4)?,
+                hard_count: row.get(5)?,
+                good_count: row.get(6)?,
+                easy_count: row.get(7)?,
+                ended_at: row.get(8)?,
+            })
+        },
+    )
+    .optional()
+    .map_err(|e| {
+        AppError::Internal(format!(
+            "Failed to query flashcard/weak_drill session: {e}"
+        ))
+    })?
+    .ok_or_else(|| {
+        AppError::NotFound(format!(
+            "Flashcard/weak_drill session {session_id} was not found"
+        ))
+    })
+}
+
+fn query_all_weak_candidates(
+    conn: &Connection,
+    user_id: i64,
+    deck_id: Option<i64>,
+    limit: i64,
+) -> Result<Vec<QueueCandidate>, AppError> {
+    let sql = format!(
+        "SELECT rc.id, rc.user_id, rc.word_id, rc.deck_id, rc.due,
+                rc.stability, rc.difficulty, rc.elapsed_days,
+                rc.scheduled_days, rc.learning_steps, rc.reps, rc.lapses, rc.state,
+                rc.last_review, rc.created_at, rc.updated_at,
+                w.headword, w.part_of_speech, w.ipa_uk, w.ipa_us,
+                (
+                    SELECT s.definition_en
+                    FROM   senses s
+                    WHERE  s.word_id = w.id
+                    ORDER  BY s.sense_index, s.id
+                    LIMIT  1
+                ) AS definition_en,
+                (
+                    SELECT s.definition_vi
+                    FROM   senses s
+                    WHERE  s.word_id = w.id
+                    ORDER  BY s.sense_index, s.id
+                    LIMIT  1
+                ) AS definition_vi,
+                (
+                    SELECT e.sentence_en
+                    FROM   senses s
+                    JOIN   examples e ON e.sense_id = s.id
+                    WHERE  s.word_id = w.id
+                    ORDER  BY s.sense_index, e.id
+                    LIMIT  1
+                ) AS example_sentence_en,
+                (
+                    SELECT e.sentence_vi
+                    FROM   senses s
+                    JOIN   examples e ON e.sense_id = s.id
+                    WHERE  s.word_id = w.id
+                    ORDER  BY s.sense_index, e.id
+                    LIMIT  1
+                ) AS example_sentence_vi,
+                MAX(0, (
+                    SELECT COUNT(*)
+                    FROM   senses s
+                    WHERE  s.word_id = w.id
+                ) - 1) AS additional_sense_count
+         FROM   review_cards rc
+         JOIN   words w ON w.id = rc.word_id
+         JOIN   deck_words dw ON dw.word_id = rc.word_id
+         WHERE  rc.user_id = ?1
+           AND  {scope}
+           AND  rc.state != 'new'
+           AND  (rc.lapses > 0 OR rc.difficulty >= 7.0 OR (rc.stability > 0.0 AND rc.stability < 2.0))
+         GROUP  BY rc.id
+         ORDER  BY rc.lapses DESC, rc.difficulty DESC, rc.stability ASC, rc.last_review ASC, rc.id ASC
+         LIMIT  ?3",
+        scope = queue_scope_predicate(),
+    );
+
+    let mut stmt = conn.prepare(&sql).map_err(|e| {
+        AppError::Internal(format!("Failed to prepare weak candidates query: {e}"))
+    })?;
+
+    let rows = stmt
+        .query_map(params![user_id, deck_id, limit], queue_candidate_from_row)
+        .map_err(|e| AppError::Internal(format!("Failed to query weak candidates: {e}")))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| AppError::Internal(format!("Failed to read weak candidates: {e}")))?;
+
+    Ok(rows)
+}
+
+fn query_weak_words_counts(
+    conn: &Connection,
+    user_id: i64,
+    deck_id: Option<i64>,
+) -> Result<(i64, i64, i64, i64), AppError> {
+    let sql = format!(
+        "SELECT
+            COUNT(DISTINCT rc.word_id)                                                     AS total,
+            COUNT(DISTINCT CASE WHEN rc.lapses > 0 THEN rc.word_id END)                   AS high_lapses,
+            COUNT(DISTINCT CASE WHEN rc.difficulty >= 7.0 THEN rc.word_id END)            AS high_difficulty,
+            COUNT(DISTINCT CASE WHEN rc.stability > 0.0
+                                 AND rc.stability < 2.0 THEN rc.word_id END)              AS low_stability
+         FROM   review_cards rc
+         JOIN   deck_words dw ON dw.word_id = rc.word_id
+         WHERE  rc.user_id = ?1
+           AND  {scope}
+           AND  rc.state != 'new'
+           AND  (rc.lapses > 0 OR rc.difficulty >= 7.0 OR (rc.stability > 0.0 AND rc.stability < 2.0))",
+        scope = queue_scope_predicate(),
+    );
+
+    conn.query_row(&sql, params![user_id, deck_id], |row| {
+        Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
+    })
+    .map_err(|e| AppError::Internal(format!("Failed to query weak word counts: {e}")))
+}
+
+fn get_weak_words_for_user(
+    conn: &Connection,
+    user_id: i64,
+    deck_id: Option<i64>,
+) -> Result<WeakWordsDto, AppError> {
+    let (total_count, high_lapses_count, high_difficulty_count, low_stability_count) =
+        query_weak_words_counts(conn, user_id, deck_id)?;
+    let candidates = query_all_weak_candidates(conn, user_id, deck_id, 50)?;
+    let items: Vec<SmartReviewQueueItemDto> = candidates
+        .into_iter()
+        .enumerate()
+        .map(|(i, c)| c.into_item(i as i64, QueueCategory::Weak))
+        .collect();
+    Ok(WeakWordsDto {
+        user_id,
+        deck_id,
+        total_count,
+        high_lapses_count,
+        high_difficulty_count,
+        low_stability_count,
+        items,
+    })
+}
+
+fn start_weak_words_drill_for_user_at(
+    conn: &Connection,
+    user_id: i64,
+    input: StartWeakWordsDrillInputDto,
+    now_sql: &str,
+) -> Result<StudySessionDto, AppError> {
+    if input.session_length < 1 || input.session_length > 100 {
+        return Err(AppError::Validation(
+            "Session length must be between 1 and 100.".to_string(),
+        ));
+    }
+
+    let queue = generate_smart_review_queue_for_user_at(
+        conn,
+        user_id,
+        SmartReviewQueueRequestDto {
+            deck_id: input.deck_id,
+            session_length: input.session_length,
+            due_ratio: 0.3,
+            weak_ratio: 0.7,
+            new_ratio: 0.0,
+            mode: SMART_REVIEW_MODE.to_string(),
+        },
+        now_sql,
+    )?;
+    let started_at = generated_at(conn, now_sql)?;
+
+    conn.execute(
+        "INSERT INTO study_sessions (
+             user_id, deck_id, session_type, started_at, total_items
+         )
+         VALUES (?1, ?2, 'weak_drill', ?3, ?4)",
+        params![user_id, input.deck_id, started_at, queue.items.len() as i64],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to create weak drill session: {e}")))?;
+
+    Ok(StudySessionDto {
+        session_id: conn.last_insert_rowid(),
+        user_id,
+        deck_id: input.deck_id,
+        mode: WEAK_DRILL_MODE.to_string(),
+        started_at,
+        ended_at: None,
+        total_items: queue.items.len() as i64,
+        reviewed_count: 0,
+        correct_count: 0,
+        again_count: 0,
+        hard_count: 0,
+        good_count: 0,
+        easy_count: 0,
+        queue,
+    })
+}
+
 fn start_flashcard_session_for_user_at(
     conn: &Connection,
     user_id: i64,
@@ -1345,10 +1565,11 @@ fn submit_flashcard_review_for_user(
     }
     validate_review_transition(&existing_card, &input.next_state, &input.reviewed_at)?;
 
-    let progress = query_session_progress(conn, input.session_id, user_id, FLASHCARD_MODE)?;
+    let progress =
+        query_flashcard_or_weak_drill_session_progress(conn, input.session_id, user_id)?;
     if progress.ended_at.is_some() {
         return Err(AppError::Validation(format!(
-            "Flashcard session {} is already completed.",
+            "Session {} is already completed.",
             input.session_id
         )));
     }
@@ -1454,7 +1675,7 @@ fn submit_flashcard_review_for_user(
              easy_count = easy_count + ?5
          WHERE id = ?6
            AND user_id = ?7
-           AND session_type = 'flashcard'
+           AND session_type IN ('flashcard', 'weak_drill')
            AND ended_at IS NULL",
         params![
             correct_increment,
@@ -1469,7 +1690,8 @@ fn submit_flashcard_review_for_user(
     .map_err(|e| AppError::Internal(format!("Failed to update flashcard session: {e}")))?;
 
     let card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
-    let session = query_session_progress(conn, input.session_id, user_id, FLASHCARD_MODE)?;
+    let session =
+        query_flashcard_or_weak_drill_session_progress(conn, input.session_id, user_id)?;
 
     Ok(SubmitReviewResultDto {
         session,
@@ -1634,10 +1856,10 @@ fn complete_study_session_for_user_at(
          SET ended_at = COALESCE(ended_at, ?1)
          WHERE id = ?2
            AND user_id = ?3
-           AND session_type IN ('flashcard', 'multiple_choice', 'type_answer')",
+           AND session_type IN ('flashcard', 'multiple_choice', 'type_answer', 'weak_drill')",
         params![ended_at, input.session_id, user_id],
     )
-    .map_err(|e| AppError::Internal(format!("Failed to complete flashcard session: {e}")))?;
+    .map_err(|e| AppError::Internal(format!("Failed to complete study session: {e}")))?;
 
     conn.query_row(
         "SELECT id, user_id, deck_id, session_type, started_at,
@@ -1650,7 +1872,7 @@ fn complete_study_session_for_user_at(
          FROM   study_sessions
          WHERE  id = ?2
            AND  user_id = ?3
-           AND  session_type IN ('flashcard', 'multiple_choice')",
+           AND  session_type IN ('flashcard', 'multiple_choice', 'type_answer', 'weak_drill')",
         params![ended_at, input.session_id, user_id],
         |row| {
             let total_items: i64 = row.get(6)?;
@@ -1894,6 +2116,34 @@ pub fn complete_study_session(
     let user = auth::require_session(&conn)?;
 
     complete_study_session_for_user_at(&conn, user.id, input, SQLITE_UTC_NOW)
+}
+
+#[tauri::command]
+pub fn get_weak_words(
+    deck_id: Option<i64>,
+    db: State<'_, DbConn>,
+) -> Result<WeakWordsDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    get_weak_words_for_user(&conn, user.id, deck_id)
+}
+
+#[tauri::command]
+pub fn start_weak_words_drill(
+    input: StartWeakWordsDrillInputDto,
+    db: State<'_, DbConn>,
+) -> Result<StudySessionDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    start_weak_words_drill_for_user_at(&conn, user.id, input, SQLITE_UTC_NOW)
 }
 
 #[cfg(test)]

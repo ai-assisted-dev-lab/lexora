@@ -1,0 +1,153 @@
+/* ── Weak Words page ─────────────────────────────────────────────────── */
+.weak-words-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.weak-words-page__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.weak-words-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: start;
+  padding: var(--space-5);
+}
+
+.weak-words-hero__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--color-amber, #f59e0b);
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.weak-words-hero h1 {
+  color: var(--color-text);
+  font-size: 1.7rem;
+  font-weight: 900;
+}
+
+.weak-words-hero p {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.weak-words-hero__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+/* ── Stats row ───────────────────────────────────────────────────────── */
+.weak-words-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap-md);
+}
+
+/* ── Word list ───────────────────────────────────────────────────────── */
+.weak-words-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.weak-words-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
+.weak-words-list__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.weak-words-list__count {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Word row ────────────────────────────────────────────────────────── */
+.weak-word-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+}
+
+.weak-word-row__word {
+  min-width: 0;
+}
+
+.weak-word-row__headword {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.weak-word-row__pos {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+  margin-left: var(--space-1);
+}
+
+.weak-word-row__definition {
+  margin-top: var(--space-1);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weak-word-row__indicators {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.weak-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.weak-indicator--lapses {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+
+.weak-indicator--difficulty {
+  background: color-mix(in srgb, var(--color-amber, #f59e0b) 12%, transparent);
+  color: var(--color-amber, #f59e0b);
+}
+
+.weak-indicator--stability {
+  background: color-mix(in srgb, var(--color-azure) 12%, transparent);
+  color: var(--color-azure);
+}

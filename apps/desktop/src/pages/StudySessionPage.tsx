@@ -47,6 +47,7 @@ import {
   startFlashcardSession,
   startMultipleChoiceSession,
   startTypeAnswerSession,
+  startWeakWordsDrill,
   type StudySessionDto,
   type StudySessionSummaryDto,
   submitFlashcardReview,
@@ -70,6 +71,8 @@ const flashcardModeAliases = new Set([
 const multipleChoiceModeAliases = new Set(["multiple-choice", "multiple_choice"]);
 
 const typeAnswerModeAliases = new Set(["type-answer", "type_answer"]);
+
+const weakDrillModeAliases = new Set(["weak-drill", "weak_drill"]);
 
 const ratingButtons: Array<{
   label: string;
@@ -145,12 +148,16 @@ export function StudySessionPage() {
   const isFlashcardMode = flashcardModeAliases.has(mode);
   const isMultipleChoiceMode = multipleChoiceModeAliases.has(mode);
   const isTypeAnswerMode = typeAnswerModeAliases.has(mode);
+  const isWeakDrillMode = weakDrillModeAliases.has(mode);
   const studyMode = isMultipleChoiceMode
     ? "multiple_choice"
     : isTypeAnswerMode
       ? "type_answer"
-      : "flashcard";
-  const isSupportedMode = isFlashcardMode || isMultipleChoiceMode || isTypeAnswerMode;
+      : isWeakDrillMode
+        ? "weak_drill"
+        : "flashcard";
+  const isSupportedMode =
+    isFlashcardMode || isMultipleChoiceMode || isTypeAnswerMode || isWeakDrillMode;
 
   const [session, setSession] = useState<StudySessionDto | null>(null);
   const [multipleChoiceSession, setMultipleChoiceSession] =
@@ -243,6 +250,16 @@ export function StudySessionPage() {
           throw new Error("Type answer session response was invalid.");
         }
         setTypeAnswerSession(result);
+      } else if (studyMode === "weak_drill") {
+        const result = await startWeakWordsDrill({
+          deckId,
+          sessionLength,
+          mode: "weak_drill",
+        });
+        if (!result || !Array.isArray(result.queue?.items)) {
+          throw new Error("Weak drill session response was invalid.");
+        }
+        setSession(result);
       } else {
         const result = await startFlashcardSession({
           deckId,
@@ -665,11 +682,11 @@ export function StudySessionPage() {
               )}%`
             : "0%",
         meta:
-        studyMode === "multiple_choice"
-          ? "Correct choices"
-          : studyMode === "type_answer"
-            ? "Correct answers"
-            : "Good or Easy",
+          studyMode === "multiple_choice"
+            ? "Correct choices"
+            : studyMode === "type_answer"
+              ? "Correct answers"
+              : "Good or Easy",
       },
     ],
     [activeSession, reviewedCount, studyMode, summary, totalItems],
@@ -694,7 +711,9 @@ export function StudySessionPage() {
                 ? "Multiple Choice Session"
                 : studyMode === "type_answer"
                   ? "Type Answer Session"
-                  : "Flashcard Session"}
+                  : studyMode === "weak_drill"
+                    ? "Weak Words Drill"
+                    : "Flashcard Session"}
           </h1>
           <p>
             {isComplete
@@ -703,7 +722,9 @@ export function StudySessionPage() {
                 ? "Choose the Vietnamese meaning and save each result to review history."
                 : studyMode === "type_answer"
                   ? "Type the Vietnamese meaning and get graded Correct, Almost, or Wrong."
-                  : "Study real vocabulary cards from the Smart Review queue."}
+                  : studyMode === "weak_drill"
+                    ? "Drill your weak words to reinforce long-term memory."
+                    : "Study real vocabulary cards from the Smart Review queue."}
           </p>
         </div>
         <div className="study-session-header__meta">

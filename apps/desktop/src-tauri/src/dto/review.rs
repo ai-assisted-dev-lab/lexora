@@ -159,6 +159,26 @@ pub struct SubmitTypeAnswerReviewInputDto {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct StartWeakWordsDrillInputDto {
+    pub deck_id: Option<i64>,
+    pub session_length: i64,
+    pub mode: String,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct WeakWordsDto {
+    pub user_id: i64,
+    pub deck_id: Option<i64>,
+    pub total_count: i64,
+    pub high_lapses_count: i64,
+    pub high_difficulty_count: i64,
+    pub low_stability_count: i64,
+    pub items: Vec<SmartReviewQueueItemDto>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompleteStudySessionInputDto {
     pub session_id: i64,
 }

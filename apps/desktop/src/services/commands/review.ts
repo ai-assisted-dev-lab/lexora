@@ -131,7 +131,7 @@ export interface StudySessionDto {
   sessionId: number;
   userId: number;
   deckId: number | null;
-  mode: "flashcard";
+  mode: "flashcard" | "weak_drill";
   startedAt: string;
   endedAt: string | null;
   totalItems: number;
@@ -199,7 +199,7 @@ export interface StudySessionSummaryDto {
   sessionId: number;
   userId: number;
   deckId: number | null;
-  mode: "flashcard" | "multiple_choice" | "type_answer";
+  mode: "flashcard" | "multiple_choice" | "type_answer" | "weak_drill";
   startedAt: string;
   endedAt: string;
   totalItems: number;
@@ -311,4 +311,32 @@ export function completeStudySession(
   input: CompleteStudySessionInputDto,
 ): Promise<StudySessionSummaryDto> {
   return invoke<StudySessionSummaryDto>("complete_study_session", { input });
+}
+
+export interface StartWeakWordsDrillInputDto {
+  deckId?: number | null;
+  sessionLength: number;
+  mode: "weak_drill";
+}
+
+export interface WeakWordsDto {
+  userId: number;
+  deckId: number | null;
+  totalCount: number;
+  highLapsesCount: number;
+  highDifficultyCount: number;
+  lowStabilityCount: number;
+  items: SmartReviewQueueItemDto[];
+}
+
+export function getWeakWords(
+  deckId?: number | null,
+): Promise<WeakWordsDto> {
+  return invoke<WeakWordsDto>("get_weak_words", { deckId });
+}
+
+export function startWeakWordsDrill(
+  input: StartWeakWordsDrillInputDto,
+): Promise<StudySessionDto> {
+  return invoke<StudySessionDto>("start_weak_words_drill", { input });
 }
