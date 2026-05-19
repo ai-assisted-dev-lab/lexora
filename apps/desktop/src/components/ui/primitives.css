@@ -357,6 +357,95 @@
   background: var(--color-border-strong);
 }
 
+/* ── Form primitives ─────────────────────────────────────────────────── */
+
+.lx-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.lx-form-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  user-select: none;
+}
+
+.lx-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  outline: none;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.lx-input::placeholder {
+  color: var(--color-text-subtle);
+}
+
+.lx-input:hover:not(:disabled) {
+  border-color: var(--color-azure);
+}
+
+.lx-input:focus {
+  border-color: var(--color-focus-ring);
+  box-shadow: var(--shadow-focus);
+}
+
+.lx-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--color-surface-raised);
+}
+
+.lx-input--error {
+  border-color: var(--color-danger);
+}
+
+.lx-input--error:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+}
+
+.lx-form-error {
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  line-height: 1.4;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────── */
+
+@keyframes lx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lx-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  animation: lx-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────── */
+
 .lx-page-header {
   height: var(--header-h);
   background: var(--color-surface);
