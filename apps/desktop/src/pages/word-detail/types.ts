@@ -7,7 +7,7 @@ export type WordDetailTab =
   | "notes";
 
 export interface WordSense {
-  id: string;
+  id: string | number;
   label: string;
   register: string;
   definitionEn: string;
@@ -49,4 +49,9 @@ export interface WordDetailMock {
     detail: string;
   }>;
   note: string;
+}
+
+export interface PronunciationNote {
+  label: string;
+  value: string;
 }

@@ -5,6 +5,30 @@
   gap: var(--gap-lg);
 }
 
+.word-detail-page--loading {
+  min-height: 360px;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  font-weight: 750;
+}
+
+.word-detail-page__spinner {
+  color: var(--color-primary);
+  animation: word-detail-spin 1s linear infinite;
+}
+
+@keyframes word-detail-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.word-detail-state-card {
+  padding: var(--space-8);
+}
+
 .word-detail-page__title {
   position: absolute;
   width: 1px;
@@ -321,6 +345,17 @@
   line-height: 1.5;
 }
 
+.word-detail-list-card li strong,
+.word-detail-list-card li span {
+  display: block;
+}
+
+.word-detail-list-card li strong {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
 .word-detail-pronunciation-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -340,6 +375,10 @@
 
 .word-detail-usage-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.word-detail-usage-grid--single {
+  grid-template-columns: 1fr;
 }
 
 .word-detail-list-card {

@@ -7,3 +7,4 @@ pub mod auth;
 pub mod db;
 pub mod decks;
 pub mod info;
+pub mod words;

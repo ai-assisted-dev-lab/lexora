@@ -45,6 +45,7 @@ pub fn run() {
             commands::decks::get_deck_detail,
             commands::decks::install_deck,
             commands::decks::uninstall_deck,
+            commands::words::get_word_detail,
             commands::auth::login_user,
             commands::auth::logout_user,
             commands::auth::get_current_session,

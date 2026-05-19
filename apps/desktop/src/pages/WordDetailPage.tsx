@@ -2,12 +2,11 @@ import "./word-detail/WordDetailPage.css";
 
 import { motion } from "framer-motion";
 import {
+  AlertCircle,
   Brain,
   ChevronLeft,
-  CircleHelp,
   Headphones,
   Link2,
-  MessageSquareText,
   Mic2,
   NotebookPen,
   Volume2,
@@ -19,13 +18,25 @@ import {
   Badge,
   Button,
   Card,
+  EmptyState,
   ProgressBar,
   SectionHeader,
 } from "@/components/ui";
+import { useWordDetail } from "@/hooks/useWordDetail";
+import type {
+  WordDetailDto,
+  WordPronunciationDto,
+  WordRelationDto,
+  WordReviewLogDto,
+  WordReviewStateDto,
+} from "@/services/commands/words";
 
 import { SenseList } from "./word-detail/SenseList";
-import type { WordDetailTab } from "./word-detail/types";
-import { wordDetailMock } from "./word-detail/wordDetailMockData";
+import type {
+  PronunciationNote,
+  WordDetailTab,
+  WordSense,
+} from "./word-detail/types";
 
 const tabs: Array<{
   id: WordDetailTab;
@@ -39,15 +50,177 @@ const tabs: Array<{
   { id: "notes", label: "Notes" },
 ];
 
+function parseWordId(value: string | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function formatReviewStatus(reviewState: WordReviewStateDto | null): string {
+  if (!reviewState) {
+    return "New word - no review state yet";
+  }
+
+  const lastReview = reviewState.lastReview ?? "not reviewed yet";
+  return `${reviewState.state} - ${reviewState.reps} reviews - ${reviewState.lapses} lapses - last ${lastReview}`;
+}
+
+function masteryValue(reviewState: WordReviewStateDto | null): number {
+  if (!reviewState) {
+    return 0;
+  }
+
+  if (reviewState.state === "review") {
+    return 100;
+  }
+
+  return Math.min(95, reviewState.reps * 15);
+}
+
+function toSenses(word: WordDetailDto): WordSense[] {
+  return word.senses.map((sense, index) => ({
+    id: sense.id,
+    label: sense.domain ?? sense.register ?? `Meaning ${sense.senseIndex + 1}`,
+    register: sense.register ?? sense.domain ?? "general",
+    definitionEn: sense.definitionEn,
+    definitionVi: sense.definitionVi ?? "No Vietnamese explanation yet",
+    examples: sense.examples.map((example) => ({
+      en: example.sentenceEn,
+      vi: example.sentenceVi ?? "",
+    })),
+    common: index < 2,
+  }));
+}
+
+function primaryMeaning(word: WordDetailDto): string {
+  return (
+    word.senses[0]?.definitionVi ??
+    word.senses[0]?.definitionEn ??
+    "No meanings have been added yet."
+  );
+}
+
+function pronunciationNotes(word: WordDetailDto): PronunciationNote[] {
+  const notes: PronunciationNote[] = [
+    {
+      label: "UK IPA",
+      value: word.ipaUk ?? "Not available",
+    },
+    {
+      label: "US IPA",
+      value: word.ipaUs ?? "Not available",
+    },
+  ];
+
+  if (word.pronunciations.length === 0) {
+    notes.push({
+      label: "Audio records",
+      value: "No local audio metadata has been assigned yet.",
+    });
+  }
+
+  return notes;
+}
+
+function relationLabel(type: string): string {
+  return type
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function groupedRelations(relations: WordRelationDto[]) {
+  return relations.reduce<Record<string, WordRelationDto[]>>((groups, item) => {
+    const key = relationLabel(item.relationType);
+    groups[key] = [...(groups[key] ?? []), item];
+    return groups;
+  }, {});
+}
+
+function reviewLabel(rating: number): string {
+  switch (rating) {
+    case 1:
+      return "Again";
+    case 2:
+      return "Hard";
+    case 3:
+      return "Good";
+    case 4:
+      return "Easy";
+    default:
+      return `Rating ${rating}`;
+  }
+}
+
 export function WordDetailPage() {
-  const { wordId } = useParams<{ wordId: string }>();
+  const { wordId: wordIdParam } = useParams<{ wordId: string }>();
+  const wordId = parseWordId(wordIdParam);
+  const { error, isLoading, notFound, word } = useWordDetail(wordId);
   const [activeTab, setActiveTab] = useState<WordDetailTab>("overview");
-  const word = wordDetailMock;
 
   const activeTabLabel = useMemo(
     () => tabs.find((tab) => tab.id === activeTab)?.label ?? "Overview",
     [activeTab],
   );
+
+  if (isLoading) {
+    return (
+      <div
+        className="word-detail-page word-detail-page--loading"
+        aria-label="Loading word detail"
+      >
+        <Volume2
+          size={28}
+          className="word-detail-page__spinner"
+          aria-hidden="true"
+        />
+        <p>Loading word detail...</p>
+      </div>
+    );
+  }
+
+  if (error && !notFound) {
+    return (
+      <Card className="word-detail-state-card" variant="glass">
+        <EmptyState
+          title="Could not load word"
+          description={error}
+          icon={<AlertCircle size={28} aria-hidden="true" />}
+          actions={
+            <Button asChild variant="secondary">
+              <Link to="/library">Back to Library</Link>
+            </Button>
+          }
+        />
+      </Card>
+    );
+  }
+
+  if (notFound || !word) {
+    return (
+      <Card className="word-detail-state-card" variant="glass">
+        <EmptyState
+          title="Word not found"
+          description="This local vocabulary item does not exist or is no longer available."
+          icon={<AlertCircle size={28} aria-hidden="true" />}
+          actions={
+            <Button asChild variant="primary">
+              <Link to="/library">Back to Library</Link>
+            </Button>
+          }
+        />
+      </Card>
+    );
+  }
+
+  const senses = toSenses(word);
+  const mastery = masteryValue(word.reviewState);
+  const reviewStatus = formatReviewStatus(word.reviewState);
+  const notes = pronunciationNotes(word);
+  const relations = groupedRelations(word.relations);
 
   return (
     <motion.div
@@ -59,27 +232,29 @@ export function WordDetailPage() {
       <h2 className="word-detail-page__title">Word Detail</h2>
 
       <Button asChild className="word-detail-back" variant="ghost">
-        <Link to="/library/demo-deck">
+        <Link to="/library">
           <ChevronLeft size={16} aria-hidden="true" />
-          Back to Deck
+          Back to Library
         </Link>
       </Button>
 
       <Card className="word-detail-hero" variant="hero">
         <div className="word-detail-hero__main">
           <p className="word-detail-hero__eyebrow">
-            Vocabulary entry {wordId ? `/${wordId}` : ""}
+            Vocabulary entry / {word.id}
           </p>
           <div className="word-detail-hero__heading">
             <div>
               <h1>{word.headword}</h1>
               <p>
-                {word.itemType} · {word.syllables} syllables · stress on{" "}
-                {word.stress}
+                {word.partOfSpeech ?? "word"} - {word.packName ?? "Local pack"}
+                {word.frequencyRank
+                  ? ` - frequency #${word.frequencyRank.toLocaleString()}`
+                  : ""}
               </p>
             </div>
             <Button
-              aria-label="Play pronunciation placeholder"
+              aria-label="Audio metadata placeholder"
               type="button"
               variant="icon"
             >
@@ -88,32 +263,29 @@ export function WordDetailPage() {
           </div>
 
           <div className="word-detail-hero__ipa" aria-label="IPA">
-            <span>UK {word.ipa.uk}</span>
-            <span>US {word.ipa.us}</span>
+            <span>UK {word.ipaUk ?? "not available"}</span>
+            <span>US {word.ipaUs ?? "not available"}</span>
           </div>
 
-          <p className="word-detail-hero__meaning">
-            {word.primaryVietnameseMeaning}
-          </p>
+          <p className="word-detail-hero__meaning">{primaryMeaning(word)}</p>
 
           <div className="word-detail-hero__tags">
-            <Badge>{word.level}</Badge>
-            {word.tags.map((tag) => (
-              <Badge key={tag} variant="muted">
-                {tag}
-              </Badge>
-            ))}
+            <Badge>{word.cefrLevel ?? "New"}</Badge>
+            {word.partOfSpeech && (
+              <Badge variant="muted">{word.partOfSpeech}</Badge>
+            )}
+            {word.packName && <Badge variant="muted">{word.packName}</Badge>}
           </div>
         </div>
 
         <aside className="word-detail-status" aria-label="Review status">
           <div>
             <Brain size={24} aria-hidden="true" />
-            <span>Mastery placeholder</span>
+            <span>Review state</span>
           </div>
-          <strong>{word.mastery}%</strong>
-          <ProgressBar label="Word mastery" value={word.mastery} />
-          <p>{word.reviewStatus}</p>
+          <strong>{mastery}%</strong>
+          <ProgressBar label="Word mastery" value={mastery} />
+          <p>{reviewStatus}</p>
         </aside>
       </Card>
 
@@ -147,76 +319,36 @@ export function WordDetailPage() {
       >
         <SectionHeader
           title={activeTabLabel}
-          description="Mock local content prepared for future SQLite word data."
+          description="Local vocabulary content from the SQLite catalog."
         />
 
-        {activeTab === "overview" && <SenseList senses={word.senses} />}
+        {activeTab === "overview" && <SenseList senses={senses} />}
 
         {activeTab === "pronunciation" && (
-          <div className="word-detail-pronunciation">
-            <div className="word-detail-audio-card">
-              <Headphones size={24} aria-hidden="true" />
-              <div>
-                <strong>Audio placeholder</strong>
-                <p>No real audio is played in this mock.</p>
-              </div>
-              <Button
-                aria-label="Preview audio placeholder"
-                type="button"
-                variant="icon"
-              >
-                <Volume2 size={18} aria-hidden="true" />
-              </Button>
-            </div>
-            <div className="word-detail-pronunciation-grid">
-              {word.pronunciationNotes.map((note) => (
-                <Card key={note.label} variant="compact">
-                  <Mic2 size={18} aria-hidden="true" />
-                  <strong>{note.label}</strong>
-                  <p>{note.value}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <PronunciationPanel
+            notes={notes}
+            pronunciations={word.pronunciations}
+          />
         )}
 
         {activeTab === "usage" && (
-          <div className="word-detail-usage-grid">
-            <UsageList title="Collocations" items={word.collocations} />
-            <UsageList
-              title="Common Mistakes"
-              items={word.commonMistakes}
-              icon="help"
-            />
-          </div>
+          <UsagePanel
+            examples={word.senses.flatMap((sense) => sense.examples)}
+          />
         )}
 
-        {activeTab === "network" && (
-          <div className="word-detail-network">
-            <NetworkGroup title="Synonyms" items={word.synonyms} />
-            <NetworkGroup title="Antonyms" items={word.antonyms} />
-            <NetworkGroup title="Related Words" items={word.relatedWords} />
-          </div>
-        )}
+        {activeTab === "network" && <NetworkPanel relations={relations} />}
 
         {activeTab === "history" && (
-          <div className="word-detail-history">
-            {word.reviewHistory.map((event) => (
-              <article className="word-detail-history__row" key={event.date}>
-                <span>{event.date}</span>
-                <strong>{event.result}</strong>
-                <p>{event.detail}</p>
-              </article>
-            ))}
-          </div>
+          <ReviewHistoryPanel events={word.reviewHistory} />
         )}
 
         {activeTab === "notes" && (
           <div className="word-detail-notes">
             <NotebookPen size={22} aria-hidden="true" />
             <div>
-              <strong>Personal notes placeholder</strong>
-              <p>{word.note}</p>
+              <strong>No personal notes yet</strong>
+              <p>Notes are not implemented in this prompt.</p>
             </div>
           </div>
         )}
@@ -225,49 +357,151 @@ export function WordDetailPage() {
   );
 }
 
-interface UsageListProps {
-  icon?: "help";
-  items: string[];
-  title: string;
+interface PronunciationPanelProps {
+  notes: PronunciationNote[];
+  pronunciations: WordPronunciationDto[];
 }
 
-function UsageList({ icon, items, title }: UsageListProps) {
-  const Icon = icon === "help" ? CircleHelp : MessageSquareText;
-
+function PronunciationPanel({
+  notes,
+  pronunciations,
+}: PronunciationPanelProps) {
   return (
-    <Card className="word-detail-list-card" variant="compact">
-      <div className="word-detail-list-card__title">
-        <Icon size={18} aria-hidden="true" />
-        <h3>{title}</h3>
+    <div className="word-detail-pronunciation">
+      <div className="word-detail-audio-card">
+        <Headphones size={24} aria-hidden="true" />
+        <div>
+          <strong>Audio metadata only</strong>
+          <p>No audio playback is implemented yet.</p>
+        </div>
+        <Button
+          aria-label="Audio playback unavailable"
+          type="button"
+          variant="icon"
+        >
+          <Volume2 size={18} aria-hidden="true" />
+        </Button>
       </div>
-      <ul>
-        {items.map((item) => (
-          <li key={item}>{item}</li>
+      <div className="word-detail-pronunciation-grid">
+        {notes.map((note) => (
+          <Card key={note.label} variant="compact">
+            <Mic2 size={18} aria-hidden="true" />
+            <strong>{note.label}</strong>
+            <p>{note.value}</p>
+          </Card>
         ))}
-      </ul>
-    </Card>
+        {pronunciations.map((record) => (
+          <Card key={record.id} variant="compact">
+            <Mic2 size={18} aria-hidden="true" />
+            <strong>{record.dialect.toUpperCase()} audio</strong>
+            <p>{record.audioPath}</p>
+            <p>{record.ttsEngine ?? "local metadata"}</p>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
 
-interface NetworkGroupProps {
-  items: string[];
-  title: string;
+interface UsagePanelProps {
+  examples: Array<{
+    sentenceEn: string;
+    sentenceVi: string | null;
+  }>;
 }
 
-function NetworkGroup({ items, title }: NetworkGroupProps) {
+function UsagePanel({ examples }: UsagePanelProps) {
+  if (examples.length === 0) {
+    return (
+      <Card className="word-detail-list-card" variant="compact">
+        <p>No usage examples are available for this word yet.</p>
+      </Card>
+    );
+  }
+
   return (
-    <div className="word-detail-network__group">
-      <h3>
-        <Link2 size={16} aria-hidden="true" />
-        {title}
-      </h3>
-      <div>
-        {items.map((item) => (
-          <Badge key={item} variant="muted">
-            {item}
-          </Badge>
-        ))}
-      </div>
+    <div className="word-detail-usage-grid word-detail-usage-grid--single">
+      <Card className="word-detail-list-card" variant="compact">
+        <div className="word-detail-list-card__title">
+          <NotebookPen size={18} aria-hidden="true" />
+          <h3>Examples</h3>
+        </div>
+        <ul>
+          {examples.map((example) => (
+            <li key={example.sentenceEn}>
+              <strong>{example.sentenceEn}</strong>
+              {example.sentenceVi && <span>{example.sentenceVi}</span>}
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </div>
+  );
+}
+
+interface NetworkPanelProps {
+  relations: Record<string, WordRelationDto[]>;
+}
+
+function NetworkPanel({ relations }: NetworkPanelProps) {
+  const entries = Object.entries(relations);
+
+  if (entries.length === 0) {
+    return (
+      <Card className="word-detail-list-card" variant="compact">
+        <p>No word relations are available yet.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="word-detail-network">
+      {entries.map(([title, items]) => (
+        <div className="word-detail-network__group" key={title}>
+          <h3>
+            <Link2 size={16} aria-hidden="true" />
+            {title}
+          </h3>
+          <div>
+            {items.map((item) => (
+              <Badge
+                key={`${item.relationType}-${item.wordId}`}
+                variant="muted"
+              >
+                {item.headword}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+interface ReviewHistoryPanelProps {
+  events: WordReviewLogDto[];
+}
+
+function ReviewHistoryPanel({ events }: ReviewHistoryPanelProps) {
+  if (events.length === 0) {
+    return (
+      <Card className="word-detail-list-card" variant="compact">
+        <p>No review history is available for this word yet.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="word-detail-history">
+      {events.map((event) => (
+        <article className="word-detail-history__row" key={event.id}>
+          <span>{event.reviewedAt}</span>
+          <strong>{reviewLabel(event.rating)}</strong>
+          <p>
+            {event.result} - {event.mode}
+          </p>
+        </article>
+      ))}
     </div>
   );
 }
