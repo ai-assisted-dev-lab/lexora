@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use rusqlite::{Connection, params};
+use rusqlite::{params, Connection};
 
 use crate::errors::AppError;
 
@@ -64,11 +64,9 @@ pub fn current_version(conn: &Connection) -> Result<u32, AppError> {
 
 /// Returns the number of rows in `schema_migrations`.
 pub fn applied_count(conn: &Connection) -> Result<u32, AppError> {
-    conn.query_row(
-        "SELECT COUNT(*) FROM schema_migrations",
-        [],
-        |row| row.get(0),
-    )
+    conn.query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+        row.get(0)
+    })
     .map_err(|e| AppError::Internal(format!("Failed to count applied migrations: {e}")))
 }
 
@@ -102,9 +100,12 @@ fn get_applied_versions(conn: &Connection) -> Result<HashSet<u32>, AppError> {
 }
 
 fn apply(conn: &mut Connection, migration: &Migration) -> Result<(), AppError> {
-    let tx = conn
-        .transaction()
-        .map_err(|e| AppError::Internal(format!("Failed to start transaction for migration {}: {e}", migration.version)))?;
+    let tx = conn.transaction().map_err(|e| {
+        AppError::Internal(format!(
+            "Failed to start transaction for migration {}: {e}",
+            migration.version
+        ))
+    })?;
 
     tx.execute_batch(migration.sql).map_err(|e| {
         AppError::Internal(format!(
@@ -161,7 +162,10 @@ mod tests {
 
         let count = applied_count(&conn).expect("applied_count");
         assert_eq!(count, MIGRATIONS.len() as u32);
-        assert_eq!(current_version(&conn).expect("current_version"), MIGRATIONS.last().unwrap().version);
+        assert_eq!(
+            current_version(&conn).expect("current_version"),
+            MIGRATIONS.last().unwrap().version
+        );
     }
 
     #[test]
@@ -279,11 +283,8 @@ mod tests {
         conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
         run(&mut conn).expect("run migrations");
 
-        conn.execute(
-            "INSERT INTO words (headword) VALUES ('test')",
-            [],
-        )
-        .expect("insert word");
+        conn.execute("INSERT INTO words (headword) VALUES ('test')", [])
+            .expect("insert word");
         let word_id: i64 = conn
             .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
             .unwrap();
@@ -299,8 +300,11 @@ mod tests {
             .unwrap();
         assert_eq!(count_before, 1);
 
-        conn.execute("DELETE FROM words WHERE id = ?1", rusqlite::params![word_id])
-            .expect("delete word");
+        conn.execute(
+            "DELETE FROM words WHERE id = ?1",
+            rusqlite::params![word_id],
+        )
+        .expect("delete word");
 
         let count_after: i64 = conn
             .query_row("SELECT COUNT(*) FROM senses", [], |r| r.get(0))
@@ -388,10 +392,19 @@ mod tests {
         let mut conn = in_memory();
         run(&mut conn).expect("run migrations");
 
-        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u1', 'h', 'learner')", []).unwrap();
-        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
-        conn.execute("INSERT INTO words (headword) VALUES ('hello')", []).unwrap();
-        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('u1', 'h', 'learner')",
+            [],
+        )
+        .unwrap();
+        let uid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('hello')", [])
+            .unwrap();
+        let wid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
 
         let ok = conn.execute(
             "INSERT INTO review_cards (user_id, word_id, state) VALUES (?1, ?2, 'learning')",
@@ -403,7 +416,10 @@ mod tests {
             "INSERT INTO review_cards (user_id, word_id, state) VALUES (?1, ?2, 'invalid')",
             rusqlite::params![uid, wid],
         );
-        assert!(err.is_err(), "invalid state should be rejected by CHECK constraint");
+        assert!(
+            err.is_err(),
+            "invalid state should be rejected by CHECK constraint"
+        );
     }
 
     #[test]
@@ -411,21 +427,34 @@ mod tests {
         let mut conn = in_memory();
         run(&mut conn).expect("run migrations");
 
-        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u2', 'h', 'learner')", []).unwrap();
-        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
-        conn.execute("INSERT INTO words (headword) VALUES ('world')", []).unwrap();
-        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('u2', 'h', 'learner')",
+            [],
+        )
+        .unwrap();
+        let uid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('world')", [])
+            .unwrap();
+        let wid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
 
         conn.execute(
             "INSERT INTO review_cards (user_id, word_id) VALUES (?1, ?2)",
             rusqlite::params![uid, wid],
-        ).expect("first card insert should succeed");
+        )
+        .expect("first card insert should succeed");
 
         let dup = conn.execute(
             "INSERT INTO review_cards (user_id, word_id) VALUES (?1, ?2)",
             rusqlite::params![uid, wid],
         );
-        assert!(dup.is_err(), "duplicate (user_id, word_id) should violate UNIQUE constraint");
+        assert!(
+            dup.is_err(),
+            "duplicate (user_id, word_id) should violate UNIQUE constraint"
+        );
     }
 
     #[test]
@@ -433,10 +462,19 @@ mod tests {
         let mut conn = in_memory();
         run(&mut conn).expect("run migrations");
 
-        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u3', 'h', 'learner')", []).unwrap();
-        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
-        conn.execute("INSERT INTO words (headword) VALUES ('test')", []).unwrap();
-        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('u3', 'h', 'learner')",
+            [],
+        )
+        .unwrap();
+        let uid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('test')", [])
+            .unwrap();
+        let wid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
 
         for rating in 1..=4 {
             conn.execute(
@@ -463,10 +501,15 @@ mod tests {
             "INSERT INTO achievements (slug, name, condition_type, condition_value, hidden) \
              VALUES ('secret_1', 'Secret', 'streak', 100, 1)",
             [],
-        ).expect("hidden=1 should be accepted");
+        )
+        .expect("hidden=1 should be accepted");
 
         let hidden: i64 = conn
-            .query_row("SELECT hidden FROM achievements WHERE slug = 'secret_1'", [], |r| r.get(0))
+            .query_row(
+                "SELECT hidden FROM achievements WHERE slug = 'secret_1'",
+                [],
+                |r| r.get(0),
+            )
             .unwrap();
         assert_eq!(hidden, 1);
 
@@ -475,7 +518,10 @@ mod tests {
              VALUES ('bad', 'Bad', 'streak', 1, 2)",
             [],
         );
-        assert!(err.is_err(), "hidden=2 should be rejected by CHECK constraint");
+        assert!(
+            err.is_err(),
+            "hidden=2 should be rejected by CHECK constraint"
+        );
     }
 
     #[test]
@@ -483,24 +529,36 @@ mod tests {
         let mut conn = in_memory();
         run(&mut conn).expect("run migrations");
 
-        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u4', 'h', 'learner')", []).unwrap();
-        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('u4', 'h', 'learner')",
+            [],
+        )
+        .unwrap();
+        let uid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
         conn.execute(
             "INSERT INTO achievements (slug, name, condition_type, condition_value) VALUES ('ach1', 'Ach', 'streak', 7)",
             [],
         ).unwrap();
-        let aid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        let aid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
 
         conn.execute(
             "INSERT INTO user_achievements (user_id, achievement_id) VALUES (?1, ?2)",
             rusqlite::params![uid, aid],
-        ).expect("first unlock should succeed");
+        )
+        .expect("first unlock should succeed");
 
         let dup = conn.execute(
             "INSERT INTO user_achievements (user_id, achievement_id) VALUES (?1, ?2)",
             rusqlite::params![uid, aid],
         );
-        assert!(dup.is_err(), "duplicate (user_id, achievement_id) should violate PRIMARY KEY");
+        assert!(
+            dup.is_err(),
+            "duplicate (user_id, achievement_id) should violate PRIMARY KEY"
+        );
     }
 
     #[test]
@@ -509,21 +567,39 @@ mod tests {
         conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
         run(&mut conn).expect("run migrations");
 
-        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u5', 'h', 'learner')", []).unwrap();
-        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
-        conn.execute("INSERT INTO words (headword) VALUES ('cascade')", []).unwrap();
-        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('u5', 'h', 'learner')",
+            [],
+        )
+        .unwrap();
+        let uid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('cascade')", [])
+            .unwrap();
+        let wid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
 
         conn.execute(
             "INSERT INTO review_cards (user_id, word_id) VALUES (?1, ?2)",
             rusqlite::params![uid, wid],
-        ).unwrap();
+        )
+        .unwrap();
 
-        conn.execute("DELETE FROM users WHERE id = ?1", rusqlite::params![uid]).unwrap();
+        conn.execute("DELETE FROM users WHERE id = ?1", rusqlite::params![uid])
+            .unwrap();
 
         let count: i64 = conn
-            .query_row("SELECT COUNT(*) FROM review_cards WHERE user_id = ?1", rusqlite::params![uid], |r| r.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM review_cards WHERE user_id = ?1",
+                rusqlite::params![uid],
+                |r| r.get(0),
+            )
             .unwrap();
-        assert_eq!(count, 0, "CASCADE DELETE should remove review_cards when user is deleted");
+        assert_eq!(
+            count, 0,
+            "CASCADE DELETE should remove review_cards when user is deleted"
+        );
     }
 }

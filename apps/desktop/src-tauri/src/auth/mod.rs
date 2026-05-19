@@ -103,8 +103,8 @@ pub fn login(conn: &Connection, username: &str, password: &str) -> Result<AuthUs
         .optional()
         .map_err(|e| AppError::Internal(format!("Database error during login: {e}")))?;
 
-    let (user_id, hash, role) = row
-        .ok_or_else(|| AppError::Unauthorized("Invalid credentials".to_string()))?;
+    let (user_id, hash, role) =
+        row.ok_or_else(|| AppError::Unauthorized("Invalid credentials".to_string()))?;
 
     if !verify_password(password, &hash)? {
         return Err(AppError::Unauthorized("Invalid credentials".to_string()));
@@ -137,11 +137,8 @@ pub fn login(conn: &Connection, username: &str, password: &str) -> Result<AuthUs
 /// Removes the persisted session.  Subsequent calls to [`current_session`]
 /// will return `None`.
 pub fn logout(conn: &Connection) -> Result<(), AppError> {
-    conn.execute(
-        "DELETE FROM app_metadata WHERE key = 'session_user_id'",
-        [],
-    )
-    .map_err(|e| AppError::Internal(format!("Failed to clear session: {e}")))?;
+    conn.execute("DELETE FROM app_metadata WHERE key = 'session_user_id'", [])
+        .map_err(|e| AppError::Internal(format!("Failed to clear session: {e}")))?;
     Ok(())
 }
 
@@ -193,9 +190,7 @@ pub fn require_session(conn: &Connection) -> Result<AuthUser, AppError> {
 pub fn require_owner(conn: &Connection) -> Result<AuthUser, AppError> {
     let user = require_session(conn)?;
     if user.role != "owner" {
-        return Err(AppError::Unauthorized(
-            "Owner access required".to_string(),
-        ));
+        return Err(AppError::Unauthorized("Owner access required".to_string()));
     }
     Ok(user)
 }
@@ -218,7 +213,10 @@ mod tests {
     #[test]
     fn hash_is_not_plaintext() {
         let h = hash_password("secret").expect("hash");
-        assert!(!h.contains("secret"), "plaintext must not appear in the hash");
+        assert!(
+            !h.contains("secret"),
+            "plaintext must not appear in the hash"
+        );
         assert!(h.starts_with("$argon2"), "output should be a PHC string");
     }
 
@@ -260,11 +258,9 @@ mod tests {
         create_default_accounts(&conn).expect("create defaults");
 
         let owner: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM users WHERE role = 'owner'",
-                [],
-                |r| r.get(0),
-            )
+            .query_row("SELECT COUNT(*) FROM users WHERE role = 'owner'", [], |r| {
+                r.get(0)
+            })
             .unwrap();
         let learner: i64 = conn
             .query_row(
@@ -306,9 +302,7 @@ mod tests {
         create_default_accounts(&conn).expect("create defaults");
 
         let hashes: Vec<String> = {
-            let mut stmt = conn
-                .prepare("SELECT password_hash FROM users")
-                .unwrap();
+            let mut stmt = conn.prepare("SELECT password_hash FROM users").unwrap();
             stmt.query_map([], |r| r.get::<_, String>(0))
                 .unwrap()
                 .filter_map(|r| r.ok())

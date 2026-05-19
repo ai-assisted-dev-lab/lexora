@@ -6,8 +6,7 @@ use crate::errors::AppError;
 // Embedded at compile time; zero runtime I/O for the bundled demo pack.
 // For future large packs (20k–50k items) the caller can load JSON from a
 // Tauri resource path and pass it to `import_pack` directly.
-const DEMO_PACK_JSON: &str =
-    include_str!("../../../../../data/seed/demo_pack.json");
+const DEMO_PACK_JSON: &str = include_str!("../../../../../data/seed/demo_pack.json");
 
 // ── Deserialisation types ─────────────────────────────────────────────────────
 
@@ -118,10 +117,7 @@ pub fn load_bundled(conn: &mut Connection) -> Result<SeedReport, AppError> {
 
 // ── Private helpers ───────────────────────────────────────────────────────────
 
-fn insert_seed_data(
-    conn: &Connection,
-    seed: &SeedFile,
-) -> Result<SeedReport, AppError> {
+fn insert_seed_data(conn: &Connection, seed: &SeedFile) -> Result<SeedReport, AppError> {
     // ── Pack ─────────────────────────────────────────────────────────────────
     conn.execute(
         "INSERT INTO packs (slug, name, description, version, author, source)
@@ -192,7 +188,12 @@ fn insert_seed_data(
             conn.execute(
                 "INSERT INTO senses (word_id, sense_index, definition_en, definition_vi)
                  VALUES (?1, ?2, ?3, ?4)",
-                params![word_id, sense.sense_index, sense.definition_en, sense.definition_vi],
+                params![
+                    word_id,
+                    sense.sense_index,
+                    sense.definition_en,
+                    sense.definition_vi
+                ],
             )
             .map_err(|e| {
                 AppError::Internal(format!(
@@ -326,7 +327,10 @@ mod tests {
         let linked: i64 = conn
             .query_row("SELECT COUNT(*) FROM deck_words", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(linked, 15, "every word should be linked to exactly one deck");
+        assert_eq!(
+            linked, 15,
+            "every word should be linked to exactly one deck"
+        );
     }
 
     #[test]
@@ -337,10 +341,15 @@ mod tests {
         let total: i64 = conn
             .query_row("SELECT SUM(word_count) FROM decks", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(total, 15, "sum of deck word_counts should equal total words");
+        assert_eq!(
+            total, 15,
+            "sum of deck word_counts should equal total words"
+        );
 
         let zeros: i64 = conn
-            .query_row("SELECT COUNT(*) FROM decks WHERE word_count = 0", [], |r| r.get(0))
+            .query_row("SELECT COUNT(*) FROM decks WHERE word_count = 0", [], |r| {
+                r.get(0)
+            })
             .unwrap();
         assert_eq!(zeros, 0, "no deck should have word_count = 0 after seeding");
     }
@@ -367,11 +376,9 @@ mod tests {
         load_bundled(&mut conn).expect("seed");
 
         let (slug, source): (String, String) = conn
-            .query_row(
-                "SELECT slug, source FROM packs LIMIT 1",
-                [],
-                |r| Ok((r.get(0)?, r.get(1)?)),
-            )
+            .query_row("SELECT slug, source FROM packs LIMIT 1", [], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })
             .unwrap();
         assert_eq!(slug, "english-essentials-demo");
         assert_eq!(source, "bundled");
