@@ -2,25 +2,20 @@ import { SlidersHorizontal } from "lucide-react";
 
 import { Button, Card } from "@/components/ui";
 
-import type { CatalogFilter } from "./types";
-
 interface FilterGroupProps {
   label: string;
-  options: CatalogFilter[];
-  selected: CatalogFilter;
-  onChange: (value: CatalogFilter) => void;
+  options: string[];
+  selected: string;
+  onChange: (value: string) => void;
 }
 
-interface FilterBarProps {
-  categories: CatalogFilter[];
-  cefrLevels: CatalogFilter[];
-  topics: CatalogFilter[];
-  selectedCategory: CatalogFilter;
-  selectedCefrLevel: CatalogFilter;
-  selectedTopic: CatalogFilter;
-  onCategoryChange: (value: CatalogFilter) => void;
-  onCefrLevelChange: (value: CatalogFilter) => void;
-  onTopicChange: (value: CatalogFilter) => void;
+export interface FilterBarProps {
+  cefrLevels: string[];
+  tags: string[];
+  selectedCefrLevel: string;
+  selectedTag: string;
+  onCefrLevelChange: (value: string) => void;
+  onTagChange: (value: string) => void;
 }
 
 function FilterGroup({ label, onChange, options, selected }: FilterGroupProps) {
@@ -45,15 +40,12 @@ function FilterGroup({ label, onChange, options, selected }: FilterGroupProps) {
 }
 
 export function FilterBar({
-  categories,
   cefrLevels,
-  onCategoryChange,
   onCefrLevelChange,
-  onTopicChange,
-  selectedCategory,
+  onTagChange,
   selectedCefrLevel,
-  selectedTopic,
-  topics,
+  selectedTag,
+  tags,
 }: FilterBarProps) {
   return (
     <Card className="discover-filter-bar" variant="glass">
@@ -61,15 +53,9 @@ export function FilterBar({
         <SlidersHorizontal size={18} aria-hidden="true" />
         <div>
           <h2>Filter catalog</h2>
-          <p>Preview how local deck metadata can narrow the catalog.</p>
+          <p>Narrow decks by CEFR level or topic tag.</p>
         </div>
       </div>
-      <FilterGroup
-        label="Goal"
-        options={categories}
-        selected={selectedCategory}
-        onChange={onCategoryChange}
-      />
       <FilterGroup
         label="CEFR"
         options={cefrLevels}
@@ -77,10 +63,10 @@ export function FilterBar({
         onChange={onCefrLevelChange}
       />
       <FilterGroup
-        label="Topic"
-        options={topics}
-        selected={selectedTopic}
-        onChange={onTopicChange}
+        label="Tag"
+        options={tags}
+        selected={selectedTag}
+        onChange={onTagChange}
       />
     </Card>
   );

@@ -7,7 +7,7 @@ import { AuthContext, type AuthContextValue } from "@/store/authContext";
 import { routeTree } from "./index";
 import { getPageLabel, ROUTE_CONFIGS } from "./routes";
 
-/* ── Mock Tauri window API ───────────────────────────────────────────── */
+/* ── Mock Tauri APIs ─────────────────────────────────────────────────── */
 
 vi.mock("@tauri-apps/api/window", () => ({
   getCurrentWindow: () => ({
@@ -17,6 +17,15 @@ vi.mock("@tauri-apps/api/window", () => ({
     close: vi.fn().mockResolvedValue(undefined),
     isMaximized: vi.fn().mockResolvedValue(false),
     onResized: vi.fn().mockResolvedValue(() => undefined),
+  }),
+}));
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn().mockImplementation((cmd: string) => {
+    if (cmd === "list_discover_decks") {
+      return Promise.resolve({ decks: [], total: 0 });
+    }
+    return Promise.resolve(undefined);
   }),
 }));
 

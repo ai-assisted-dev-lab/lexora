@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookPlus, Layers3 } from "lucide-react";
+import { BookPlus, Check, Layers3 } from "lucide-react";
 
 import { Badge, Button, Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -9,9 +9,16 @@ import type { CatalogDeck } from "./types";
 interface CatalogCardProps {
   deck: CatalogDeck;
   featured?: boolean;
+  onInstall?: (id: number) => void;
+  onUninstall?: (id: number) => void;
 }
 
-export function CatalogCard({ deck, featured = false }: CatalogCardProps) {
+export function CatalogCard({
+  deck,
+  featured = false,
+  onInstall,
+  onUninstall,
+}: CatalogCardProps) {
   return (
     <motion.article whileHover={{ y: -4 }} transition={{ duration: 0.16 }}>
       <Card
@@ -43,14 +50,27 @@ export function CatalogCard({ deck, featured = false }: CatalogCardProps) {
               </Badge>
             ))}
           </div>
-          <Button
-            className="catalog-card__action"
-            type="button"
-            variant={featured ? "primary" : "secondary"}
-          >
-            <BookPlus size={15} aria-hidden="true" />
-            Add to Library
-          </Button>
+          {deck.installed ? (
+            <Button
+              className="catalog-card__action"
+              type="button"
+              variant="soft"
+              onClick={() => onUninstall?.(deck.id)}
+            >
+              <Check size={15} aria-hidden="true" />
+              Installed
+            </Button>
+          ) : (
+            <Button
+              className="catalog-card__action"
+              type="button"
+              variant={featured ? "primary" : "secondary"}
+              onClick={() => onInstall?.(deck.id)}
+            >
+              <BookPlus size={15} aria-hidden="true" />
+              Add to Library
+            </Button>
+          )}
         </div>
       </Card>
     </motion.article>

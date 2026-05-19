@@ -1,17 +1,17 @@
-export type CatalogFilter = string;
-
 export type CatalogTone = "azure" | "cyan" | "mint" | "sky" | "violet";
 
 export interface CatalogDeck {
-  id: string;
+  id: number;
+  slug: string;
   title: string;
   description: string;
   level: string;
   wordCount: number;
-  categories: string[];
-  topics: string[];
   tags: string[];
-  section: "popular" | "recommended";
-  featured: boolean;
+  packName: string;
+  installed: boolean;
+  // Derived client-side for display purposes
   tone: CatalogTone;
+  featured: boolean;
+  section: "popular" | "recommended";
 }
