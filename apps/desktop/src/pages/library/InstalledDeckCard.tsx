@@ -68,12 +68,13 @@ export function InstalledDeckCard({
           <div className="installed-deck-card__stats">
             <span>
               <Flame size={14} aria-hidden="true" />
-              {deck.mastery}% mastery
+              {deck.masteredCount} mastered
             </span>
             <span>
               <CalendarClock size={14} aria-hidden="true" />
               {deck.dueCount} due
             </span>
+            <span>{deck.accuracy}% accuracy</span>
           </div>
 
           <div className="installed-deck-card__footer">

@@ -1,7 +1,14 @@
 import "./library/LibraryPage.css";
 
 import { motion } from "framer-motion";
-import { BookOpen, Compass, LibraryBig, Star } from "lucide-react";
+import {
+  AlertCircle,
+  BookOpen,
+  Compass,
+  LibraryBig,
+  Loader2,
+  Star,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -12,16 +19,98 @@ import {
   SectionHeader,
   StatCard,
 } from "@/components/ui";
+import { useLibraryDecks } from "@/hooks/useLibraryDecks";
+import type { LibraryDeckDto } from "@/services/commands/decks";
 
 import { LibraryFilterBar } from "./library/LibraryFilterBar";
-import { installedDecks, libraryFilters } from "./library/libraryMockData";
 import { LibraryShelf } from "./library/LibraryShelf";
-import type { LibraryFilter } from "./library/types";
+import type {
+  InstalledDeck,
+  LibraryDeckTone,
+  LibraryFilter,
+} from "./library/types";
 
-function matchesFilter(
-  filter: LibraryFilter,
-  deck: (typeof installedDecks)[number],
-) {
+const libraryFilters: LibraryFilter[] = [
+  "All",
+  "In Progress",
+  "Completed",
+  "Weak",
+  "Favorites",
+];
+
+const TONES: LibraryDeckTone[] = ["azure", "cyan", "mint", "sky", "violet"];
+
+function deriveTone(id: number): LibraryDeckTone {
+  return TONES[id % TONES.length];
+}
+
+function formatLastStudied(value: string | null): string {
+  if (!value) {
+    return "New deck";
+  }
+
+  const studiedAt = new Date(value);
+  if (Number.isNaN(studiedAt.getTime())) {
+    return "Studied";
+  }
+
+  const now = Date.now();
+  const elapsedDays = Math.max(
+    0,
+    Math.floor((now - studiedAt.getTime()) / 86_400_000),
+  );
+
+  if (elapsedDays === 0) {
+    return "Today";
+  }
+  if (elapsedDays === 1) {
+    return "Yesterday";
+  }
+  if (elapsedDays < 7) {
+    return `${elapsedDays} days ago`;
+  }
+  return studiedAt.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function rankLastStudied(value: string | null): number {
+  if (!value) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? Number.MAX_SAFE_INTEGER : -time;
+}
+
+function toInstalledDeck(dto: LibraryDeckDto): InstalledDeck {
+  const hasProgressData =
+    dto.masteredCount > 0 || dto.dueCount > 0 || dto.accuracy > 0;
+
+  return {
+    id: dto.id,
+    slug: dto.slug,
+    title: dto.title,
+    description: dto.description ?? "Installed deck ready for offline study.",
+    level: dto.level ?? "New",
+    wordCount: dto.wordCount,
+    progress: dto.progress,
+    mastery: dto.progress,
+    masteredCount: dto.masteredCount,
+    dueCount: dto.dueCount,
+    accuracy: dto.accuracy,
+    lastStudied: formatLastStudied(dto.lastStudied),
+    lastStudiedRank: rankLastStudied(dto.lastStudied),
+    status: dto.progress >= 100 ? "completed" : "in-progress",
+    favorite: false,
+    weak: dto.dueCount > 0 || (hasProgressData && dto.accuracy < 60),
+    tags: dto.tags,
+    tone: deriveTone(dto.id),
+  };
+}
+
+function matchesFilter(filter: LibraryFilter, deck: InstalledDeck) {
   switch (filter) {
     case "Completed":
       return deck.status === "completed";
@@ -39,10 +128,16 @@ function matchesFilter(
 
 export function LibraryPage() {
   const [filter, setFilter] = useState<LibraryFilter>("All");
+  const { decks: rawDecks, error, isLoading } = useLibraryDecks();
+
+  const installedDecks = useMemo(
+    () => rawDecks.map((deck) => toInstalledDeck(deck)),
+    [rawDecks],
+  );
 
   const filteredDecks = useMemo(
     () => installedDecks.filter((deck) => matchesFilter(filter, deck)),
-    [filter],
+    [filter, installedDecks],
   );
 
   const continueLearning = installedDecks.filter((deck) => deck.progress < 100);
@@ -55,6 +150,41 @@ export function LibraryPage() {
     (total, deck) => total + deck.dueCount,
     0,
   );
+  const averageMastery =
+    installedDecks.length > 0
+      ? Math.round(
+          installedDecks.reduce((total, deck) => total + deck.mastery, 0) /
+            installedDecks.length,
+        )
+      : 0;
+
+  if (isLoading) {
+    return (
+      <div
+        className="library-page library-page--loading"
+        aria-label="Loading library"
+      >
+        <Loader2
+          size={28}
+          className="library-page__spinner"
+          aria-hidden="true"
+        />
+        <p>Loading library...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        className="library-page library-page--error"
+        aria-label="Library error"
+      >
+        <AlertCircle size={28} aria-hidden="true" />
+        <p>Could not load library: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -103,10 +233,7 @@ export function LibraryPage() {
         />
         <StatCard
           label="Average mastery"
-          value={`${Math.round(
-            installedDecks.reduce((total, deck) => total + deck.mastery, 0) /
-              installedDecks.length,
-          )}%`}
+          value={`${averageMastery}%`}
           meta="across installed decks"
         />
         <StatCard
@@ -127,7 +254,23 @@ export function LibraryPage() {
         onFilterChange={setFilter}
       />
 
-      {filter === "All" ? (
+      {installedDecks.length === 0 ? (
+        <Card className="library-empty-card" variant="glass">
+          <EmptyState
+            title="No decks installed yet"
+            description="Open Discover to add a deck to your offline learning collection."
+            icon={<LibraryBig size={30} aria-hidden="true" />}
+            actions={
+              <Button asChild variant="primary">
+                <Link to="/discover">
+                  <Compass size={16} aria-hidden="true" />
+                  Open Discover
+                </Link>
+              </Button>
+            }
+          />
+        </Card>
+      ) : filter === "All" ? (
         <div className="library-shelves">
           <LibraryShelf title="Continue Learning" decks={continueLearning} />
           <LibraryShelf

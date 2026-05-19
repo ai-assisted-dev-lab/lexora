@@ -22,7 +22,9 @@ pub fn run() {
 
             // Run pending migrations, seed demo data, and initialise default accounts.
             {
-                let mut conn = db.conn.lock()
+                let mut conn = db
+                    .conn
+                    .lock()
                     .map_err(|e| errors::AppError::Internal(format!("DB mutex poisoned: {e}")))?;
                 db::migrations::run(&mut conn)?;
                 db::seeder::load_bundled(&mut conn)?;
@@ -39,6 +41,7 @@ pub fn run() {
             commands::db::get_schema_version,
             commands::decks::list_seeded_decks,
             commands::decks::list_discover_decks,
+            commands::decks::list_library_decks,
             commands::decks::install_deck,
             commands::decks::uninstall_deck,
             commands::auth::login_user,

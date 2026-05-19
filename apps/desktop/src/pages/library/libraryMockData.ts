@@ -10,7 +10,8 @@ export const libraryFilters: LibraryFilter[] = [
 
 export const installedDecks: InstalledDeck[] = [
   {
-    id: "ielts-speaking-core",
+    id: 1,
+    slug: "ielts-speaking-core",
     title: "IELTS Speaking Core",
     description:
       "High-frequency prompts, transitions, and opinion language for B2-C1 interviews.",
@@ -20,6 +21,8 @@ export const installedDecks: InstalledDeck[] = [
     lastStudiedRank: 1,
     level: "B2",
     mastery: 72,
+    masteredCount: 619,
+    accuracy: 72,
     progress: 64,
     status: "in-progress",
     tags: ["IELTS", "Speaking", "Fluency"],
@@ -28,7 +31,8 @@ export const installedDecks: InstalledDeck[] = [
     wordCount: 860,
   },
   {
-    id: "toeic-workplace-actions",
+    id: 2,
+    slug: "toeic-workplace-actions",
     title: "TOEIC Workplace Actions",
     description:
       "Office tasks, schedules, requests, and daily business verbs for TOEIC Part 3 and 4.",
@@ -38,6 +42,8 @@ export const installedDecks: InstalledDeck[] = [
     lastStudiedRank: 2,
     level: "B1",
     mastery: 54,
+    masteredCount: 389,
+    accuracy: 54,
     progress: 48,
     status: "in-progress",
     tags: ["TOEIC", "Business", "Listening"],
@@ -46,7 +52,8 @@ export const installedDecks: InstalledDeck[] = [
     wordCount: 720,
   },
   {
-    id: "academic-reading-phrases",
+    id: 3,
+    slug: "academic-reading-phrases",
     title: "Academic Reading Phrases",
     description:
       "Signal words, argument structures, and abstract nouns for university reading.",
@@ -56,6 +63,8 @@ export const installedDecks: InstalledDeck[] = [
     lastStudiedRank: 3,
     level: "C1",
     mastery: 81,
+    masteredCount: 761,
+    accuracy: 81,
     progress: 78,
     status: "in-progress",
     tags: ["Academic", "Reading", "C1"],
@@ -64,7 +73,8 @@ export const installedDecks: InstalledDeck[] = [
     wordCount: 940,
   },
   {
-    id: "daily-life-survival",
+    id: 4,
+    slug: "daily-life-survival",
     title: "Daily Life Survival",
     description:
       "Practical everyday words for errands, meals, travel, appointments, and home routines.",
@@ -74,6 +84,8 @@ export const installedDecks: InstalledDeck[] = [
     lastStudiedRank: 5,
     level: "A2",
     mastery: 68,
+    masteredCount: 435,
+    accuracy: 68,
     progress: 58,
     status: "in-progress",
     tags: ["Daily", "A2", "Conversation"],
@@ -82,7 +94,8 @@ export const installedDecks: InstalledDeck[] = [
     wordCount: 640,
   },
   {
-    id: "tech-product-vocabulary",
+    id: 5,
+    slug: "tech-product-vocabulary",
     title: "Tech Product Vocabulary",
     description:
       "Software, product, analytics, and engineering terms for modern workplace English.",
@@ -92,6 +105,8 @@ export const installedDecks: InstalledDeck[] = [
     lastStudiedRank: 6,
     level: "B2",
     mastery: 49,
+    masteredCount: 382,
+    accuracy: 49,
     progress: 42,
     status: "in-progress",
     tags: ["Tech", "Business", "Product"],
@@ -100,7 +115,8 @@ export const installedDecks: InstalledDeck[] = [
     wordCount: 780,
   },
   {
-    id: "business-email-polish",
+    id: 6,
+    slug: "business-email-polish",
     title: "Business Email Polish",
     description:
       "Concise phrases for requests, follow-ups, soft refusals, and professional tone.",
@@ -110,6 +126,8 @@ export const installedDecks: InstalledDeck[] = [
     lastStudiedRank: 7,
     level: "B2",
     mastery: 61,
+    masteredCount: 317,
+    accuracy: 61,
     progress: 53,
     status: "in-progress",
     tags: ["Business", "Writing", "Email"],

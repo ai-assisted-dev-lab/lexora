@@ -43,3 +43,30 @@ pub struct DiscoverDecksDto {
     pub decks: Vec<DiscoverDeckDto>,
     pub total: usize,
 }
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryDeckDto {
+    pub id: i64,
+    pub slug: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub level: Option<String>,
+    pub word_count: i64,
+    pub tags: Vec<String>,
+    pub pack_name: String,
+    pub pack_slug: String,
+    pub installed_at: String,
+    pub mastered_count: i64,
+    pub due_count: i64,
+    pub accuracy: i64,
+    pub last_studied: Option<String>,
+    pub progress: i64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryDecksDto {
+    pub decks: Vec<LibraryDeckDto>,
+    pub total: usize,
+}

@@ -10,14 +10,17 @@ export type InstalledDeckStatus = "completed" | "in-progress";
 export type LibraryDeckTone = "azure" | "cyan" | "mint" | "sky" | "violet";
 
 export interface InstalledDeck {
-  id: string;
+  id: number;
+  slug: string;
   title: string;
   description: string;
   level: string;
   wordCount: number;
   progress: number;
   mastery: number;
+  masteredCount: number;
   dueCount: number;
+  accuracy: number;
   lastStudied: string;
   lastStudiedRank: number;
   status: InstalledDeckStatus;

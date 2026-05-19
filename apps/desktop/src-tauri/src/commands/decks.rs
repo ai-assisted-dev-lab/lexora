@@ -3,7 +3,10 @@ use tauri::State;
 
 use crate::auth;
 use crate::db::DbConn;
-use crate::dto::decks::{DiscoverDeckDto, DiscoverDecksDto, DeckSummaryDto, SeededDecksDto};
+use crate::dto::decks::{
+    DeckSummaryDto, DiscoverDeckDto, DiscoverDecksDto, LibraryDeckDto, LibraryDecksDto,
+    SeededDecksDto,
+};
 use crate::errors::AppError;
 
 /// Returns all decks that belong to a bundled (seeded) pack.
@@ -66,7 +69,18 @@ fn query_discover_decks(conn: &Connection, user_id: i64) -> Result<Vec<DiscoverD
         )
         .map_err(|e| AppError::Internal(format!("Failed to prepare discover query: {e}")))?;
 
-    type Row = (i64, String, String, Option<String>, Option<String>, i64, Option<String>, String, String, i64);
+    type Row = (
+        i64,
+        String,
+        String,
+        Option<String>,
+        Option<String>,
+        i64,
+        Option<String>,
+        String,
+        String,
+        i64,
+    );
 
     let rows: Vec<Row> = stmt
         .query_map(params![user_id], |row| {
@@ -89,13 +103,37 @@ fn query_discover_decks(conn: &Connection, user_id: i64) -> Result<Vec<DiscoverD
 
     let decks = rows
         .into_iter()
-        .map(|(id, slug, name, description, level, word_count, tags_json, pack_name, pack_slug, installed)| {
-            let tags: Vec<String> = tags_json
-                .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
-                .unwrap_or_default();
-            DiscoverDeckDto { id, slug, title: name, description, level, word_count, tags, pack_name, pack_slug, installed: installed != 0 }
-        })
+        .map(
+            |(
+                id,
+                slug,
+                name,
+                description,
+                level,
+                word_count,
+                tags_json,
+                pack_name,
+                pack_slug,
+                installed,
+            )| {
+                let tags: Vec<String> = tags_json
+                    .as_deref()
+                    .and_then(|s| serde_json::from_str(s).ok())
+                    .unwrap_or_default();
+                DiscoverDeckDto {
+                    id,
+                    slug,
+                    title: name,
+                    description,
+                    level,
+                    word_count,
+                    tags,
+                    pack_name,
+                    pack_slug,
+                    installed: installed != 0,
+                }
+            },
+        )
         .collect();
 
     Ok(decks)
@@ -120,6 +158,144 @@ fn do_uninstall_deck(conn: &Connection, user_id: i64, deck_id: i64) -> Result<()
 }
 
 // ── Discover: Tauri commands ──────────────────────────────────────────────────
+
+fn progress_percent(mastered_count: i64, word_count: i64) -> i64 {
+    if word_count <= 0 {
+        0
+    } else {
+        ((mastered_count * 100) / word_count).clamp(0, 100)
+    }
+}
+
+fn query_library_decks(conn: &Connection, user_id: i64) -> Result<Vec<LibraryDeckDto>, AppError> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT d.id, d.slug, d.name, d.description, d.difficulty, d.word_count,
+                    d.tags, COALESCE(p.name, 'Standalone'), COALESCE(p.slug, 'standalone'), ds.added_at,
+                    COALESCE((
+                        SELECT COUNT(*)
+                        FROM   review_cards rc
+                        JOIN   deck_words dw ON dw.word_id = rc.word_id AND dw.deck_id = d.id
+                        WHERE  rc.user_id = ?1
+                          AND  rc.state = 'review'
+                    ), 0) AS mastered_count,
+                    COALESCE((
+                        SELECT COUNT(*)
+                        FROM   review_cards rc
+                        JOIN   deck_words dw ON dw.word_id = rc.word_id AND dw.deck_id = d.id
+                        WHERE  rc.user_id = ?1
+                          AND  rc.due <= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+                    ), 0) AS due_count,
+                    COALESCE((
+                        SELECT CAST(ROUND(
+                            100.0 * SUM(CASE WHEN rl.result = 'pass' THEN 1 ELSE 0 END)
+                            / NULLIF(COUNT(*), 0)
+                        ) AS INTEGER)
+                        FROM   review_logs rl
+                        JOIN   deck_words dw ON dw.word_id = rl.word_id AND dw.deck_id = d.id
+                        WHERE  rl.user_id = ?1
+                    ), 0) AS accuracy,
+                    (
+                        SELECT MAX(COALESCE(ss.ended_at, ss.started_at))
+                        FROM   study_sessions ss
+                        WHERE  ss.user_id = ?1
+                          AND  ss.deck_id = d.id
+                    ) AS last_studied
+             FROM   deck_subscriptions ds
+             JOIN   decks d ON d.id = ds.deck_id
+             LEFT JOIN packs p ON p.id = d.pack_id
+             WHERE  ds.user_id = ?1
+             ORDER  BY COALESCE(last_studied, ds.added_at) DESC, d.name",
+        )
+        .map_err(|e| AppError::Internal(format!("Failed to prepare library query: {e}")))?;
+
+    type Row = (
+        i64,
+        String,
+        String,
+        Option<String>,
+        Option<String>,
+        i64,
+        Option<String>,
+        String,
+        String,
+        String,
+        i64,
+        i64,
+        i64,
+        Option<String>,
+    );
+
+    let rows: Vec<Row> = stmt
+        .query_map(params![user_id], |row| {
+            Ok((
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+                row.get(4)?,
+                row.get(5)?,
+                row.get(6)?,
+                row.get(7)?,
+                row.get(8)?,
+                row.get(9)?,
+                row.get(10)?,
+                row.get(11)?,
+                row.get(12)?,
+                row.get(13)?,
+            ))
+        })
+        .map_err(|e| AppError::Internal(format!("Failed to query library decks: {e}")))?
+        .filter_map(|r| r.ok())
+        .collect();
+
+    let decks = rows
+        .into_iter()
+        .map(
+            |(
+                id,
+                slug,
+                title,
+                description,
+                level,
+                word_count,
+                tags_json,
+                pack_name,
+                pack_slug,
+                installed_at,
+                mastered_count,
+                due_count,
+                accuracy,
+                last_studied,
+            )| {
+                let tags: Vec<String> = tags_json
+                    .as_deref()
+                    .and_then(|s| serde_json::from_str(s).ok())
+                    .unwrap_or_default();
+
+                LibraryDeckDto {
+                    id,
+                    slug,
+                    title,
+                    description,
+                    level,
+                    word_count,
+                    tags,
+                    pack_name,
+                    pack_slug,
+                    installed_at,
+                    mastered_count,
+                    due_count,
+                    accuracy,
+                    last_studied,
+                    progress: progress_percent(mastered_count, word_count),
+                }
+            },
+        )
+        .collect();
+
+    Ok(decks)
+}
 
 /// Returns all bundled catalog decks, each annotated with whether the current
 /// user has it installed in their library.  Requires an active session.
@@ -158,6 +334,20 @@ pub fn uninstall_deck(deck_id: i64, db: State<'_, DbConn>) -> Result<(), AppErro
     do_uninstall_deck(&conn, user.id, deck_id)
 }
 
+/// Returns the current user's installed library decks with available progress
+/// summaries. Missing review/session data is reported as zero or null.
+#[tauri::command]
+pub fn list_library_decks(db: State<'_, DbConn>) -> Result<LibraryDecksDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+    let decks = query_library_decks(&conn, user.id)?;
+    let total = decks.len();
+    Ok(LibraryDecksDto { decks, total })
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -184,7 +374,10 @@ mod tests {
         let user_id = login_as(&conn, "owner");
 
         let decks = query_discover_decks(&conn, user_id).expect("query");
-        assert!(!decks.is_empty(), "bundled decks must be present after seeding");
+        assert!(
+            !decks.is_empty(),
+            "bundled decks must be present after seeding"
+        );
     }
 
     #[test]
@@ -211,7 +404,10 @@ mod tests {
 
         let decks = query_discover_decks(&conn, user_id).expect("query after install");
         let first = decks.iter().find(|d| d.id == first_id).expect("deck");
-        assert!(first.installed, "deck must be marked installed after install");
+        assert!(
+            first.installed,
+            "deck must be marked installed after install"
+        );
     }
 
     #[test]
@@ -227,7 +423,10 @@ mod tests {
 
         let decks = query_discover_decks(&conn, user_id).expect("query after uninstall");
         let first = decks.iter().find(|d| d.id == first_id).expect("deck");
-        assert!(!first.installed, "deck must not be installed after uninstall");
+        assert!(
+            !first.installed,
+            "deck must not be installed after uninstall"
+        );
     }
 
     #[test]
@@ -243,7 +442,10 @@ mod tests {
 
         let decks = query_discover_decks(&conn, user_id).expect("query after double install");
         let first = decks.iter().find(|d| d.id == first_id).expect("deck");
-        assert!(first.installed, "deck still installed after duplicate insert");
+        assert!(
+            first.installed,
+            "deck still installed after duplicate insert"
+        );
     }
 
     #[test]
@@ -259,11 +461,11 @@ mod tests {
         crate::auth::logout(&conn).expect("logout owner");
         let learner_id = login_as(&conn, "learner");
         let learner_decks = query_discover_decks(&conn, learner_id).expect("learner query");
-        let first = learner_decks.iter().find(|d| d.id == first_id).expect("deck");
-        assert!(
-            !first.installed,
-            "learner should not see owner's install"
-        );
+        let first = learner_decks
+            .iter()
+            .find(|d| d.id == first_id)
+            .expect("deck");
+        assert!(!first.installed, "learner should not see owner's install");
     }
 
     #[test]
@@ -273,6 +475,44 @@ mod tests {
 
         let decks = query_discover_decks(&conn, user_id).expect("query");
         let has_tags = decks.iter().any(|d| !d.tags.is_empty());
-        assert!(has_tags, "at least one deck should have non-empty parsed tags");
+        assert!(
+            has_tags,
+            "at least one deck should have non-empty parsed tags"
+        );
+    }
+
+    #[test]
+    fn list_library_decks_returns_only_installed_decks() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+
+        let discover = query_discover_decks(&conn, user_id).expect("discover query");
+        let first_id = discover[0].id;
+        do_install_deck(&conn, user_id, first_id).expect("install");
+
+        let library = query_library_decks(&conn, user_id).expect("library query");
+
+        assert_eq!(library.len(), 1);
+        assert_eq!(library[0].id, first_id);
+        assert_eq!(library[0].mastered_count, 0);
+        assert_eq!(library[0].due_count, 0);
+        assert_eq!(library[0].accuracy, 0);
+        assert_eq!(library[0].progress, 0);
+        assert!(library[0].last_studied.is_none());
+    }
+
+    #[test]
+    fn list_library_decks_is_scoped_to_current_user() {
+        let conn = db_with_data();
+        let owner_id = login_as(&conn, "owner");
+
+        let discover = query_discover_decks(&conn, owner_id).expect("discover query");
+        do_install_deck(&conn, owner_id, discover[0].id).expect("owner install");
+
+        crate::auth::logout(&conn).expect("logout owner");
+        let learner_id = login_as(&conn, "learner");
+
+        let library = query_library_decks(&conn, learner_id).expect("learner library");
+        assert!(library.is_empty());
     }
 }
