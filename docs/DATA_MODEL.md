@@ -23,9 +23,10 @@ users
   └── deck_subscriptions (1:N) → decks
   └── review_cards (1:N) → words
   └── review_logs (1:N)
-  └── sessions (1:N)
-  └── achievements (1:N) → achievement_definitions
-  └── daily_progress (1:N)
+  └── study_sessions (1:N)
+  └── user_achievements (1:N) → achievements
+  └── user_progress (1:N)
+  └── user_xp (1:1)
 
 packs
   └── decks (1:N)
@@ -38,6 +39,7 @@ words
   └── word_relations (N:M) → words
 
 backups (metadata only; file on disk)
+reminders
 ```
 
 ---
@@ -261,21 +263,24 @@ FSRS state per (user, word) pair.
 
 Immutable append-only log of every review event.
 
-| Column               | Type                  | Notes                              |
-| -------------------- | --------------------- | ---------------------------------- |
-| `id`                 | INTEGER PK            |                                    |
-| `user_id`            | INTEGER FK → users    |                                    |
-| `word_id`            | INTEGER FK → words    |                                    |
-| `session_id`         | INTEGER FK → sessions |                                    |
-| `rating`             | INTEGER NOT NULL      | 1=Again, 2=Hard, 3=Good, 4=Easy    |
-| `state_before`       | TEXT NOT NULL         | JSON snapshot of FSRS state before |
-| `state_after`        | TEXT NOT NULL         | JSON snapshot of FSRS state after  |
-| `review_duration_ms` | INTEGER               | Time spent on this card            |
-| `reviewed_at`        | TEXT NOT NULL         | ISO 8601 UTC                       |
+| Column               | Type                         | Notes                                            |
+| -------------------- | ---------------------------- | ------------------------------------------------ |
+| `id`                 | INTEGER PK                   |                                                  |
+| `user_id`            | INTEGER FK → users           |                                                  |
+| `word_id`            | INTEGER FK → words           |                                                  |
+| `session_id`         | INTEGER FK → study_sessions  |                                                  |
+| `rating`             | INTEGER NOT NULL             | 1=Again, 2=Hard, 3=Good, 4=Easy                  |
+| `result`             | TEXT NOT NULL                | `'pass'`, `'fail'`                               |
+| `mode`               | TEXT NOT NULL                | `'review'`, `'learn'`, `'cram'`, `'preview'`     |
+| `state_before`       | TEXT NOT NULL                | JSON snapshot of FSRS state before               |
+| `state_after`        | TEXT NOT NULL                | JSON snapshot of FSRS state after                |
+| `review_duration_ms` | INTEGER                      | Time spent on this card                          |
+| `device`             | TEXT                         | Device identifier/type                           |
+| `reviewed_at`        | TEXT NOT NULL                | ISO 8601 UTC                                     |
 
 ---
 
-### `sessions`
+### `study_sessions`
 
 One row per study session.
 
@@ -290,10 +295,11 @@ One row per study session.
 | `cards_correct` | INTEGER DEFAULT 0  | Rating >= 3                     |
 | `xp_earned`     | INTEGER DEFAULT 0  |                                 |
 | `session_type`  | TEXT NOT NULL      | `'review'`, `'learn'`, `'cram'` |
+| `device`        | TEXT               | Device identifier/type          |
 
 ---
 
-### `achievement_definitions`
+### `achievements`
 
 Static definitions for achievement types (can be shipped in app bundle).
 
@@ -307,6 +313,7 @@ Static definitions for achievement types (can be shipped in app bundle).
 | `condition_type`  | TEXT NOT NULL        | `'streak'`, `'cards_reviewed'`, `'words_mastered'`, etc. |
 | `condition_value` | INTEGER NOT NULL     | Threshold for unlock                                     |
 | `xp_reward`       | INTEGER DEFAULT 0    |                                                          |
+| `hidden`          | INTEGER DEFAULT 0    | 1 = secret; not shown until unlocked                     |
 
 ---
 
@@ -314,16 +321,17 @@ Static definitions for achievement types (can be shipped in app bundle).
 
 Per-user unlock records.
 
-| Column           | Type                                 | Notes        |
-| ---------------- | ------------------------------------ | ------------ |
-| `user_id`        | INTEGER FK → users                   |              |
-| `achievement_id` | INTEGER FK → achievement_definitions |              |
-| `unlocked_at`    | TEXT NOT NULL                        | ISO 8601 UTC |
-| PRIMARY KEY      | (`user_id`, `achievement_id`)        |              |
+| Column           | Type                          | Notes                              |
+| ---------------- | ----------------------------- | ---------------------------------- |
+| `user_id`        | INTEGER FK → users            |                                    |
+| `achievement_id` | INTEGER FK → achievements     |                                    |
+| `unlocked_at`    | TEXT NOT NULL                 | ISO 8601 UTC                       |
+| `notified`       | INTEGER DEFAULT 0             | 1 = UI toast already shown         |
+| PRIMARY KEY      | (`user_id`, `achievement_id`) |                                    |
 
 ---
 
-### `daily_progress`
+### `user_progress`
 
 Daily learning snapshots for streak and goal tracking.
 
@@ -384,13 +392,44 @@ Metadata for backup files created on disk.
 
 ---
 
+### `reminders`
+
+Per-user study reminder configuration.
+
+| Column        | Type               | Notes                             |
+| ------------- | ------------------ | --------------------------------- |
+| `id`          | INTEGER PK         |                                   |
+| `user_id`     | INTEGER FK → users |                                   |
+| `remind_at`   | TEXT NOT NULL      | HH:MM local time                  |
+| `enabled`     | INTEGER DEFAULT 1  | Boolean                           |
+| `days_of_week`| TEXT DEFAULT '1111111' | 7-char bitmask Mon–Sun         |
+| `created_at`  | TEXT NOT NULL      |                                   |
+| `updated_at`  | TEXT NOT NULL      |                                   |
+
+---
+
 ## Indexes (Key)
 
 ```sql
-CREATE INDEX idx_review_cards_user_due ON review_cards(user_id, due);
-CREATE INDEX idx_review_logs_user_session ON review_logs(user_id, session_id);
-CREATE INDEX idx_daily_progress_user_date ON daily_progress(user_id, date);
-CREATE INDEX idx_words_pack ON words(pack_id);
-CREATE INDEX idx_senses_word ON senses(word_id);
-CREATE INDEX idx_deck_words_deck ON deck_words(deck_id);
+-- review_cards
+CREATE INDEX idx_review_cards_user_due   ON review_cards (user_id, due);
+CREATE INDEX idx_review_cards_user_state ON review_cards (user_id, state);
+CREATE INDEX idx_review_cards_deck       ON review_cards (deck_id);
+-- review_logs
+CREATE INDEX idx_review_logs_user_session ON review_logs (user_id, session_id);
+CREATE INDEX idx_review_logs_user_word    ON review_logs (user_id, word_id);
+CREATE INDEX idx_review_logs_reviewed_at  ON review_logs (reviewed_at);
+-- study_sessions
+CREATE INDEX idx_study_sessions_user         ON study_sessions (user_id);
+CREATE INDEX idx_study_sessions_user_started ON study_sessions (user_id, started_at);
+CREATE INDEX idx_study_sessions_deck         ON study_sessions (deck_id);
+-- user_progress
+CREATE INDEX idx_user_progress_user_date ON user_progress (user_id, date);
+-- user_achievements
+CREATE INDEX idx_user_achievements_user        ON user_achievements (user_id);
+CREATE INDEX idx_user_achievements_achievement ON user_achievements (achievement_id);
+-- content tables
+CREATE INDEX idx_words_pack     ON words (pack_id);
+CREATE INDEX idx_senses_word    ON senses (word_id);
+CREATE INDEX idx_deck_words_deck ON deck_words (deck_id);
 ```

@@ -25,6 +25,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "core_schema",
         sql: include_str!("../../migrations/0002_core_schema.sql"),
     },
+    Migration {
+        version: 3,
+        name: "review_gamification_schema",
+        sql: include_str!("../../migrations/0003_review_gamification_schema.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -350,5 +355,175 @@ mod tests {
             err.is_err(),
             "self-referential word relation should be rejected by CHECK constraint"
         );
+    }
+
+    // ── Migration 3 — review / gamification schema ────────────────────────────
+
+    #[test]
+    fn migration_003_creates_all_review_and_gamification_tables() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        let tables = tables_in(&conn);
+        for expected in &[
+            "study_sessions",
+            "review_cards",
+            "review_logs",
+            "user_progress",
+            "user_xp",
+            "achievements",
+            "user_achievements",
+            "backups",
+            "reminders",
+        ] {
+            assert!(
+                tables.iter().any(|t| t == expected),
+                "expected table '{expected}' to exist after migration 3; found: {tables:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn migration_003_review_cards_state_check_rejects_invalid() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u1', 'h', 'learner')", []).unwrap();
+        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('hello')", []).unwrap();
+        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+
+        let ok = conn.execute(
+            "INSERT INTO review_cards (user_id, word_id, state) VALUES (?1, ?2, 'learning')",
+            rusqlite::params![uid, wid],
+        );
+        assert!(ok.is_ok(), "valid state should be accepted");
+
+        let err = conn.execute(
+            "INSERT INTO review_cards (user_id, word_id, state) VALUES (?1, ?2, 'invalid')",
+            rusqlite::params![uid, wid],
+        );
+        assert!(err.is_err(), "invalid state should be rejected by CHECK constraint");
+    }
+
+    #[test]
+    fn migration_003_review_cards_unique_user_word() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u2', 'h', 'learner')", []).unwrap();
+        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('world')", []).unwrap();
+        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+
+        conn.execute(
+            "INSERT INTO review_cards (user_id, word_id) VALUES (?1, ?2)",
+            rusqlite::params![uid, wid],
+        ).expect("first card insert should succeed");
+
+        let dup = conn.execute(
+            "INSERT INTO review_cards (user_id, word_id) VALUES (?1, ?2)",
+            rusqlite::params![uid, wid],
+        );
+        assert!(dup.is_err(), "duplicate (user_id, word_id) should violate UNIQUE constraint");
+    }
+
+    #[test]
+    fn migration_003_review_logs_rating_check() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u3', 'h', 'learner')", []).unwrap();
+        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('test')", []).unwrap();
+        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+
+        for rating in 1..=4 {
+            conn.execute(
+                "INSERT INTO review_logs (user_id, word_id, rating, result, state_before, state_after) \
+                 VALUES (?1, ?2, ?3, 'pass', '{}', '{}')",
+                rusqlite::params![uid, wid, rating],
+            ).unwrap_or_else(|e| panic!("rating {rating} should be accepted: {e}"));
+        }
+
+        let err = conn.execute(
+            "INSERT INTO review_logs (user_id, word_id, rating, result, state_before, state_after) \
+             VALUES (?1, ?2, 5, 'pass', '{}', '{}')",
+            rusqlite::params![uid, wid],
+        );
+        assert!(err.is_err(), "rating 5 should be rejected");
+    }
+
+    #[test]
+    fn migration_003_achievements_hidden_field_and_check() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute(
+            "INSERT INTO achievements (slug, name, condition_type, condition_value, hidden) \
+             VALUES ('secret_1', 'Secret', 'streak', 100, 1)",
+            [],
+        ).expect("hidden=1 should be accepted");
+
+        let hidden: i64 = conn
+            .query_row("SELECT hidden FROM achievements WHERE slug = 'secret_1'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(hidden, 1);
+
+        let err = conn.execute(
+            "INSERT INTO achievements (slug, name, condition_type, condition_value, hidden) \
+             VALUES ('bad', 'Bad', 'streak', 1, 2)",
+            [],
+        );
+        assert!(err.is_err(), "hidden=2 should be rejected by CHECK constraint");
+    }
+
+    #[test]
+    fn migration_003_user_achievements_composite_pk() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u4', 'h', 'learner')", []).unwrap();
+        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute(
+            "INSERT INTO achievements (slug, name, condition_type, condition_value) VALUES ('ach1', 'Ach', 'streak', 7)",
+            [],
+        ).unwrap();
+        let aid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+
+        conn.execute(
+            "INSERT INTO user_achievements (user_id, achievement_id) VALUES (?1, ?2)",
+            rusqlite::params![uid, aid],
+        ).expect("first unlock should succeed");
+
+        let dup = conn.execute(
+            "INSERT INTO user_achievements (user_id, achievement_id) VALUES (?1, ?2)",
+            rusqlite::params![uid, aid],
+        );
+        assert!(dup.is_err(), "duplicate (user_id, achievement_id) should violate PRIMARY KEY");
+    }
+
+    #[test]
+    fn migration_003_fk_cascade_delete_user_removes_review_cards() {
+        let mut conn = in_memory();
+        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
+        run(&mut conn).expect("run migrations");
+
+        conn.execute("INSERT INTO users (username, password_hash, role) VALUES ('u5', 'h', 'learner')", []).unwrap();
+        let uid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+        conn.execute("INSERT INTO words (headword) VALUES ('cascade')", []).unwrap();
+        let wid: i64 = conn.query_row("SELECT last_insert_rowid()", [], |r| r.get(0)).unwrap();
+
+        conn.execute(
+            "INSERT INTO review_cards (user_id, word_id) VALUES (?1, ?2)",
+            rusqlite::params![uid, wid],
+        ).unwrap();
+
+        conn.execute("DELETE FROM users WHERE id = ?1", rusqlite::params![uid]).unwrap();
+
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM review_cards WHERE user_id = ?1", rusqlite::params![uid], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count, 0, "CASCADE DELETE should remove review_cards when user is deleted");
     }
 }
