@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { Card, IconButton } from "@/components/ui";
+import { useGamificationSummary } from "@/hooks/useGamificationSummary";
 import { SIDEBAR_BOTTOM_ITEMS, SIDEBAR_MAIN_ITEMS } from "@/router/routes";
 
 const AUTO_COLLAPSE_BREAKPOINT = 1024;
@@ -38,6 +39,7 @@ function SidebarLink({ path, label, Icon, isCollapsed }: SidebarLinkProps) {
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const summary = useGamificationSummary();
 
   useEffect(() => {
     function handleResize() {
@@ -116,7 +118,8 @@ export function Sidebar() {
             <div className="sidebar__profile-info">
               <span className="sidebar__profile-name">User</span>
               <span className="sidebar__profile-streak">
-                <Flame size={11} aria-hidden="true" />0 day streak
+                <Flame size={11} aria-hidden="true" />
+                {summary?.currentStreak ?? 0} day streak
               </span>
             </div>
           )}

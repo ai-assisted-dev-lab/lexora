@@ -3,6 +3,7 @@ export * from "./db";
 export * from "./decks";
 export * from "./info";
 export * from "./importExport";
+export * from "./progress";
 export * from "./review";
 export * from "./search";
 export * from "./settings";

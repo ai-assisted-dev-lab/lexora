@@ -1,6 +1,7 @@
 import "./profile/ProfilePage.css";
 
 import { motion } from "framer-motion";
+import type { LucideIcon } from "lucide-react";
 import {
   Award,
   BookOpen,
@@ -9,9 +10,9 @@ import {
   Target,
   Zap,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 import { Badge, Card, ProgressBar, SectionHeader, StatCard } from "@/components/ui";
+import { useGamificationSummary } from "@/hooks/useGamificationSummary";
 
 import {
   favoriteDeck,
@@ -37,19 +38,20 @@ function formatDate(isoDate: string): string {
 }
 
 export function ProfilePage() {
+  const gamification = useGamificationSummary();
   const {
     displayName,
     initials,
     joinedDate,
-    level,
-    xp,
-    xpNextLevel,
-    currentStreak,
-    longestStreak,
-    totalXP,
-    masteredWords,
-    totalSessions,
   } = userProfile;
+  const level = gamification?.level ?? userProfile.level;
+  const xp = gamification?.currentLevelXp ?? userProfile.xp;
+  const xpNextLevel = gamification?.nextLevelXp ?? userProfile.xpNextLevel;
+  const currentStreak = gamification?.currentStreak ?? userProfile.currentStreak;
+  const longestStreak = gamification?.longestStreak ?? userProfile.longestStreak;
+  const totalXP = gamification?.totalXp ?? userProfile.totalXP;
+  const masteredWords = gamification?.masteredWords ?? userProfile.masteredWords;
+  const totalSessions = gamification?.totalSessions ?? userProfile.totalSessions;
 
   const xpPct = Math.round((xp / xpNextLevel) * 100);
 

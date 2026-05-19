@@ -2,6 +2,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use tauri::State;
 
 use crate::auth;
+use crate::commands::progress::award_completed_session_progress;
 use crate::db::DbConn;
 use crate::dto::review::{
     CompleteStudySessionInputDto, EnsureReviewCardsForDeckDto, MultipleChoiceOptionDto,
@@ -986,11 +987,7 @@ fn query_flashcard_or_weak_drill_session_progress(
         },
     )
     .optional()
-    .map_err(|e| {
-        AppError::Internal(format!(
-            "Failed to query flashcard/weak_drill session: {e}"
-        ))
-    })?
+    .map_err(|e| AppError::Internal(format!("Failed to query flashcard/weak_drill session: {e}")))?
     .ok_or_else(|| {
         AppError::NotFound(format!(
             "Flashcard/weak_drill session {session_id} was not found"
@@ -1058,9 +1055,9 @@ fn query_all_weak_candidates(
         scope = queue_scope_predicate(),
     );
 
-    let mut stmt = conn.prepare(&sql).map_err(|e| {
-        AppError::Internal(format!("Failed to prepare weak candidates query: {e}"))
-    })?;
+    let mut stmt = conn
+        .prepare(&sql)
+        .map_err(|e| AppError::Internal(format!("Failed to prepare weak candidates query: {e}")))?;
 
     let rows = stmt
         .query_map(params![user_id, deck_id, limit], queue_candidate_from_row)
@@ -1505,7 +1502,11 @@ fn submit_type_answer_review_for_user(
     )
     .map_err(|e| AppError::Internal(format!("Failed to write type answer review log: {e}")))?;
 
-    let correct_increment = if is_correct_rating(&input.rating) { 1 } else { 0 };
+    let correct_increment = if is_correct_rating(&input.rating) {
+        1
+    } else {
+        0
+    };
     let (again_increment, hard_increment, good_increment, easy_increment) =
         match input.rating.as_str() {
             "again" => (1, 0, 0, 0),
@@ -1565,8 +1566,7 @@ fn submit_flashcard_review_for_user(
     }
     validate_review_transition(&existing_card, &input.next_state, &input.reviewed_at)?;
 
-    let progress =
-        query_flashcard_or_weak_drill_session_progress(conn, input.session_id, user_id)?;
+    let progress = query_flashcard_or_weak_drill_session_progress(conn, input.session_id, user_id)?;
     if progress.ended_at.is_some() {
         return Err(AppError::Validation(format!(
             "Session {} is already completed.",
@@ -1690,8 +1690,7 @@ fn submit_flashcard_review_for_user(
     .map_err(|e| AppError::Internal(format!("Failed to update flashcard session: {e}")))?;
 
     let card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
-    let session =
-        query_flashcard_or_weak_drill_session_progress(conn, input.session_id, user_id)?;
+    let session = query_flashcard_or_weak_drill_session_progress(conn, input.session_id, user_id)?;
 
     Ok(SubmitReviewResultDto {
         session,
@@ -1850,6 +1849,21 @@ fn complete_study_session_for_user_at(
     now_sql: &str,
 ) -> Result<StudySessionSummaryDto, AppError> {
     let ended_at = generated_at(conn, now_sql)?;
+    let was_open =
+        conn.query_row(
+            "SELECT ended_at IS NULL
+             FROM study_sessions
+             WHERE id = ?1
+               AND user_id = ?2
+               AND session_type IN ('flashcard', 'multiple_choice', 'type_answer', 'weak_drill')",
+            params![input.session_id, user_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .optional()
+        .map_err(|e| AppError::Internal(format!("Failed to query study session state: {e}")))?
+        .ok_or_else(|| {
+            AppError::NotFound(format!("Study session {} was not found", input.session_id))
+        })? != 0;
 
     conn.execute(
         "UPDATE study_sessions
@@ -1860,6 +1874,10 @@ fn complete_study_session_for_user_at(
         params![ended_at, input.session_id, user_id],
     )
     .map_err(|e| AppError::Internal(format!("Failed to complete study session: {e}")))?;
+
+    if was_open {
+        award_completed_session_progress(conn, user_id, input.session_id, &ended_at)?;
+    }
 
     conn.query_row(
         "SELECT id, user_id, deck_id, session_type, started_at,
@@ -2733,6 +2751,53 @@ mod tests {
         assert_eq!(summary.correct_count, 1);
         assert_eq!(summary.accuracy, 100);
         assert_eq!(summary.time_spent_seconds, 120);
+        assert_eq!(summary.xp_earned, 11);
+    }
+
+    #[test]
+    fn completing_session_twice_does_not_double_count_xp() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+        let session = start_flashcard_session_for_user_at(
+            &conn,
+            user_id,
+            flashcard_start(Some(deck_id), 1),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start session");
+        let card = &session.queue.items[0].card;
+        submit_flashcard_review_for_user(
+            &conn,
+            user_id,
+            submit_input(session.session_id, card, "easy"),
+        )
+        .expect("submit");
+
+        let input = CompleteStudySessionInputDto {
+            session_id: session.session_id,
+        };
+        let first = complete_study_session_for_user_at(
+            &conn,
+            user_id,
+            input.clone(),
+            "'2026-01-01T00:02:00Z'",
+        )
+        .expect("first summary");
+        let second =
+            complete_study_session_for_user_at(&conn, user_id, input, "'2026-01-01T00:03:00Z'")
+                .expect("second summary");
+        let total_xp: i64 = conn
+            .query_row(
+                "SELECT total_xp FROM user_xp WHERE user_id = ?1",
+                params![user_id],
+                |row| row.get(0),
+            )
+            .expect("total xp");
+
+        assert_eq!(first.xp_earned, 11);
+        assert_eq!(second.xp_earned, 11);
+        assert_eq!(total_xp, 11);
     }
 
     #[test]

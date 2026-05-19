@@ -8,6 +8,7 @@ pub mod db;
 pub mod decks;
 pub mod import_export;
 pub mod info;
+pub mod progress;
 pub mod review;
 pub mod search;
 pub mod settings;

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Flame, Target, Zap } from "lucide-react";
 
 import { Badge, Card, SectionHeader, StatCard } from "@/components/ui";
+import { useGamificationSummary } from "@/hooks/useGamificationSummary";
 
 import {
   masteryDistribution,
@@ -22,6 +23,34 @@ function accuracyVariant(acc: number): "success" | "warning" | "danger" {
 }
 
 export function StatsPage() {
+  const gamification = useGamificationSummary();
+  const liveSummary = gamification
+    ? {
+        streak: gamification.currentStreak,
+        streakBest: gamification.longestStreak,
+        xpToday: gamification.todayXpEarned,
+        xpLevel: gamification.level,
+        xpCurrent: gamification.totalXp,
+        accuracy: gamification.accuracy,
+        accuracySessions: gamification.totalSessions,
+        mastered: gamification.masteredWords,
+        masteredOf: Math.max(
+          gamification.masteredWords,
+          gamification.totalCardsReviewed,
+        ),
+      }
+    : summaryStats;
+  const liveWeeklyActivity = gamification
+    ? gamification.weeklyActivity.map((day) => ({
+        day: new Date(`${day.date}T00:00:00Z`).toLocaleDateString("en-US", {
+          weekday: "short",
+          timeZone: "UTC",
+        }),
+        words: day.cardsReviewed,
+      }))
+    : weeklyActivity;
+  const liveWeeklyTotal = gamification?.weeklyCardsReviewed ?? weeklyTotal;
+
   return (
     <motion.div
       className="stats-page"
@@ -35,17 +64,16 @@ export function StatsPage() {
           <h2>Progress &amp; Statistics</h2>
           <p>
             A factual view of your vocabulary growth, retention, and study
-            patterns. This data will be powered by the live SQLite database in
-            Milestone 2.
+            patterns from your local SQLite learning history.
           </p>
         </div>
         <div className="stats-hero__xp-box" aria-label="XP summary">
           <Zap size={28} aria-hidden="true" />
           <span className="stats-hero__xp-value">
-            {summaryStats.xpCurrent.toLocaleString()}
+            {liveSummary.xpCurrent.toLocaleString()}
           </span>
           <span className="stats-hero__xp-sublabel">
-            Level {summaryStats.xpLevel} · XP
+            Level {liveSummary.xpLevel} · XP
           </span>
         </div>
       </Card>
@@ -54,26 +82,26 @@ export function StatsPage() {
         <StatCard
           icon={<Flame size={18} aria-hidden="true" />}
           label="Current Streak"
-          value={`${summaryStats.streak} days`}
-          meta={`Best: ${summaryStats.streakBest} days`}
+          value={`${liveSummary.streak} days`}
+          meta={`Best: ${liveSummary.streakBest} days`}
         />
         <StatCard
           icon={<Zap size={18} aria-hidden="true" />}
           label="XP Today"
-          value={summaryStats.xpToday.toLocaleString()}
-          meta={`Level ${summaryStats.xpLevel} · ${summaryStats.xpCurrent.toLocaleString()} total`}
+          value={liveSummary.xpToday.toLocaleString()}
+          meta={`Level ${liveSummary.xpLevel} · ${liveSummary.xpCurrent.toLocaleString()} total`}
         />
         <StatCard
           icon={<Target size={18} aria-hidden="true" />}
           label="Accuracy"
-          value={`${summaryStats.accuracy}%`}
-          meta={`Last ${summaryStats.accuracySessions} sessions`}
+          value={`${liveSummary.accuracy}%`}
+          meta={`${liveSummary.accuracySessions} completed sessions`}
         />
         <StatCard
           icon={<BookOpen size={18} aria-hidden="true" />}
           label="Mastered"
-          value={summaryStats.mastered.toLocaleString()}
-          meta={`of ${summaryStats.masteredOf} words`}
+          value={liveSummary.mastered.toLocaleString()}
+          meta={`of ${liveSummary.masteredOf.toLocaleString()} reviewed`}
         />
       </div>
 
@@ -81,9 +109,9 @@ export function StatsPage() {
         <Card className="stats-chart-card">
           <SectionHeader
             title="Weekly Activity"
-            description={`${weeklyTotal} words reviewed this week`}
+            description={`${liveWeeklyTotal} cards reviewed this week`}
           />
-          <WeeklyChart data={weeklyActivity} />
+          <WeeklyChart data={liveWeeklyActivity} />
         </Card>
 
         <Card className="stats-chart-card">
