@@ -13,6 +13,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ReviewPage } from "@/pages/ReviewPage";
+import { SearchPage } from "@/pages/SearchPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { StatsPage } from "@/pages/StatsPage";
 import { StudySessionPage } from "@/pages/StudySessionPage";
@@ -38,6 +39,7 @@ export const routeTree = [
           { path: "library/:deckId", element: <DeckDetailPage /> },
           { path: "word/:wordId", element: <WordDetailPage /> },
           { path: "review", element: <ReviewPage /> },
+          { path: "search", element: <SearchPage /> },
           { path: "study/session", element: <StudySessionPage /> },
           { path: "weak-words", element: <WeakWordsPage /> },
           { path: "achievements", element: <AchievementsPage /> },

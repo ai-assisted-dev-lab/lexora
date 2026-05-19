@@ -1,5 +1,7 @@
 import { Search } from "lucide-react";
+import type { FormEvent } from "react";
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface SearchBarProps {
   onActivate?: () => void;
@@ -7,6 +9,7 @@ interface SearchBarProps {
 
 export function SearchBar({ onActivate }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -20,8 +23,18 @@ export function SearchBar({ onActivate }: SearchBarProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onActivate]);
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = inputRef.current?.value.trim() ?? "";
+    if (query) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+    } else {
+      navigate("/search");
+    }
+  }
+
   return (
-    <div className="search-bar" role="search">
+    <form className="search-bar" role="search" onSubmit={handleSubmit}>
       <Search size={15} className="search-bar__icon" aria-hidden="true" />
       <input
         ref={inputRef}
@@ -35,6 +48,6 @@ export function SearchBar({ onActivate }: SearchBarProps) {
         <kbd>Ctrl</kbd>
         <kbd>K</kbd>
       </div>
-    </div>
+    </form>
   );
 }

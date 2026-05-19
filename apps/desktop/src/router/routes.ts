@@ -6,6 +6,7 @@ import {
   Compass,
   Home,
   Settings2,
+  Search,
   Trophy,
 } from "lucide-react";
 
@@ -105,6 +106,14 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
   {
     path: "/study/session",
     label: "Study Session",
+    requiresAuth: true,
+    requiresOwner: false,
+    showInSidebar: false,
+  },
+  {
+    path: "/search",
+    label: "Search",
+    icon: Search,
     requiresAuth: true,
     requiresOwner: false,
     showInSidebar: false,

@@ -10,5 +10,6 @@ pub mod decks;
 pub mod import_export;
 pub mod info;
 pub mod review;
+pub mod search;
 pub mod settings;
 pub mod words;

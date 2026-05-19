@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Header } from "./Header";
@@ -12,6 +12,11 @@ function renderHeader(path = "/discover") {
       <Header />
     </MemoryRouter>,
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <span data-testid="location">{location.pathname + location.search}</span>;
 }
 
 describe("Header page title", () => {
@@ -60,6 +65,23 @@ describe("Header search bar", () => {
     const input = screen.getByRole("searchbox");
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     expect(document.activeElement).toBe(input);
+  });
+
+  it("submits searches to the search results route", () => {
+    render(
+      <MemoryRouter initialEntries={["/discover"]}>
+        <Header />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+    const input = screen.getByRole("searchbox");
+
+    fireEvent.change(input, { target: { value: "hello" } });
+    fireEvent.submit(input.closest("form")!);
+
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/search?q=hello",
+    );
   });
 });
 

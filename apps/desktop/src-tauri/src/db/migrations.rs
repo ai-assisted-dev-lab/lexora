@@ -50,6 +50,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "pronunciation_settings",
         sql: include_str!("../../migrations/0007_pronunciation_settings.sql"),
     },
+    Migration {
+        version: 8,
+        name: "unified_search_fts",
+        sql: include_str!("../../migrations/0008_unified_search_fts.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────

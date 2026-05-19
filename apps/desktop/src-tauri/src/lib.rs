@@ -59,6 +59,7 @@ pub fn run() {
             commands::review::complete_study_session,
             commands::review::get_weak_words,
             commands::review::start_weak_words_drill,
+            commands::search::search,
             commands::import_export::get_import_export_schema,
             commands::import_export::list_exportable_decks,
             commands::import_export::export_deck_to_json,
