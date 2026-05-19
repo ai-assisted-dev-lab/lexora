@@ -5,9 +5,7 @@ import {
   AlertCircle,
   Brain,
   ChevronLeft,
-  Headphones,
   Link2,
-  Mic2,
   NotebookPen,
   Volume2,
 } from "lucide-react";
@@ -25,18 +23,17 @@ import {
 import { useWordDetail } from "@/hooks/useWordDetail";
 import type {
   WordDetailDto,
-  WordPronunciationDto,
   WordRelationDto,
   WordReviewLogDto,
   WordReviewStateDto,
 } from "@/services/commands/words";
 
+import {
+  CompactIPA,
+  PronunciationPanel,
+} from "@/components/pronunciation/PronunciationPanel";
 import { SenseList } from "./word-detail/SenseList";
-import type {
-  PronunciationNote,
-  WordDetailTab,
-  WordSense,
-} from "./word-detail/types";
+import type { WordDetailTab, WordSense } from "./word-detail/types";
 
 const tabs: Array<{
   id: WordDetailTab;
@@ -101,28 +98,6 @@ function primaryMeaning(word: WordDetailDto): string {
     word.senses[0]?.definitionEn ??
     "No meanings have been added yet."
   );
-}
-
-function pronunciationNotes(word: WordDetailDto): PronunciationNote[] {
-  const notes: PronunciationNote[] = [
-    {
-      label: "UK IPA",
-      value: word.ipaUk ?? "Not available",
-    },
-    {
-      label: "US IPA",
-      value: word.ipaUs ?? "Not available",
-    },
-  ];
-
-  if (word.pronunciations.length === 0) {
-    notes.push({
-      label: "Audio records",
-      value: "No local audio metadata has been assigned yet.",
-    });
-  }
-
-  return notes;
 }
 
 function relationLabel(type: string): string {
@@ -219,7 +194,6 @@ export function WordDetailPage() {
   const senses = toSenses(word);
   const mastery = masteryValue(word.reviewState);
   const reviewStatus = formatReviewStatus(word.reviewState);
-  const notes = pronunciationNotes(word);
   const relations = groupedRelations(word.relations);
 
   return (
@@ -262,10 +236,11 @@ export function WordDetailPage() {
             </Button>
           </div>
 
-          <div className="word-detail-hero__ipa" aria-label="IPA">
-            <span>UK {word.ipaUk ?? "not available"}</span>
-            <span>US {word.ipaUs ?? "not available"}</span>
-          </div>
+          {(word.ipaUk || word.ipaUs) && (
+            <div className="word-detail-hero__ipa" aria-label="IPA">
+              <CompactIPA ipaUk={word.ipaUk} ipaUs={word.ipaUs} />
+            </div>
+          )}
 
           <p className="word-detail-hero__meaning">{primaryMeaning(word)}</p>
 
@@ -326,7 +301,8 @@ export function WordDetailPage() {
 
         {activeTab === "pronunciation" && (
           <PronunciationPanel
-            notes={notes}
+            ipaUk={word.ipaUk}
+            ipaUs={word.ipaUs}
             pronunciations={word.pronunciations}
           />
         )}
@@ -354,52 +330,6 @@ export function WordDetailPage() {
         )}
       </Card>
     </motion.div>
-  );
-}
-
-interface PronunciationPanelProps {
-  notes: PronunciationNote[];
-  pronunciations: WordPronunciationDto[];
-}
-
-function PronunciationPanel({
-  notes,
-  pronunciations,
-}: PronunciationPanelProps) {
-  return (
-    <div className="word-detail-pronunciation">
-      <div className="word-detail-audio-card">
-        <Headphones size={24} aria-hidden="true" />
-        <div>
-          <strong>Audio metadata only</strong>
-          <p>No audio playback is implemented yet.</p>
-        </div>
-        <Button
-          aria-label="Audio playback unavailable"
-          type="button"
-          variant="icon"
-        >
-          <Volume2 size={18} aria-hidden="true" />
-        </Button>
-      </div>
-      <div className="word-detail-pronunciation-grid">
-        {notes.map((note) => (
-          <Card key={note.label} variant="compact">
-            <Mic2 size={18} aria-hidden="true" />
-            <strong>{note.label}</strong>
-            <p>{note.value}</p>
-          </Card>
-        ))}
-        {pronunciations.map((record) => (
-          <Card key={record.id} variant="compact">
-            <Mic2 size={18} aria-hidden="true" />
-            <strong>{record.dialect.toUpperCase()} audio</strong>
-            <p>{record.audioPath}</p>
-            <p>{record.ttsEngine ?? "local metadata"}</p>
-          </Card>
-        ))}
-      </div>
-    </div>
   );
 }
 

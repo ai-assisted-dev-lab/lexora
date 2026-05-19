@@ -39,6 +39,7 @@ import {
   ProgressBar,
   StatCard,
 } from "@/components/ui";
+import { CompactIPA } from "@/components/pronunciation/PronunciationPanel";
 import {
   completeStudySession,
   type MultipleChoiceOptionDto,
@@ -957,10 +958,6 @@ interface FlashcardViewProps {
 
 function FlashcardView({ flipped, item, onFlip }: FlashcardViewProps) {
   const itemType = item.partOfSpeech ?? "word";
-  const ipaValues = [
-    item.ipaUk ? `UK ${item.ipaUk}` : null,
-    item.ipaUs ? `US ${item.ipaUs}` : null,
-  ].filter(Boolean);
 
   return (
     <button
@@ -980,9 +977,7 @@ function FlashcardView({ flipped, item, onFlip }: FlashcardViewProps) {
           <h2>{item.headword}</h2>
           <div className="flashcard__meta">
             <span>{itemType}</span>
-            {ipaValues.map((ipa) => (
-              <span key={ipa}>{ipa}</span>
-            ))}
+            <CompactIPA ipaUk={item.ipaUk} ipaUs={item.ipaUs} />
           </div>
           <span>Click or press Space to reveal the answer.</span>
         </div>
@@ -1027,20 +1022,13 @@ function MultipleChoiceView({
   question,
   selectedOption,
 }: MultipleChoiceViewProps) {
-  const ipaValues = [
-    question.ipaUk ? `UK ${question.ipaUk}` : null,
-    question.ipaUs ? `US ${question.ipaUs}` : null,
-  ].filter(Boolean);
-
   return (
     <div className="choice-card">
       <p className="study-card-label">Choose the Vietnamese meaning</p>
       <h2>{question.headword}</h2>
       <div className="flashcard__meta">
         {question.partOfSpeech && <span>{question.partOfSpeech}</span>}
-        {ipaValues.map((ipa) => (
-          <span key={ipa}>{ipa}</span>
-        ))}
+        <CompactIPA ipaUk={question.ipaUk} ipaUs={question.ipaUs} />
       </div>
       {question.definitionEn && (
         <p className="choice-card__definition">{question.definitionEn}</p>
@@ -1131,11 +1119,6 @@ function TypeAnswerView({
     }
   }, [feedback]);
 
-  const ipaValues = [
-    item.ipaUk ? `UK ${item.ipaUk}` : null,
-    item.ipaUs ? `US ${item.ipaUs}` : null,
-  ].filter(Boolean);
-
   const gradeLabel =
     feedback?.grade === "correct"
       ? "Correct"
@@ -1160,9 +1143,7 @@ function TypeAnswerView({
       <h2>{item.headword}</h2>
       <div className="flashcard__meta">
         {item.partOfSpeech && <span>{item.partOfSpeech}</span>}
-        {ipaValues.map((ipa) => (
-          <span key={ipa}>{ipa}</span>
-        ))}
+        <CompactIPA ipaUk={item.ipaUk} ipaUs={item.ipaUs} />
       </div>
       {item.definitionEn && (
         <p className="choice-card__definition">{item.definitionEn}</p>

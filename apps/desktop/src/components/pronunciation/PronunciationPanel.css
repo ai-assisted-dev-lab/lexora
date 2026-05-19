@@ -1,0 +1,130 @@
+/* ── Pronunciation Panel (full — Word Detail tab) ─────────────────── */
+.pronunciation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.pronunciation-panel__accents {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-md);
+}
+
+/* ── Accent Block ─────────────────────────────────────────────────── */
+.accent-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.accent-block__label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.accent-block__ipa {
+  font-size: 1.875rem;
+  font-weight: 300;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.accent-block__missing {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.accent-block__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.accent-block__meta span {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Audio records section ────────────────────────────────────────── */
+.pronunciation-panel__audio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.pronunciation-panel__audio-header {
+  margin: 0 0 var(--space-1);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pronunciation-panel__audio-empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.pronunciation-panel__audio-record {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.pronunciation-panel__audio-record div {
+  flex: 1;
+  min-width: 0;
+}
+
+.pronunciation-panel__audio-record strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pronunciation-panel__audio-record p {
+  margin: var(--space-1) 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pronunciation-panel__audio-engine {
+  font-size: 0.75rem;
+}
+
+/* ── Compact IPA chips (hero + study cards) ───────────────────────── */
+.compact-ipa {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.compact-ipa__chip {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}

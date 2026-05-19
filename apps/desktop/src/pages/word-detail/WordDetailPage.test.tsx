@@ -149,16 +149,14 @@ describe("WordDetailPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("switches to pronunciation metadata without audio playback", async () => {
+  it("shows IPA accent blocks and audio records in the pronunciation tab", async () => {
     renderWordDetail();
 
     await screen.findByText("run");
     fireEvent.click(screen.getByRole("tab", { name: "Pronunciation" }));
 
-    expect(screen.getByText("Audio metadata only")).toBeInTheDocument();
-    expect(
-      screen.getByText("No audio playback is implemented yet."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("British English (UK)")).toBeInTheDocument();
+    expect(screen.getByText("American English (US)")).toBeInTheDocument();
     expect(screen.getByText("UK audio")).toBeInTheDocument();
     expect(screen.getByText("audio/run-uk.mp3")).toBeInTheDocument();
   });
