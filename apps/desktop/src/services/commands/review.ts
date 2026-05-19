@@ -27,6 +27,42 @@ export interface EnsureReviewCardsForDeckDto {
   cards: ReviewCardDto[];
 }
 
+export interface SmartReviewQueueRequestDto {
+  deckId?: number | null;
+  sessionLength: number;
+  dueRatio: number;
+  weakRatio: number;
+  newRatio: number;
+  mode: "smart_review";
+}
+
+export interface SmartReviewQueueItemDto {
+  position: number;
+  category: "due" | "weak" | "new";
+  card: ReviewCardDto;
+  headword: string;
+  partOfSpeech: string | null;
+  definitionEn: string | null;
+  definitionVi: string | null;
+}
+
+export interface SmartReviewQueueSummaryDto {
+  dueCount: number;
+  weakCount: number;
+  newCount: number;
+  requestedLength: number;
+  returnedLength: number;
+}
+
+export interface SmartReviewQueueDto {
+  userId: number;
+  deckId: number | null;
+  mode: "smart_review";
+  generatedAt: string;
+  summary: SmartReviewQueueSummaryDto;
+  items: SmartReviewQueueItemDto[];
+}
+
 export function ensureReviewCardsForDeck(
   deckId: number,
 ): Promise<EnsureReviewCardsForDeckDto> {
@@ -39,4 +75,10 @@ export function getReviewCard(
   vocabularyItemId: number,
 ): Promise<ReviewCardDto | null> {
   return invoke<ReviewCardDto | null>("get_review_card", { vocabularyItemId });
+}
+
+export function generateSmartReviewQueue(
+  input: SmartReviewQueueRequestDto,
+): Promise<SmartReviewQueueDto> {
+  return invoke<SmartReviewQueueDto>("generate_smart_review_queue", { input });
 }
