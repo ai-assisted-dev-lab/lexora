@@ -13,14 +13,16 @@ import {
   ChevronLeft,
   Clock3,
   Headphones,
+  Home,
   Keyboard,
   Layers3,
   Loader2,
   RotateCcw,
   Sparkles,
+  Trophy,
   Volume2,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import {
@@ -1224,50 +1226,254 @@ interface SessionSummaryProps {
   summary: StudySessionSummaryDto;
 }
 
-function SessionSummary({ exitHref, summary }: SessionSummaryProps) {
+const summaryItemVariants = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+};
+
+function gradeFromAccuracy(accuracy: number): {
+  label: string;
+  subtitle: string;
+  iconEl: ReactNode;
+  grade: "excellent" | "great" | "good" | "low";
+} {
+  if (accuracy >= 90) {
+    return {
+      label: "Outstanding!",
+      subtitle:
+        "Top-tier retention. This vocabulary is cementing into long-term memory.",
+      iconEl: <Trophy size={34} aria-hidden="true" />,
+      grade: "excellent",
+    };
+  }
+  if (accuracy >= 75) {
+    return {
+      label: "Great work",
+      subtitle: "Strong session. Keep the momentum going.",
+      iconEl: <Sparkles size={34} aria-hidden="true" />,
+      grade: "great",
+    };
+  }
+  if (accuracy >= 50) {
+    return {
+      label: "Good effort",
+      subtitle:
+        "Solid progress. The tricky words need a few more repetitions.",
+      iconEl: <Sparkles size={34} aria-hidden="true" />,
+      grade: "good",
+    };
+  }
+  return {
+    label: "Keep pushing",
+    subtitle:
+      "Challenging material. Repetition is how memory is built — come back tomorrow.",
+    iconEl: <RotateCcw size={34} aria-hidden="true" />,
+    grade: "low",
+  };
+}
+
+interface RatingBarProps {
+  again: number;
+  hard: number;
+  good: number;
+  easy: number;
+}
+
+function RatingBar({ again, hard, good, easy }: RatingBarProps) {
+  const total = again + hard + good + easy;
+  if (total === 0) return null;
+  const pct = (n: number) => `${Math.round((n / total) * 100)}%`;
+
   return (
-    <Card className="session-summary" variant="hero">
-      <div className="session-summary__icon">
-        <Sparkles size={34} aria-hidden="true" />
+    <div className="summary-rating-bar">
+      <div
+        className="summary-rating-bar__track"
+        role="img"
+        aria-label="Rating distribution bar"
+      >
+        {again > 0 && (
+          <div
+            className="summary-rating-bar__seg summary-rating-bar__seg--again"
+            style={{ width: pct(again) }}
+          />
+        )}
+        {hard > 0 && (
+          <div
+            className="summary-rating-bar__seg summary-rating-bar__seg--hard"
+            style={{ width: pct(hard) }}
+          />
+        )}
+        {good > 0 && (
+          <div
+            className="summary-rating-bar__seg summary-rating-bar__seg--good"
+            style={{ width: pct(good) }}
+          />
+        )}
+        {easy > 0 && (
+          <div
+            className="summary-rating-bar__seg summary-rating-bar__seg--easy"
+            style={{ width: pct(easy) }}
+          />
+        )}
       </div>
-      <h2>Session complete</h2>
-      <p>Review updates and logs have been saved locally.</p>
-      <div className="session-summary__stats">
+      <div className="summary-rating-bar__legend">
+        {(
+          [
+            { label: "Again", count: again, mod: "again" },
+            { label: "Hard", count: hard, mod: "hard" },
+            { label: "Good", count: good, mod: "good" },
+            { label: "Easy", count: easy, mod: "easy" },
+          ] as const
+        ).map(({ label, count, mod }) => (
+          <span
+            key={label}
+            className={`summary-rating-legend__item summary-rating-legend__item--${mod}${count === 0 ? " summary-rating-legend__item--zero" : ""}`}
+          >
+            <strong>{count}</strong>
+            <span>{label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SessionSummary({ summary }: SessionSummaryProps) {
+  const { label, subtitle, iconEl, grade } = gradeFromAccuracy(summary.accuracy);
+  const masteredCount = summary.goodCount + summary.easyCount;
+  const continueHref = `/study/session?mode=${encodeURIComponent(summary.mode)}&sessionLength=20${
+    summary.deckId ? `&deckId=${summary.deckId}` : ""
+  }`;
+  const accuracyLabel =
+    summary.mode === "multiple_choice"
+      ? "Correct choices"
+      : summary.mode === "type_answer"
+        ? "Correct answers"
+        : "Good or Easy";
+
+  return (
+    <motion.div
+      className="session-summary"
+      initial="hidden"
+      animate="show"
+      variants={{
+        hidden: {},
+        show: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } },
+      }}
+    >
+      {/* Performance grade */}
+      <motion.div
+        className="session-summary__grade"
+        variants={summaryItemVariants}
+      >
+        <div className="session-summary__icon">{iconEl}</div>
+        <h2>{label}</h2>
+        <p>{subtitle}</p>
+      </motion.div>
+
+      {/* Big accuracy number */}
+      <motion.div
+        className="session-summary__accuracy"
+        variants={summaryItemVariants}
+      >
+        <span
+          className="session-summary__accuracy-number"
+          data-grade={grade}
+        >
+          {summary.accuracy}%
+        </span>
+        <span className="session-summary__accuracy-label">{accuracyLabel}</span>
+      </motion.div>
+
+      {/* Rating distribution bar */}
+      <motion.div
+        className="session-summary__bar-wrap"
+        variants={summaryItemVariants}
+      >
+        <RatingBar
+          again={summary.againCount}
+          hard={summary.hardCount}
+          good={summary.goodCount}
+          easy={summary.easyCount}
+        />
+      </motion.div>
+
+      {/* Stats grid */}
+      <motion.div
+        className="session-summary__stats"
+        variants={summaryItemVariants}
+      >
         <StatCard
-          label="Cards studied"
-          value={String(summary.reviewedCount)}
-          meta={`${summary.totalItems} queued`}
+          label="Time"
+          value={formatDuration(summary.timeSpentSeconds)}
+          meta="session duration"
         />
         <StatCard
-          label="Accuracy"
-          value={`${summary.accuracy}%`}
+          label="Cards"
+          value={`${summary.reviewedCount} / ${summary.totalItems}`}
+          meta="reviewed"
+        />
+        <StatCard
+          label="Mastered"
+          value={String(masteredCount)}
           meta="Good or Easy"
         />
         <StatCard
-          label="Time spent"
-          value={formatDuration(summary.timeSpentSeconds)}
-          meta="local session"
+          label="Struggled"
+          value={String(summary.againCount)}
+          meta="marked Again"
         />
-      </div>
-      <div className="session-summary__stats">
-        <StatCard label="Again" value={String(summary.againCount)} />
-        <StatCard label="Hard" value={String(summary.hardCount)} />
-        <StatCard label="Good" value={String(summary.goodCount)} />
-        <StatCard label="Easy" value={String(summary.easyCount)} />
-      </div>
-      <Button asChild variant="primary">
-        <Link to={exitHref}>
-          <CheckCircle2 size={16} aria-hidden="true" />
-          Finish
-        </Link>
-      </Button>
-      <div className="session-summary__shortcuts">
-        <span>Space flip</span>
-        <span>1 Again</span>
-        <span>2 Hard</span>
-        <span>3 Good</span>
-        <span>4 Easy</span>
-      </div>
-    </Card>
+        <StatCard
+          label="Almost"
+          value={String(summary.hardCount)}
+          meta="marked Hard"
+        />
+        <StatCard
+          label="XP"
+          value={summary.xpEarned > 0 ? `+${summary.xpEarned}` : "—"}
+          meta="experience"
+        />
+      </motion.div>
+
+      {/* Achievement placeholder */}
+      <motion.div
+        className="session-summary__achievements"
+        variants={summaryItemVariants}
+      >
+        <Trophy size={16} aria-hidden="true" />
+        <div>
+          <strong>Achievements</strong>
+          <p>
+            Progress is being tracked. Unlock details coming in a future
+            update.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Actions */}
+      <motion.div
+        className="session-summary__actions"
+        variants={summaryItemVariants}
+      >
+        <Button asChild variant="ghost">
+          <Link to="/home">
+            <Home size={15} aria-hidden="true" />
+            Home
+          </Link>
+        </Button>
+        <Button asChild variant="secondary">
+          <Link to="/weak-words">
+            <AlertCircle size={15} aria-hidden="true" />
+            Weak Words
+          </Link>
+        </Button>
+        <Button asChild variant="primary">
+          <Link to={continueHref}>
+            <RotateCcw size={15} aria-hidden="true" />
+            Continue
+          </Link>
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 }

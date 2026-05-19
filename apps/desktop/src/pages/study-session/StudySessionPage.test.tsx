@@ -519,7 +519,8 @@ describe("StudySessionPage", () => {
     await clickMultipleChoiceOptionById(101);
     fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
 
-    expect(await screen.findByText("Session complete")).toBeInTheDocument();
+    // 100% accuracy → "Outstanding!" grade label
+    expect(await screen.findByText("Outstanding!")).toBeInTheDocument();
     expect(invokeMock).toHaveBeenCalledWith("complete_study_session", {
       input: { sessionId: 88 },
     });
@@ -542,9 +543,8 @@ describe("StudySessionPage", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Easy/i }));
 
-    expect(await screen.findByText("Session complete")).toBeInTheDocument();
-    expect(screen.getByText("Review updates and logs have been saved locally."))
-      .toBeInTheDocument();
+    // 50% accuracy → "Good effort" grade label
+    expect(await screen.findByText("Good effort")).toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
     expect(invokeMock).toHaveBeenCalledWith("complete_study_session", {
       input: { sessionId: 77 },
