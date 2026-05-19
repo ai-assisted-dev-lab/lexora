@@ -30,6 +30,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "review_gamification_schema",
         sql: include_str!("../../migrations/0003_review_gamification_schema.sql"),
     },
+    Migration {
+        version: 4,
+        name: "import_export_foundation",
+        sql: include_str!("../../migrations/0004_import_export_foundation.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -229,6 +234,32 @@ mod tests {
                 "expected table '{expected}' to exist after migration 2; found: {tables:?}"
             );
         }
+    }
+
+    #[test]
+    fn migration_004_creates_import_status_table() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        let tables = tables_in(&conn);
+        assert!(
+            tables.iter().any(|t| t == "content_imports"),
+            "content_imports should exist after migration 4"
+        );
+
+        let valid = conn.execute(
+            "INSERT INTO content_imports (import_type, source_path, status)
+             VALUES ('deck_json', 'sample.json', 'rejected')",
+            [],
+        );
+        assert!(valid.is_ok(), "valid import status row should insert");
+
+        let invalid = conn.execute(
+            "INSERT INTO content_imports (import_type, source_path, status)
+             VALUES ('deck_json', 'sample.json', 'pending')",
+            [],
+        );
+        assert!(invalid.is_err(), "invalid import status should be rejected");
     }
 
     #[test]

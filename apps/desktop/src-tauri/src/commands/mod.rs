@@ -6,5 +6,6 @@ pub mod admin;
 pub mod auth;
 pub mod db;
 pub mod decks;
+pub mod import_export;
 pub mod info;
 pub mod words;

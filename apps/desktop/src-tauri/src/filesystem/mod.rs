@@ -6,6 +6,7 @@ use std::path::PathBuf;
 ///
 /// All database and cache files live inside this directory — never inside the
 /// source or build tree.
+#[derive(Clone, Debug)]
 pub struct AppPaths {
     pub app_data_dir: PathBuf,
 }
@@ -21,5 +22,10 @@ impl AppPaths {
     #[allow(dead_code)]
     pub fn content_db(&self) -> PathBuf {
         self.app_data_dir.join("content.db")
+    }
+
+    /// Default directory for user-created deck JSON exports.
+    pub fn exports_dir(&self) -> PathBuf {
+        self.app_data_dir.join("exports")
     }
 }

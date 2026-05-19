@@ -191,6 +191,10 @@
   font-weight: 800;
 }
 
+.settings-select--wide {
+  max-width: 260px;
+}
+
 .settings-select:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
@@ -221,6 +225,40 @@
 .settings-input--wide {
   width: 200px;
   text-align: left;
+}
+
+.settings-input--path {
+  width: min(420px, 40vw);
+  text-align: left;
+}
+
+/* Import/export status */
+
+.settings-status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.settings-status svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.settings-status--success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.settings-status--error {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 /* ── Locked value display ───────────────────────────────── */

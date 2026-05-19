@@ -32,6 +32,7 @@ pub fn run() {
             }
 
             app.manage(db);
+            app.manage(paths);
 
             Ok(())
         })
@@ -46,6 +47,10 @@ pub fn run() {
             commands::decks::install_deck,
             commands::decks::uninstall_deck,
             commands::words::get_word_detail,
+            commands::import_export::get_import_export_schema,
+            commands::import_export::list_exportable_decks,
+            commands::import_export::export_deck_to_json,
+            commands::import_export::import_deck_from_json,
             commands::auth::login_user,
             commands::auth::logout_user,
             commands::auth::get_current_session,

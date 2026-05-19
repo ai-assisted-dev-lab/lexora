@@ -1,16 +1,21 @@
 import "./settings/SettingsPage.css";
 
 import {
+  AlertCircle,
   Bell,
   BookOpen,
+  CheckCircle2,
+  Download,
+  FileJson,
   HardDrive,
   Mic,
   RotateCcw,
   ShieldCheck,
+  Upload,
   User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,6 +23,17 @@ import { Badge, Button, Card, SectionHeader } from "@/components/ui";
 import { useAppInfo } from "@/hooks/useAppInfo";
 import { useDbHealth } from "@/hooks/useDbHealth";
 import { useSchemaVersion } from "@/hooks/useSchemaVersion";
+import {
+  exportDeckToJson,
+  getImportExportSchema,
+  importDeckFromJson,
+  listExportableDecks,
+} from "@/services/commands/importExport";
+import type {
+  ExportableDeckDto,
+  ImportExportSchemaDto,
+} from "@/services/commands/importExport";
+import { formatTauriError } from "@/services/tauri";
 import { useAuth } from "@/store/authContext";
 
 // ── Primitive helpers ────────────────────────────────────────────────────────
@@ -398,19 +414,118 @@ function NotificationsSection() {
 }
 
 function BackupSection() {
-  const [exportFormat, setExportFormat] = useState("sqlite");
+  const [decks, setDecks] = useState<ExportableDeckDto[]>([]);
+  const [schema, setSchema] = useState<ImportExportSchemaDto | null>(null);
+  const [selectedDeckId, setSelectedDeckId] = useState("");
+  const [exportPath, setExportPath] = useState("");
+  const [importPath, setImportPath] = useState("");
+  const [overwriteExport, setOverwriteExport] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const dbHealth = useDbHealth();
   const schemaVersion = useSchemaVersion();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadImportExportData() {
+      try {
+        const [schemaResult, deckResult] = await Promise.all([
+          getImportExportSchema(),
+          listExportableDecks(),
+        ]);
+        if (cancelled) return;
+        setSchema(schemaResult);
+        setDecks(deckResult.decks);
+        setSelectedDeckId((current) => {
+          if (current) return current;
+          return deckResult.decks[0]?.id.toString() ?? "";
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setError(formatTauriError(err));
+        }
+      }
+    }
+
+    void loadImportExportData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleExportDeck() {
+    const deckId = Number(selectedDeckId);
+    if (!Number.isInteger(deckId) || deckId <= 0) {
+      setError("Choose a deck to export.");
+      return;
+    }
+
+    setIsBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await exportDeckToJson(
+        deckId,
+        exportPath.trim() ? exportPath.trim() : null,
+        overwriteExport,
+      );
+      setMessage(`Exported ${result.wordCount} words to ${result.filePath}.`);
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleImportDeck() {
+    if (!importPath.trim()) {
+      setError("Enter a local .json file path to import.");
+      return;
+    }
+
+    setIsBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await importDeckFromJson(importPath.trim());
+      setMessage(
+        `Imported ${result.wordsImported} words into ${result.deckSlug}.`,
+      );
+      const deckResult = await listExportableDecks();
+      setDecks(deckResult.decks);
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsBusy(false);
+    }
+  }
 
   return (
     <div className="settings-content">
       <SectionHeader
-        title="Backup &amp; Export"
-        description="Protect your learning data and export it for archiving."
+        title="Import & Export"
+        description="Move local decks through safe Lexora JSON files."
       />
       <p className="settings-note">
-        Automated backup and restore will be available in Milestone 2.
+        Deck JSON import creates new local content only. Existing pack or deck
+        slugs are rejected to avoid silent overwrites.
       </p>
+      {(message || error) && (
+        <div
+          className={`settings-status ${error ? "settings-status--error" : "settings-status--success"}`}
+          role="status"
+        >
+          {error ? (
+            <AlertCircle size={16} aria-hidden="true" />
+          ) : (
+            <CheckCircle2 size={16} aria-hidden="true" />
+          )}
+          <span>{error ?? message}</span>
+        </div>
+      )}
       <Card className="settings-group">
         <SettingsRow
           label="Database"
@@ -441,35 +556,122 @@ function BackupSection() {
           <span className="settings-backup-meta">Never</span>
         </SettingsRow>
         <SettingsRow
-          label="Back Up Now"
-          description="Create a full snapshot of your SQLite database."
+          label="Deck JSON Schema"
+          description={
+            schema
+              ? `${schema.jsonSchemaName} v${schema.jsonSchemaVersion}; required: ${schema.jsonRequiredTopLevelFields.join(", ")}`
+              : "Lexora deck JSON schema details load from the native layer."
+          }
         >
-          <Button variant="soft" size="sm" disabled>
-            Back Up Now
-          </Button>
+          <Badge variant="muted">JSON</Badge>
         </SettingsRow>
         <SettingsRow
-          label="Export Format"
-          description="File format used when exporting your learning data."
+          label="CSV Vocabulary Format"
+          description={
+            schema
+              ? schema.csvHeaders.join(", ")
+              : "Vocabulary CSV headers load from the native layer."
+          }
+        >
+          <Badge variant="muted">Defined</Badge>
+        </SettingsRow>
+        <SettingsRow
+          label="Deck to Export"
+          description="Choose a local deck; leaving the path empty writes to Lexora's app-data exports folder."
         >
           <select
-            className="settings-select"
-            value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value)}
-            aria-label="Export format"
+            className="settings-select settings-select--wide"
+            value={selectedDeckId}
+            onChange={(e) => setSelectedDeckId(e.target.value)}
+            aria-label="Deck to export"
+            disabled={decks.length === 0 || isBusy}
           >
-            <option value="sqlite">SQLite (.db)</option>
-            <option value="json">JSON (.json)</option>
-            <option value="csv">CSV (.csv)</option>
+            {decks.length === 0 ? (
+              <option value="">No local decks</option>
+            ) : (
+              decks.map((deck) => (
+                <option key={deck.id} value={deck.id}>
+                  {deck.title} ({deck.wordCount})
+                </option>
+              ))
+            )}
           </select>
         </SettingsRow>
         <SettingsRow
-          label="Export Data"
-          description="Download your vocabulary and review history."
+          label="Export Path"
+          description="Optional full .json path. Existing files require explicit overwrite."
         >
-          <Button variant="soft" size="sm" disabled>
-            Export Data
+          <input
+            className="settings-input settings-input--path"
+            type="text"
+            value={exportPath}
+            onChange={(e) => setExportPath(e.target.value)}
+            placeholder="Use default export folder"
+            aria-label="Export JSON path"
+            disabled={isBusy}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Overwrite Export File"
+          description="Required before replacing an existing export file."
+        >
+          <Toggle
+            checked={overwriteExport}
+            onChange={setOverwriteExport}
+            aria-label="Toggle overwrite export file"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Export Deck JSON"
+          description="Write a compatible Lexora deck JSON file."
+        >
+          <Button
+            variant="soft"
+            size="sm"
+            onClick={handleExportDeck}
+            disabled={isBusy || !selectedDeckId}
+          >
+            <Download size={15} aria-hidden="true" />
+            Export JSON
           </Button>
+        </SettingsRow>
+        <SettingsRow
+          label="Import JSON Path"
+          description="Full path to a compatible Lexora deck JSON file."
+        >
+          <input
+            className="settings-input settings-input--path"
+            type="text"
+            value={importPath}
+            onChange={(e) => setImportPath(e.target.value)}
+            placeholder="C:\\path\\deck.lexora-deck.json"
+            aria-label="Import JSON path"
+            disabled={isBusy}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Import Deck JSON"
+          description="Validate and import without overwriting existing slugs."
+        >
+          <Button
+            variant="soft"
+            size="sm"
+            onClick={handleImportDeck}
+            disabled={isBusy || !importPath.trim()}
+          >
+            <Upload size={15} aria-hidden="true" />
+            Import JSON
+          </Button>
+        </SettingsRow>
+        <SettingsRow
+          label="Format Notes"
+          description={
+            schema
+              ? schema.csvNotes.join(" ")
+              : "Schema notes load from the native layer."
+          }
+        >
+          <FileJson size={18} aria-hidden="true" />
         </SettingsRow>
       </Card>
     </div>
