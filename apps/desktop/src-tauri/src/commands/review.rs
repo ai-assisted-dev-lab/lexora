@@ -8,8 +8,9 @@ use crate::dto::review::{
     MultipleChoiceQuestionDto, MultipleChoiceSessionDto, ReviewCardDto, ReviewCardStateInputDto,
     SmartReviewQueueDto, SmartReviewQueueItemDto, SmartReviewQueueRequestDto,
     SmartReviewQueueSummaryDto, StartFlashcardSessionInputDto, StartMultipleChoiceSessionInputDto,
-    StudySessionDto, StudySessionProgressDto, StudySessionSummaryDto,
-    SubmitFlashcardReviewInputDto, SubmitMultipleChoiceReviewInputDto, SubmitReviewResultDto,
+    StartTypeAnswerSessionInputDto, StudySessionDto, StudySessionProgressDto,
+    StudySessionSummaryDto, SubmitFlashcardReviewInputDto, SubmitMultipleChoiceReviewInputDto,
+    SubmitReviewResultDto, SubmitTypeAnswerReviewInputDto,
 };
 use crate::errors::AppError;
 
@@ -17,6 +18,7 @@ const SQLITE_UTC_NOW: &str = "strftime('%Y-%m-%dT%H:%M:%SZ', 'now')";
 const SMART_REVIEW_MODE: &str = "smart_review";
 const FLASHCARD_MODE: &str = "flashcard";
 const MULTIPLE_CHOICE_MODE: &str = "multiple_choice";
+const TYPE_ANSWER_MODE: &str = "type_answer";
 
 fn review_card_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ReviewCardDto> {
     Ok(ReviewCardDto {
@@ -777,6 +779,12 @@ fn validate_multiple_choice_start_input(
     )
 }
 
+fn validate_type_answer_start_input(
+    input: &StartTypeAnswerSessionInputDto,
+) -> Result<(), AppError> {
+    validate_study_session_start(input.mode.as_str(), TYPE_ANSWER_MODE, input.session_length)
+}
+
 fn validate_study_session_start(
     submitted_mode: &str,
     expected_mode: &str,
@@ -1127,6 +1135,201 @@ fn start_multiple_choice_session_for_user_at(
     })
 }
 
+fn start_type_answer_session_for_user_at(
+    conn: &Connection,
+    user_id: i64,
+    input: StartTypeAnswerSessionInputDto,
+    now_sql: &str,
+) -> Result<StudySessionDto, AppError> {
+    validate_type_answer_start_input(&input)?;
+
+    let queue = generate_smart_review_queue_for_user_at(
+        conn,
+        user_id,
+        SmartReviewQueueRequestDto {
+            deck_id: input.deck_id,
+            session_length: input.session_length,
+            due_ratio: 0.7,
+            weak_ratio: 0.2,
+            new_ratio: 0.1,
+            mode: SMART_REVIEW_MODE.to_string(),
+        },
+        now_sql,
+    )?;
+    let started_at = generated_at(conn, now_sql)?;
+
+    conn.execute(
+        "INSERT INTO study_sessions (
+             user_id, deck_id, session_type, started_at, total_items
+         )
+         VALUES (?1, ?2, 'type_answer', ?3, ?4)",
+        params![user_id, input.deck_id, started_at, queue.items.len() as i64],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to create type answer session: {e}")))?;
+
+    Ok(StudySessionDto {
+        session_id: conn.last_insert_rowid(),
+        user_id,
+        deck_id: input.deck_id,
+        mode: TYPE_ANSWER_MODE.to_string(),
+        started_at,
+        ended_at: None,
+        total_items: queue.items.len() as i64,
+        reviewed_count: 0,
+        correct_count: 0,
+        again_count: 0,
+        hard_count: 0,
+        good_count: 0,
+        easy_count: 0,
+        queue,
+    })
+}
+
+fn submit_type_answer_review_for_user(
+    conn: &Connection,
+    user_id: i64,
+    input: SubmitTypeAnswerReviewInputDto,
+) -> Result<SubmitReviewResultDto, AppError> {
+    validate_review_state(&input.next_state)?;
+    let numeric_rating = rating_value(&input.rating)?;
+    let existing_card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
+    if existing_card.vocabulary_item_id != input.vocabulary_item_id {
+        return Err(AppError::Validation(
+            "Review card does not match the submitted vocabulary item.".to_string(),
+        ));
+    }
+    validate_review_transition(&existing_card, &input.next_state, &input.reviewed_at)?;
+
+    let progress = query_session_progress(conn, input.session_id, user_id, TYPE_ANSWER_MODE)?;
+    if progress.ended_at.is_some() {
+        return Err(AppError::Validation(format!(
+            "Type answer session {} is already completed.",
+            input.session_id
+        )));
+    }
+
+    let state_before = state_json(&state_from_card(&existing_card))?;
+    let state_after = state_json(&input.next_state)?;
+
+    let updated = conn
+        .execute(
+            "UPDATE review_cards
+             SET due = ?1,
+                 stability = ?2,
+                 difficulty = ?3,
+                 elapsed_days = ?4,
+                 scheduled_days = ?5,
+                 learning_steps = ?6,
+                 reps = ?7,
+                 lapses = ?8,
+                 state = ?9,
+                 last_review = ?10,
+                 updated_at = ?11
+             WHERE id = ?12
+               AND user_id = ?13
+               AND word_id = ?14",
+            params![
+                input.next_state.due,
+                input.next_state.stability,
+                input.next_state.difficulty,
+                input.next_state.elapsed_days,
+                input.next_state.scheduled_days,
+                input.next_state.learning_steps,
+                input.next_state.reps,
+                input.next_state.lapses,
+                input.next_state.state,
+                input.next_state.last_review,
+                input.reviewed_at,
+                input.review_card_id,
+                user_id,
+                input.vocabulary_item_id,
+            ],
+        )
+        .map_err(|e| AppError::Internal(format!("Failed to update review card: {e}")))?;
+
+    if updated != 1 {
+        return Err(AppError::NotFound(format!(
+            "Review card {} was not found",
+            input.review_card_id
+        )));
+    }
+
+    let result = if is_correct_rating(&input.rating) {
+        "pass"
+    } else {
+        "fail"
+    };
+    let response_time_ms = input.response_time_ms.unwrap_or(0);
+
+    conn.execute(
+        "INSERT INTO review_logs (
+             user_id, word_id, review_card_id, deck_id, session_id, rating,
+             result, mode, state_before, state_after, review_duration_ms,
+             response_time_ms, reviewed_at
+         )
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'type_answer', ?8, ?9, ?10, ?11, ?12)",
+        params![
+            user_id,
+            input.vocabulary_item_id,
+            input.review_card_id,
+            existing_card.deck_id,
+            input.session_id,
+            numeric_rating,
+            result,
+            state_before,
+            state_after,
+            response_time_ms,
+            input.response_time_ms,
+            input.reviewed_at,
+        ],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to write type answer review log: {e}")))?;
+
+    let correct_increment = if is_correct_rating(&input.rating) { 1 } else { 0 };
+    let (again_increment, hard_increment, good_increment, easy_increment) =
+        match input.rating.as_str() {
+            "again" => (1, 0, 0, 0),
+            "hard" => (0, 1, 0, 0),
+            "good" => (0, 0, 1, 0),
+            "easy" => (0, 0, 0, 1),
+            _ => unreachable!("rating validated above"),
+        };
+
+    conn.execute(
+        "UPDATE study_sessions
+         SET cards_studied = cards_studied + 1,
+             cards_correct = cards_correct + ?1,
+             again_count = again_count + ?2,
+             hard_count = hard_count + ?3,
+             good_count = good_count + ?4,
+             easy_count = easy_count + ?5
+         WHERE id = ?6
+           AND user_id = ?7
+           AND session_type = 'type_answer'
+           AND ended_at IS NULL",
+        params![
+            correct_increment,
+            again_increment,
+            hard_increment,
+            good_increment,
+            easy_increment,
+            input.session_id,
+            user_id,
+        ],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to update type answer session: {e}")))?;
+
+    let card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
+    let session = query_session_progress(conn, input.session_id, user_id, TYPE_ANSWER_MODE)?;
+
+    Ok(SubmitReviewResultDto {
+        session,
+        card,
+        rating: input.rating,
+        reviewed_at: input.reviewed_at,
+    })
+}
+
 fn submit_flashcard_review_for_user(
     conn: &Connection,
     user_id: i64,
@@ -1431,7 +1634,7 @@ fn complete_study_session_for_user_at(
          SET ended_at = COALESCE(ended_at, ?1)
          WHERE id = ?2
            AND user_id = ?3
-           AND session_type IN ('flashcard', 'multiple_choice')",
+           AND session_type IN ('flashcard', 'multiple_choice', 'type_answer')",
         params![ended_at, input.session_id, user_id],
     )
     .map_err(|e| AppError::Internal(format!("Failed to complete flashcard session: {e}")))?;
@@ -1649,6 +1852,34 @@ pub fn submit_multiple_choice_review(
     let user = auth::require_session(&conn)?;
 
     submit_multiple_choice_review_for_user(&conn, user.id, input)
+}
+
+#[tauri::command]
+pub fn start_type_answer_session(
+    input: StartTypeAnswerSessionInputDto,
+    db: State<'_, DbConn>,
+) -> Result<StudySessionDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    start_type_answer_session_for_user_at(&conn, user.id, input, SQLITE_UTC_NOW)
+}
+
+#[tauri::command]
+pub fn submit_type_answer_review(
+    input: SubmitTypeAnswerReviewInputDto,
+    db: State<'_, DbConn>,
+) -> Result<SubmitReviewResultDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    submit_type_answer_review_for_user(&conn, user.id, input)
 }
 
 #[tauri::command]

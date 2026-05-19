@@ -24,6 +24,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import {
+  gradeAnswer,
+  gradeToRating,
+  type MatchGrade,
+} from "@/lib/fuzzy-match";
+
+import {
   Badge,
   Button,
   Card,
@@ -40,10 +46,13 @@ import {
   type SmartReviewQueueItemDto,
   startFlashcardSession,
   startMultipleChoiceSession,
+  startTypeAnswerSession,
   type StudySessionDto,
   type StudySessionSummaryDto,
   submitFlashcardReview,
   submitMultipleChoiceReview,
+  submitTypeAnswerReview,
+  type TypeAnswerSessionDto,
 } from "@/services/commands/review";
 import { formatTauriError } from "@/services/tauri";
 
@@ -59,6 +68,8 @@ const flashcardModeAliases = new Set([
 ]);
 
 const multipleChoiceModeAliases = new Set(["multiple-choice", "multiple_choice"]);
+
+const typeAnswerModeAliases = new Set(["type-answer", "type_answer"]);
 
 const ratingButtons: Array<{
   label: string;
@@ -133,12 +144,19 @@ export function StudySessionPage() {
   const mode = searchParams.get("mode") ?? "flashcard";
   const isFlashcardMode = flashcardModeAliases.has(mode);
   const isMultipleChoiceMode = multipleChoiceModeAliases.has(mode);
-  const studyMode = isMultipleChoiceMode ? "multiple_choice" : "flashcard";
-  const isSupportedMode = isFlashcardMode || isMultipleChoiceMode;
+  const isTypeAnswerMode = typeAnswerModeAliases.has(mode);
+  const studyMode = isMultipleChoiceMode
+    ? "multiple_choice"
+    : isTypeAnswerMode
+      ? "type_answer"
+      : "flashcard";
+  const isSupportedMode = isFlashcardMode || isMultipleChoiceMode || isTypeAnswerMode;
 
   const [session, setSession] = useState<StudySessionDto | null>(null);
   const [multipleChoiceSession, setMultipleChoiceSession] =
     useState<MultipleChoiceSessionDto | null>(null);
+  const [typeAnswerSession, setTypeAnswerSession] =
+    useState<TypeAnswerSessionDto | null>(null);
   const [summary, setSummary] = useState<StudySessionSummaryDto | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -147,6 +165,12 @@ export function StudySessionPage() {
   const [choiceFeedback, setChoiceFeedback] = useState<{
     isCorrect: boolean;
     rating: LexoraReviewRating;
+  } | null>(null);
+  const [typedAnswer, setTypedAnswer] = useState("");
+  const [typeAnswerFeedback, setTypeAnswerFeedback] = useState<{
+    grade: MatchGrade;
+    rating: "again" | "hard" | "good";
+    correctAnswer: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(isSupportedMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -157,9 +181,11 @@ export function StudySessionPage() {
   const currentItem = session?.queue.items[currentIndex] ?? null;
   const currentQuestion =
     multipleChoiceSession?.questions[currentIndex] ?? null;
-  const currentCard = currentItem ?? currentQuestion;
+  const typeAnswerItem =
+    typeAnswerSession?.queue.items[currentIndex] ?? null;
+  const currentCard = currentItem ?? currentQuestion ?? typeAnswerItem;
   const isComplete = summary !== null;
-  const activeSession = multipleChoiceSession ?? session;
+  const activeSession = multipleChoiceSession ?? typeAnswerSession ?? session;
   const totalItems = activeSession?.totalItems ?? 0;
   const reviewedCount =
     summary?.reviewedCount ?? activeSession?.reviewedCount ?? 0;
@@ -172,7 +198,9 @@ export function StudySessionPage() {
   const progressValue = isComplete
     ? totalItems
     : reviewedCount +
-      ((isFlipped && currentItem) || choiceFeedback ? 0.5 : 0);
+      ((isFlipped && currentItem) || choiceFeedback || typeAnswerFeedback
+        ? 0.5
+        : 0);
 
   const startSession = useCallback(async () => {
     if (!isSupportedMode) {
@@ -186,10 +214,13 @@ export function StudySessionPage() {
     setSummary(null);
     setSession(null);
     setMultipleChoiceSession(null);
+    setTypeAnswerSession(null);
     setCurrentIndex(0);
     setIsFlipped(false);
     setSelectedOption(null);
     setChoiceFeedback(null);
+    setTypedAnswer("");
+    setTypeAnswerFeedback(null);
 
     try {
       if (studyMode === "multiple_choice") {
@@ -202,6 +233,16 @@ export function StudySessionPage() {
           throw new Error("Multiple choice session response was invalid.");
         }
         setMultipleChoiceSession(result);
+      } else if (studyMode === "type_answer") {
+        const result = await startTypeAnswerSession({
+          deckId,
+          sessionLength,
+          mode: "type_answer",
+        });
+        if (!result || !Array.isArray(result.queue?.items)) {
+          throw new Error("Type answer session response was invalid.");
+        }
+        setTypeAnswerSession(result);
       } else {
         const result = await startFlashcardSession({
           deckId,
@@ -424,6 +465,108 @@ export function StudySessionPage() {
     setCardStartedAtMs(Date.now());
   }, [choiceFeedback, currentIndex, multipleChoiceSession]);
 
+  const submitTypeAnswer = useCallback(async () => {
+    if (
+      !typeAnswerSession ||
+      !typeAnswerItem ||
+      typeAnswerFeedback ||
+      isSubmittingRef.current ||
+      summary
+    ) {
+      return;
+    }
+
+    const expected =
+      typeAnswerItem.definitionVi ??
+      typeAnswerItem.definitionEn ??
+      typeAnswerItem.headword;
+    const grade = gradeAnswer(typedAnswer, expected);
+    const rating = gradeToRating(grade);
+
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const reviewedAt = new Date();
+      const scheduling = scheduleReview({
+        card: toReviewCardState(typeAnswerItem.card),
+        rating,
+        reviewedAt,
+      });
+      const responseTimeMs = Math.max(0, Date.now() - cardStartedAtMs);
+
+      const result = await submitTypeAnswerReview({
+        sessionId: typeAnswerSession.sessionId,
+        reviewCardId: typeAnswerItem.card.id,
+        vocabularyItemId: typeAnswerItem.card.vocabularyItemId,
+        rating,
+        reviewedAt: scheduling.reviewedAt,
+        responseTimeMs,
+        nextState: scheduling.next,
+      });
+
+      setTypeAnswerSession((current) =>
+        current
+          ? {
+              ...current,
+              reviewedCount: result.session.reviewedCount,
+              correctCount: result.session.correctCount,
+              againCount: result.session.againCount,
+              hardCount: result.session.hardCount,
+              goodCount: result.session.goodCount,
+              easyCount: result.session.easyCount,
+              endedAt: result.session.endedAt,
+            }
+          : current,
+      );
+      setTypeAnswerFeedback({ grade, rating, correctAnswer: expected });
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }, [
+    cardStartedAtMs,
+    summary,
+    typeAnswerFeedback,
+    typeAnswerItem,
+    typeAnswerSession,
+    typedAnswer,
+  ]);
+
+  const continueTypeAnswer = useCallback(async () => {
+    if (!typeAnswerSession || !typeAnswerFeedback || isSubmittingRef.current) {
+      return;
+    }
+
+    const isLastItem =
+      currentIndex >= typeAnswerSession.queue.items.length - 1;
+    if (isLastItem) {
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        const completed = await completeStudySession({
+          sessionId: typeAnswerSession.sessionId,
+        });
+        setSummary(completed);
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    setCurrentIndex((index) => index + 1);
+    setTypedAnswer("");
+    setTypeAnswerFeedback(null);
+    setCardStartedAtMs(Date.now());
+  }, [currentIndex, typeAnswerFeedback, typeAnswerSession]);
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (isTextEntryTarget(event.target)) {
@@ -452,6 +595,12 @@ export function StudySessionPage() {
         return;
       }
 
+      if (event.code === "Space" && typeAnswerFeedback) {
+        event.preventDefault();
+        void continueTypeAnswer();
+        return;
+      }
+
       if (currentQuestion && !choiceFeedback) {
         const optionIndex = Number(event.key) - 1;
         const option = currentQuestion.options[optionIndex];
@@ -474,6 +623,7 @@ export function StudySessionPage() {
   }, [
     choiceFeedback,
     continueMultipleChoice,
+    continueTypeAnswer,
     currentQuestion,
     currentItem,
     exitHref,
@@ -483,6 +633,7 @@ export function StudySessionPage() {
     navigate,
     submitMultipleChoiceOption,
     submitRating,
+    typeAnswerFeedback,
   ]);
 
   const supportStats = useMemo(
@@ -513,7 +664,12 @@ export function StudySessionPage() {
                 ((activeSession?.correctCount ?? 0) * 100) / totalItems,
               )}%`
             : "0%",
-        meta: studyMode === "multiple_choice" ? "Correct choices" : "Good or Easy",
+        meta:
+        studyMode === "multiple_choice"
+          ? "Correct choices"
+          : studyMode === "type_answer"
+            ? "Correct answers"
+            : "Good or Easy",
       },
     ],
     [activeSession, reviewedCount, studyMode, summary, totalItems],
@@ -536,14 +692,18 @@ export function StudySessionPage() {
               ? "Session Summary"
               : studyMode === "multiple_choice"
                 ? "Multiple Choice Session"
-                : "Flashcard Session"}
+                : studyMode === "type_answer"
+                  ? "Type Answer Session"
+                  : "Flashcard Session"}
           </h1>
           <p>
             {isComplete
               ? "Your saved session summary is ready."
               : studyMode === "multiple_choice"
                 ? "Choose the Vietnamese meaning and save each result to review history."
-                : "Study real vocabulary cards from the Smart Review queue."}
+                : studyMode === "type_answer"
+                  ? "Type the Vietnamese meaning and get graded Correct, Almost, or Wrong."
+                  : "Study real vocabulary cards from the Smart Review queue."}
           </p>
         </div>
         <div className="study-session-header__meta">
@@ -641,7 +801,9 @@ export function StudySessionPage() {
                   <Badge>
                     {studyMode === "multiple_choice"
                       ? "Multiple Choice"
-                      : "Flashcard"}
+                      : studyMode === "type_answer"
+                        ? "Type Answer"
+                        : "Flashcard"}
                   </Badge>
                   <Badge variant="muted">{currentCard.category}</Badge>
                 </div>
@@ -662,6 +824,17 @@ export function StudySessionPage() {
                   flipped={isFlipped}
                   item={currentItem}
                   onFlip={() => setIsFlipped((current) => !current)}
+                />
+              ) : typeAnswerItem ? (
+                <TypeAnswerView
+                  key={currentIndex}
+                  feedback={typeAnswerFeedback}
+                  isSubmitting={isSubmitting}
+                  item={typeAnswerItem}
+                  onCheck={submitTypeAnswer}
+                  onContinue={continueTypeAnswer}
+                  typed={typedAnswer}
+                  onTyped={setTypedAnswer}
                 />
               ) : currentQuestion ? (
                 <MultipleChoiceView
@@ -713,7 +886,9 @@ export function StudySessionPage() {
                 <p>
                   {studyMode === "multiple_choice"
                     ? "1-4 chooses an option. Space continues after feedback. Esc exits."
-                    : "Space flips. 1-4 rate after the answer is visible. Esc exits."}
+                    : studyMode === "type_answer"
+                      ? "Type your answer and press Enter to check. Space continues after feedback. Esc exits."
+                      : "Space flips. 1-4 rate after the answer is visible. Esc exits."}
                 </p>
               </div>
             </Card>
@@ -896,6 +1071,127 @@ function MultipleChoiceView({
           >
             Continue
           </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface TypeAnswerViewProps {
+  feedback: {
+    grade: MatchGrade;
+    rating: "again" | "hard" | "good";
+    correctAnswer: string;
+  } | null;
+  isSubmitting: boolean;
+  item: SmartReviewQueueItemDto;
+  onCheck: () => void;
+  onContinue: () => void;
+  typed: string;
+  onTyped: (value: string) => void;
+}
+
+function TypeAnswerView({
+  feedback,
+  isSubmitting,
+  item,
+  onCheck,
+  onContinue,
+  typed,
+  onTyped,
+}: TypeAnswerViewProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!feedback) {
+      inputRef.current?.focus();
+    }
+  }, [feedback]);
+
+  const ipaValues = [
+    item.ipaUk ? `UK ${item.ipaUk}` : null,
+    item.ipaUs ? `US ${item.ipaUs}` : null,
+  ].filter(Boolean);
+
+  const gradeLabel =
+    feedback?.grade === "correct"
+      ? "Correct"
+      : feedback?.grade === "almost"
+        ? "Almost"
+        : feedback?.grade === "wrong"
+          ? "Wrong"
+          : null;
+
+  const savedAsLabel =
+    feedback?.rating === "good"
+      ? "Good"
+      : feedback?.rating === "hard"
+        ? "Hard"
+        : feedback?.rating === "again"
+          ? "Again"
+          : null;
+
+  return (
+    <div className="type-answer-card">
+      <p className="study-card-label">Type the Vietnamese meaning</p>
+      <h2>{item.headword}</h2>
+      <div className="flashcard__meta">
+        {item.partOfSpeech && <span>{item.partOfSpeech}</span>}
+        {ipaValues.map((ipa) => (
+          <span key={ipa}>{ipa}</span>
+        ))}
+      </div>
+      {item.definitionEn && (
+        <p className="choice-card__definition">{item.definitionEn}</p>
+      )}
+      <label htmlFor="type-answer-input">
+        Vietnamese meaning
+        <input
+          ref={inputRef}
+          id="type-answer-input"
+          type="text"
+          value={typed}
+          disabled={Boolean(feedback) || isSubmitting}
+          placeholder="Type here and press Enter"
+          onChange={(e) => onTyped(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (feedback) {
+                onContinue();
+              } else if (typed.trim()) {
+                onCheck();
+              }
+            }
+          }}
+        />
+      </label>
+      {feedback ? (
+        <div
+          className="type-answer-card__feedback"
+          data-grade={feedback.grade}
+          role="status"
+        >
+          <strong>{gradeLabel}</strong>
+          <span>
+            Answer: <em>{feedback.correctAnswer}</em>
+          </span>
+          <span>Saved as {savedAsLabel}.</span>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={isSubmitting}
+            onClick={onContinue}
+          >
+            Continue
+          </Button>
+        </div>
+      ) : (
+        <div className="type-answer-card__hint">
+          <span>
+            Press <kbd>Enter</kbd> to check your answer.
+          </span>
         </div>
       )}
     </div>

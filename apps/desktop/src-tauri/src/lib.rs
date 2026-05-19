@@ -54,6 +54,8 @@ pub fn run() {
             commands::review::start_multiple_choice_session,
             commands::review::submit_flashcard_review,
             commands::review::submit_multiple_choice_review,
+            commands::review::start_type_answer_session,
+            commands::review::submit_type_answer_review,
             commands::review::complete_study_session,
             commands::import_export::get_import_export_schema,
             commands::import_export::list_exportable_decks,

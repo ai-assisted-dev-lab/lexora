@@ -139,6 +139,26 @@ pub struct SubmitMultipleChoiceReviewInputDto {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct StartTypeAnswerSessionInputDto {
+    pub deck_id: Option<i64>,
+    pub session_length: i64,
+    pub mode: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubmitTypeAnswerReviewInputDto {
+    pub session_id: i64,
+    pub review_card_id: i64,
+    pub vocabulary_item_id: i64,
+    pub rating: String,
+    pub reviewed_at: String,
+    pub response_time_ms: Option<i64>,
+    pub next_state: ReviewCardStateInputDto,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompleteStudySessionInputDto {
     pub session_id: i64,
 }

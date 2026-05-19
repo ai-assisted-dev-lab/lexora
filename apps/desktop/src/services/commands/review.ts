@@ -199,7 +199,7 @@ export interface StudySessionSummaryDto {
   sessionId: number;
   userId: number;
   deckId: number | null;
-  mode: "flashcard" | "multiple_choice";
+  mode: "flashcard" | "multiple_choice" | "type_answer";
   startedAt: string;
   endedAt: string;
   totalItems: number;
@@ -212,6 +212,39 @@ export interface StudySessionSummaryDto {
   accuracy: number;
   timeSpentSeconds: number;
   xpEarned: number;
+}
+
+export interface StartTypeAnswerSessionInputDto {
+  deckId?: number | null;
+  sessionLength: number;
+  mode: "type_answer";
+}
+
+export interface TypeAnswerSessionDto {
+  sessionId: number;
+  userId: number;
+  deckId: number | null;
+  mode: "type_answer";
+  startedAt: string;
+  endedAt: string | null;
+  totalItems: number;
+  reviewedCount: number;
+  correctCount: number;
+  againCount: number;
+  hardCount: number;
+  goodCount: number;
+  easyCount: number;
+  queue: SmartReviewQueueDto;
+}
+
+export interface SubmitTypeAnswerReviewInputDto {
+  sessionId: number;
+  reviewCardId: number;
+  vocabularyItemId: number;
+  rating: "again" | "hard" | "good" | "easy";
+  reviewedAt: string;
+  responseTimeMs?: number;
+  nextState: ReviewCardStateInputDto;
 }
 
 export function ensureReviewCardsForDeck(
@@ -260,6 +293,18 @@ export function submitMultipleChoiceReview(
   return invoke<SubmitReviewResultDto>("submit_multiple_choice_review", {
     input,
   });
+}
+
+export function startTypeAnswerSession(
+  input: StartTypeAnswerSessionInputDto,
+): Promise<TypeAnswerSessionDto> {
+  return invoke<TypeAnswerSessionDto>("start_type_answer_session", { input });
+}
+
+export function submitTypeAnswerReview(
+  input: SubmitTypeAnswerReviewInputDto,
+): Promise<SubmitReviewResultDto> {
+  return invoke<SubmitReviewResultDto>("submit_type_answer_review", { input });
 }
 
 export function completeStudySession(

@@ -376,6 +376,60 @@
   color: var(--color-text);
 }
 
+.type-answer-card__submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.type-answer-card__feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-glass);
+  padding: var(--space-3) var(--space-4);
+}
+
+.type-answer-card__feedback[data-grade="correct"] {
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+}
+
+.type-answer-card__feedback[data-grade="almost"] {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+}
+
+.type-answer-card__feedback[data-grade="wrong"] {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+.type-answer-card__feedback strong {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.type-answer-card__feedback span {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.type-answer-card__feedback em {
+  color: var(--color-text);
+  font-style: normal;
+  font-weight: 850;
+}
+
+.type-answer-card__feedback .lx-button {
+  margin-left: auto;
+}
+
 .study-rating-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
