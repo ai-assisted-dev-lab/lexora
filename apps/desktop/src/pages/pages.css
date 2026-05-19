@@ -32,6 +32,18 @@
   line-height: 1.6;
 }
 
+.review-page {
+  display: flex;
+  min-height: 360px;
+  align-items: center;
+  justify-content: center;
+}
+
+.review-entry-card {
+  width: min(100%, 620px);
+  padding: var(--space-8);
+}
+
 /* ── Login page ──────────────────────────────────────────────────────── */
 .login-page {
   display: flex;

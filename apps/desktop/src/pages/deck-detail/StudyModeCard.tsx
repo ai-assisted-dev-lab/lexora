@@ -28,7 +28,7 @@ export function StudyModeCard({ mode }: StudyModeCardProps) {
         </div>
         <Button
           asChild
-          aria-label={`${mode.title} placeholder`}
+          aria-label={`Start ${mode.title}`}
           className="study-mode-card__action"
           variant="ghost"
         >

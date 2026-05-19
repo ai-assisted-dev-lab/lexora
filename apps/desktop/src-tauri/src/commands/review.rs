@@ -4,13 +4,17 @@ use tauri::State;
 use crate::auth;
 use crate::db::DbConn;
 use crate::dto::review::{
-    EnsureReviewCardsForDeckDto, ReviewCardDto, SmartReviewQueueDto, SmartReviewQueueItemDto,
-    SmartReviewQueueRequestDto, SmartReviewQueueSummaryDto,
+    CompleteStudySessionInputDto, EnsureReviewCardsForDeckDto, ReviewCardDto,
+    ReviewCardStateInputDto, SmartReviewQueueDto, SmartReviewQueueItemDto,
+    SmartReviewQueueRequestDto, SmartReviewQueueSummaryDto, StartFlashcardSessionInputDto,
+    StudySessionDto, StudySessionProgressDto, StudySessionSummaryDto,
+    SubmitFlashcardReviewInputDto, SubmitReviewResultDto,
 };
 use crate::errors::AppError;
 
 const SQLITE_UTC_NOW: &str = "strftime('%Y-%m-%dT%H:%M:%SZ', 'now')";
 const SMART_REVIEW_MODE: &str = "smart_review";
+const FLASHCARD_MODE: &str = "flashcard";
 
 fn review_card_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ReviewCardDto> {
     Ok(ReviewCardDto {
@@ -23,12 +27,13 @@ fn review_card_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ReviewCardD
         difficulty: row.get(6)?,
         elapsed_days: row.get(7)?,
         scheduled_days: row.get(8)?,
-        reps: row.get(9)?,
-        lapses: row.get(10)?,
-        state: row.get(11)?,
-        last_review: row.get(12)?,
-        created_at: row.get(13)?,
-        updated_at: row.get(14)?,
+        learning_steps: row.get(9)?,
+        reps: row.get(10)?,
+        lapses: row.get(11)?,
+        state: row.get(12)?,
+        last_review: row.get(13)?,
+        created_at: row.get(14)?,
+        updated_at: row.get(15)?,
     })
 }
 
@@ -54,8 +59,13 @@ struct QueueCandidate {
     card: ReviewCardDto,
     headword: String,
     part_of_speech: Option<String>,
+    ipa_uk: Option<String>,
+    ipa_us: Option<String>,
     definition_en: Option<String>,
     definition_vi: Option<String>,
+    example_sentence_en: Option<String>,
+    example_sentence_vi: Option<String>,
+    additional_sense_count: i64,
 }
 
 impl QueueCandidate {
@@ -66,8 +76,13 @@ impl QueueCandidate {
             card: self.card,
             headword: self.headword,
             part_of_speech: self.part_of_speech,
+            ipa_uk: self.ipa_uk,
+            ipa_us: self.ipa_us,
             definition_en: self.definition_en,
             definition_vi: self.definition_vi,
+            example_sentence_en: self.example_sentence_en,
+            example_sentence_vi: self.example_sentence_vi,
+            additional_sense_count: self.additional_sense_count,
         }
     }
 }
@@ -79,7 +94,7 @@ fn query_review_card(
 ) -> Result<Option<ReviewCardDto>, AppError> {
     conn.query_row(
         "SELECT id, user_id, word_id, deck_id, due, stability, difficulty,
-                elapsed_days, scheduled_days, reps, lapses, state, last_review,
+                elapsed_days, scheduled_days, learning_steps, reps, lapses, state, last_review,
                 created_at, updated_at
          FROM   review_cards
          WHERE  word_id = ?1
@@ -94,10 +109,15 @@ fn query_review_card(
 fn queue_candidate_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<QueueCandidate> {
     Ok(QueueCandidate {
         card: review_card_from_row(row)?,
-        headword: row.get(15)?,
-        part_of_speech: row.get(16)?,
-        definition_en: row.get(17)?,
-        definition_vi: row.get(18)?,
+        headword: row.get(16)?,
+        part_of_speech: row.get(17)?,
+        ipa_uk: row.get(18)?,
+        ipa_us: row.get(19)?,
+        definition_en: row.get(20)?,
+        definition_vi: row.get(21)?,
+        example_sentence_en: row.get(22)?,
+        example_sentence_vi: row.get(23)?,
+        additional_sense_count: row.get(24)?,
     })
 }
 
@@ -140,9 +160,9 @@ fn query_queue_candidates(
     let sql = format!(
         "SELECT rc.id, rc.user_id, rc.word_id, rc.deck_id, rc.due,
                 rc.stability, rc.difficulty, rc.elapsed_days,
-                rc.scheduled_days, rc.reps, rc.lapses, rc.state,
+                rc.scheduled_days, rc.learning_steps, rc.reps, rc.lapses, rc.state,
                 rc.last_review, rc.created_at, rc.updated_at,
-                w.headword, w.part_of_speech,
+                w.headword, w.part_of_speech, w.ipa_uk, w.ipa_us,
                 (
                     SELECT s.definition_en
                     FROM   senses s
@@ -156,7 +176,28 @@ fn query_queue_candidates(
                     WHERE  s.word_id = w.id
                     ORDER  BY s.sense_index, s.id
                     LIMIT  1
-                ) AS definition_vi
+                ) AS definition_vi,
+                (
+                    SELECT e.sentence_en
+                    FROM   senses s
+                    JOIN   examples e ON e.sense_id = s.id
+                    WHERE  s.word_id = w.id
+                    ORDER  BY s.sense_index, e.id
+                    LIMIT  1
+                ) AS example_sentence_en,
+                (
+                    SELECT e.sentence_vi
+                    FROM   senses s
+                    JOIN   examples e ON e.sense_id = s.id
+                    WHERE  s.word_id = w.id
+                    ORDER  BY s.sense_index, e.id
+                    LIMIT  1
+                ) AS example_sentence_vi,
+                MAX(0, (
+                    SELECT COUNT(*)
+                    FROM   senses s
+                    WHERE  s.word_id = w.id
+                ) - 1) AS additional_sense_count
          FROM   review_cards rc
          JOIN   words w ON w.id = rc.word_id
          JOIN   deck_words dw ON dw.word_id = rc.word_id
@@ -203,7 +244,7 @@ fn query_review_cards_for_deck(
         .prepare(
             "SELECT rc.id, rc.user_id, rc.word_id, rc.deck_id, rc.due,
                     rc.stability, rc.difficulty, rc.elapsed_days,
-                    rc.scheduled_days, rc.reps, rc.lapses, rc.state,
+                    rc.scheduled_days, rc.learning_steps, rc.reps, rc.lapses, rc.state,
                     rc.last_review, rc.created_at, rc.updated_at
              FROM   review_cards rc
              JOIN   deck_words dw ON dw.word_id = rc.word_id
@@ -295,11 +336,11 @@ fn ensure_review_cards_for_deck_at(
     let sql = format!(
         "INSERT OR IGNORE INTO review_cards (
              user_id, word_id, deck_id, due, stability, difficulty,
-             elapsed_days, scheduled_days, reps, lapses, state, last_review,
+             elapsed_days, scheduled_days, learning_steps, reps, lapses, state, last_review,
              created_at, updated_at
          )
          SELECT ?1, dw.word_id, ?2, {now}, 0.0, 0.0,
-                0, 0, 0, 0, 'new', NULL, {now}, {now}
+                0, 0, 0, 0, 0, 'new', NULL, {now}, {now}
          FROM   deck_words dw
          WHERE  dw.deck_id = ?2",
         now = now_sql,
@@ -332,11 +373,11 @@ fn ensure_review_cards_for_installed_decks_at(
     let sql = format!(
         "INSERT OR IGNORE INTO review_cards (
              user_id, word_id, deck_id, due, stability, difficulty,
-             elapsed_days, scheduled_days, reps, lapses, state, last_review,
+             elapsed_days, scheduled_days, learning_steps, reps, lapses, state, last_review,
              created_at, updated_at
          )
          SELECT ?1, dw.word_id, MIN(ds.deck_id), {now}, 0.0, 0.0,
-                0, 0, 0, 0, 'new', NULL, {now}, {now}
+                0, 0, 0, 0, 0, 'new', NULL, {now}, {now}
          FROM   deck_subscriptions ds
          JOIN   deck_words dw ON dw.deck_id = ds.deck_id
          WHERE  ds.user_id = ?1
@@ -565,6 +606,442 @@ fn generated_at(conn: &Connection, now_sql: &str) -> Result<String, AppError> {
         .map_err(|e| AppError::Internal(format!("Failed to resolve queue timestamp: {e}")))
 }
 
+fn validate_flashcard_start_input(input: &StartFlashcardSessionInputDto) -> Result<(), AppError> {
+    if input.mode != FLASHCARD_MODE {
+        return Err(AppError::Validation(format!(
+            "Unsupported study mode '{}'. Only '{FLASHCARD_MODE}' is available.",
+            input.mode
+        )));
+    }
+
+    if !(1..=200).contains(&input.session_length) {
+        return Err(AppError::Validation(
+            "sessionLength must be between 1 and 200".to_string(),
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_review_state(state: &ReviewCardStateInputDto) -> Result<(), AppError> {
+    if !state.stability.is_finite() || !state.difficulty.is_finite() {
+        return Err(AppError::Validation(
+            "Review card stability and difficulty must be finite numbers.".to_string(),
+        ));
+    }
+
+    if state.elapsed_days < 0
+        || state.scheduled_days < 0
+        || state.learning_steps < 0
+        || state.reps < 0
+        || state.lapses < 0
+    {
+        return Err(AppError::Validation(
+            "Review card counters must be non-negative.".to_string(),
+        ));
+    }
+
+    match state.state.as_str() {
+        "new" | "learning" | "review" | "relearning" => Ok(()),
+        _ => Err(AppError::Validation(format!(
+            "Invalid review card state '{}'.",
+            state.state
+        ))),
+    }
+}
+
+fn validate_review_transition(
+    previous: &ReviewCardDto,
+    next: &ReviewCardStateInputDto,
+    reviewed_at: &str,
+) -> Result<(), AppError> {
+    if next.reps != previous.reps + 1 {
+        return Err(AppError::Validation(
+            "Submitted review state must increment reps exactly once.".to_string(),
+        ));
+    }
+
+    if next.lapses < previous.lapses {
+        return Err(AppError::Validation(
+            "Submitted review state cannot reduce lapse count.".to_string(),
+        ));
+    }
+
+    if next.last_review.as_deref() != Some(reviewed_at) {
+        return Err(AppError::Validation(
+            "Submitted review state must record the reviewedAt timestamp.".to_string(),
+        ));
+    }
+
+    if next.due.trim().is_empty() {
+        return Err(AppError::Validation(
+            "Submitted review state must include a due timestamp.".to_string(),
+        ));
+    }
+
+    Ok(())
+}
+
+fn rating_value(rating: &str) -> Result<i64, AppError> {
+    match rating {
+        "again" => Ok(1),
+        "hard" => Ok(2),
+        "good" => Ok(3),
+        "easy" => Ok(4),
+        _ => Err(AppError::Validation(format!(
+            "Invalid flashcard rating '{rating}'."
+        ))),
+    }
+}
+
+fn is_correct_rating(rating: &str) -> bool {
+    matches!(rating, "good" | "easy")
+}
+
+fn state_from_card(card: &ReviewCardDto) -> ReviewCardStateInputDto {
+    ReviewCardStateInputDto {
+        due: card.due.clone(),
+        stability: card.stability,
+        difficulty: card.difficulty,
+        elapsed_days: card.elapsed_days,
+        scheduled_days: card.scheduled_days,
+        learning_steps: card.learning_steps,
+        reps: card.reps,
+        lapses: card.lapses,
+        state: card.state.clone(),
+        last_review: card.last_review.clone(),
+    }
+}
+
+fn state_json(state: &ReviewCardStateInputDto) -> Result<String, AppError> {
+    serde_json::to_string(state).map_err(|e| {
+        AppError::Internal(format!(
+            "Failed to serialize flashcard review state snapshot: {e}"
+        ))
+    })
+}
+
+fn query_review_card_by_id(
+    conn: &Connection,
+    review_card_id: i64,
+    user_id: i64,
+) -> Result<ReviewCardDto, AppError> {
+    conn.query_row(
+        "SELECT id, user_id, word_id, deck_id, due, stability, difficulty,
+                elapsed_days, scheduled_days, learning_steps, reps, lapses, state, last_review,
+                created_at, updated_at
+         FROM   review_cards
+         WHERE  id = ?1
+           AND  user_id = ?2",
+        params![review_card_id, user_id],
+        review_card_from_row,
+    )
+    .optional()
+    .map_err(|e| AppError::Internal(format!("Failed to query review card: {e}")))?
+    .ok_or_else(|| AppError::NotFound(format!("Review card {review_card_id} was not found")))
+}
+
+fn query_session_progress(
+    conn: &Connection,
+    session_id: i64,
+    user_id: i64,
+) -> Result<StudySessionProgressDto, AppError> {
+    conn.query_row(
+        "SELECT id, total_items, cards_studied, cards_correct,
+                again_count, hard_count, good_count, easy_count, ended_at
+         FROM   study_sessions
+         WHERE  id = ?1
+           AND  user_id = ?2
+           AND  session_type = 'flashcard'",
+        params![session_id, user_id],
+        |row| {
+            Ok(StudySessionProgressDto {
+                session_id: row.get(0)?,
+                total_items: row.get(1)?,
+                reviewed_count: row.get(2)?,
+                correct_count: row.get(3)?,
+                again_count: row.get(4)?,
+                hard_count: row.get(5)?,
+                good_count: row.get(6)?,
+                easy_count: row.get(7)?,
+                ended_at: row.get(8)?,
+            })
+        },
+    )
+    .optional()
+    .map_err(|e| AppError::Internal(format!("Failed to query flashcard session: {e}")))?
+    .ok_or_else(|| AppError::NotFound(format!("Flashcard session {session_id} was not found")))
+}
+
+fn start_flashcard_session_for_user_at(
+    conn: &Connection,
+    user_id: i64,
+    input: StartFlashcardSessionInputDto,
+    now_sql: &str,
+) -> Result<StudySessionDto, AppError> {
+    validate_flashcard_start_input(&input)?;
+
+    let queue = generate_smart_review_queue_for_user_at(
+        conn,
+        user_id,
+        SmartReviewQueueRequestDto {
+            deck_id: input.deck_id,
+            session_length: input.session_length,
+            due_ratio: 0.7,
+            weak_ratio: 0.2,
+            new_ratio: 0.1,
+            mode: SMART_REVIEW_MODE.to_string(),
+        },
+        now_sql,
+    )?;
+    let started_at = generated_at(conn, now_sql)?;
+
+    conn.execute(
+        "INSERT INTO study_sessions (
+             user_id, deck_id, session_type, started_at, total_items
+         )
+         VALUES (?1, ?2, 'flashcard', ?3, ?4)",
+        params![user_id, input.deck_id, started_at, queue.items.len() as i64],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to create flashcard session: {e}")))?;
+
+    Ok(StudySessionDto {
+        session_id: conn.last_insert_rowid(),
+        user_id,
+        deck_id: input.deck_id,
+        mode: FLASHCARD_MODE.to_string(),
+        started_at,
+        ended_at: None,
+        total_items: queue.items.len() as i64,
+        reviewed_count: 0,
+        correct_count: 0,
+        again_count: 0,
+        hard_count: 0,
+        good_count: 0,
+        easy_count: 0,
+        queue,
+    })
+}
+
+fn submit_flashcard_review_for_user(
+    conn: &Connection,
+    user_id: i64,
+    input: SubmitFlashcardReviewInputDto,
+) -> Result<SubmitReviewResultDto, AppError> {
+    validate_review_state(&input.next_state)?;
+    let numeric_rating = rating_value(&input.rating)?;
+    let existing_card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
+    if existing_card.vocabulary_item_id != input.vocabulary_item_id {
+        return Err(AppError::Validation(
+            "Review card does not match the submitted vocabulary item.".to_string(),
+        ));
+    }
+    validate_review_transition(&existing_card, &input.next_state, &input.reviewed_at)?;
+
+    let progress = query_session_progress(conn, input.session_id, user_id)?;
+    if progress.ended_at.is_some() {
+        return Err(AppError::Validation(format!(
+            "Flashcard session {} is already completed.",
+            input.session_id
+        )));
+    }
+
+    let state_before = state_json(&state_from_card(&existing_card))?;
+    let state_after = state_json(&input.next_state)?;
+
+    let updated = conn
+        .execute(
+            "UPDATE review_cards
+             SET due = ?1,
+                 stability = ?2,
+                 difficulty = ?3,
+                 elapsed_days = ?4,
+                 scheduled_days = ?5,
+                 learning_steps = ?6,
+                 reps = ?7,
+                 lapses = ?8,
+                 state = ?9,
+                 last_review = ?10,
+                 updated_at = ?11
+             WHERE id = ?12
+               AND user_id = ?13
+               AND word_id = ?14",
+            params![
+                input.next_state.due,
+                input.next_state.stability,
+                input.next_state.difficulty,
+                input.next_state.elapsed_days,
+                input.next_state.scheduled_days,
+                input.next_state.learning_steps,
+                input.next_state.reps,
+                input.next_state.lapses,
+                input.next_state.state,
+                input.next_state.last_review,
+                input.reviewed_at,
+                input.review_card_id,
+                user_id,
+                input.vocabulary_item_id,
+            ],
+        )
+        .map_err(|e| AppError::Internal(format!("Failed to update review card: {e}")))?;
+
+    if updated != 1 {
+        return Err(AppError::NotFound(format!(
+            "Review card {} was not found",
+            input.review_card_id
+        )));
+    }
+
+    let result = if is_correct_rating(&input.rating) {
+        "pass"
+    } else {
+        "fail"
+    };
+    let response_time_ms = input.response_time_ms.unwrap_or(0);
+
+    conn.execute(
+        "INSERT INTO review_logs (
+             user_id, word_id, review_card_id, deck_id, session_id, rating,
+             result, mode, state_before, state_after, review_duration_ms,
+             response_time_ms, reviewed_at
+         )
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'flashcard', ?8, ?9, ?10, ?11, ?12)",
+        params![
+            user_id,
+            input.vocabulary_item_id,
+            input.review_card_id,
+            existing_card.deck_id,
+            input.session_id,
+            numeric_rating,
+            result,
+            state_before,
+            state_after,
+            response_time_ms,
+            input.response_time_ms,
+            input.reviewed_at,
+        ],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to write flashcard review log: {e}")))?;
+
+    let correct_increment = if is_correct_rating(&input.rating) {
+        1
+    } else {
+        0
+    };
+    let (again_increment, hard_increment, good_increment, easy_increment) =
+        match input.rating.as_str() {
+            "again" => (1, 0, 0, 0),
+            "hard" => (0, 1, 0, 0),
+            "good" => (0, 0, 1, 0),
+            "easy" => (0, 0, 0, 1),
+            _ => unreachable!("rating validated above"),
+        };
+
+    conn.execute(
+        "UPDATE study_sessions
+         SET cards_studied = cards_studied + 1,
+             cards_correct = cards_correct + ?1,
+             again_count = again_count + ?2,
+             hard_count = hard_count + ?3,
+             good_count = good_count + ?4,
+             easy_count = easy_count + ?5
+         WHERE id = ?6
+           AND user_id = ?7
+           AND session_type = 'flashcard'
+           AND ended_at IS NULL",
+        params![
+            correct_increment,
+            again_increment,
+            hard_increment,
+            good_increment,
+            easy_increment,
+            input.session_id,
+            user_id,
+        ],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to update flashcard session: {e}")))?;
+
+    let card = query_review_card_by_id(conn, input.review_card_id, user_id)?;
+    let session = query_session_progress(conn, input.session_id, user_id)?;
+
+    Ok(SubmitReviewResultDto {
+        session,
+        card,
+        rating: input.rating,
+        reviewed_at: input.reviewed_at,
+    })
+}
+
+fn complete_study_session_for_user_at(
+    conn: &Connection,
+    user_id: i64,
+    input: CompleteStudySessionInputDto,
+    now_sql: &str,
+) -> Result<StudySessionSummaryDto, AppError> {
+    let ended_at = generated_at(conn, now_sql)?;
+
+    conn.execute(
+        "UPDATE study_sessions
+         SET ended_at = COALESCE(ended_at, ?1)
+         WHERE id = ?2
+           AND user_id = ?3
+           AND session_type = 'flashcard'",
+        params![ended_at, input.session_id, user_id],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to complete flashcard session: {e}")))?;
+
+    conn.query_row(
+        "SELECT id, user_id, deck_id, session_type, started_at,
+                COALESCE(ended_at, ?1), total_items, cards_studied,
+                cards_correct, again_count, hard_count, good_count,
+                easy_count,
+                MAX(0, CAST(strftime('%s', COALESCE(ended_at, ?1)) AS INTEGER)
+                       - CAST(strftime('%s', started_at) AS INTEGER)),
+                xp_earned
+         FROM   study_sessions
+         WHERE  id = ?2
+           AND  user_id = ?3
+           AND  session_type = 'flashcard'",
+        params![ended_at, input.session_id, user_id],
+        |row| {
+            let total_items: i64 = row.get(6)?;
+            let correct_count: i64 = row.get(8)?;
+            let accuracy = if total_items > 0 {
+                (correct_count * 100 / total_items).clamp(0, 100)
+            } else {
+                0
+            };
+
+            Ok(StudySessionSummaryDto {
+                session_id: row.get(0)?,
+                user_id: row.get(1)?,
+                deck_id: row.get(2)?,
+                mode: row.get(3)?,
+                started_at: row.get(4)?,
+                ended_at: row.get(5)?,
+                total_items,
+                reviewed_count: row.get(7)?,
+                correct_count,
+                again_count: row.get(9)?,
+                hard_count: row.get(10)?,
+                good_count: row.get(11)?,
+                easy_count: row.get(12)?,
+                accuracy,
+                time_spent_seconds: row.get(13)?,
+                xp_earned: row.get(14)?,
+            })
+        },
+    )
+    .optional()
+    .map_err(|e| AppError::Internal(format!("Failed to summarize flashcard session: {e}")))?
+    .ok_or_else(|| {
+        AppError::NotFound(format!(
+            "Flashcard session {} was not found",
+            input.session_id
+        ))
+    })
+}
+
 fn smart_queue_summary(
     items: &[SmartReviewQueueItemDto],
     requested_length: i64,
@@ -677,6 +1154,48 @@ pub fn generate_smart_review_queue(
     generate_smart_review_queue_for_user(&conn, user.id, input)
 }
 
+#[tauri::command]
+pub fn start_flashcard_session(
+    input: StartFlashcardSessionInputDto,
+    db: State<'_, DbConn>,
+) -> Result<StudySessionDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    start_flashcard_session_for_user_at(&conn, user.id, input, SQLITE_UTC_NOW)
+}
+
+#[tauri::command]
+pub fn submit_flashcard_review(
+    input: SubmitFlashcardReviewInputDto,
+    db: State<'_, DbConn>,
+) -> Result<SubmitReviewResultDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    submit_flashcard_review_for_user(&conn, user.id, input)
+}
+
+#[tauri::command]
+pub fn complete_study_session(
+    input: CompleteStudySessionInputDto,
+    db: State<'_, DbConn>,
+) -> Result<StudySessionSummaryDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    let user = auth::require_session(&conn)?;
+
+    complete_study_session_for_user_at(&conn, user.id, input, SQLITE_UTC_NOW)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -735,6 +1254,61 @@ mod tests {
             weak_ratio,
             new_ratio,
             mode: SMART_REVIEW_MODE.to_string(),
+        }
+    }
+
+    fn flashcard_start(deck_id: Option<i64>, session_length: i64) -> StartFlashcardSessionInputDto {
+        StartFlashcardSessionInputDto {
+            deck_id,
+            session_length,
+            mode: FLASHCARD_MODE.to_string(),
+        }
+    }
+
+    fn next_state_for(card: &ReviewCardDto, rating: &str) -> ReviewCardStateInputDto {
+        ReviewCardStateInputDto {
+            due: "2026-01-02T00:00:00Z".to_string(),
+            stability: match rating {
+                "again" => 0.6,
+                "hard" => 1.2,
+                "good" => 2.5,
+                "easy" => 4.0,
+                _ => 1.0,
+            },
+            difficulty: match rating {
+                "again" => 8.0,
+                "hard" => 6.5,
+                "good" => 5.0,
+                "easy" => 3.5,
+                _ => 5.0,
+            },
+            elapsed_days: 0,
+            scheduled_days: 1,
+            learning_steps: if rating == "again" { 1 } else { 0 },
+            reps: card.reps + 1,
+            lapses: card.lapses + if rating == "again" { 1 } else { 0 },
+            state: if rating == "again" {
+                "learning".to_string()
+            } else {
+                "review".to_string()
+            },
+            last_review: Some("2026-01-01T00:00:00Z".to_string()),
+        }
+    }
+
+    fn submit_input(
+        session_id: i64,
+        card: &ReviewCardDto,
+        rating: &str,
+    ) -> SubmitFlashcardReviewInputDto {
+        SubmitFlashcardReviewInputDto {
+            session_id,
+            review_card_id: card.id,
+            vocabulary_item_id: card.vocabulary_item_id,
+            rating: rating.to_string(),
+            reviewed_at: "2026-01-01T00:00:00Z".to_string(),
+            response_time_ms: Some(1500),
+            next_state: next_state_for(card, rating),
         }
     }
 
@@ -1007,5 +1581,203 @@ mod tests {
         );
 
         assert!(matches!(result, Err(AppError::Validation(_))));
+    }
+
+    #[test]
+    fn start_flashcard_session_returns_valid_session() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+
+        let session = start_flashcard_session_for_user_at(
+            &conn,
+            user_id,
+            flashcard_start(Some(deck_id), 3),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start session");
+
+        assert!(session.session_id > 0);
+        assert_eq!(session.user_id, user_id);
+        assert_eq!(session.deck_id, Some(deck_id));
+        assert_eq!(session.mode, "flashcard");
+        assert_eq!(session.total_items, 3);
+        assert_eq!(session.queue.items.len(), 3);
+        assert_eq!(session.reviewed_count, 0);
+    }
+
+    #[test]
+    fn submit_flashcard_review_updates_review_card_state() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+        let session = start_flashcard_session_for_user_at(
+            &conn,
+            user_id,
+            flashcard_start(Some(deck_id), 1),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start session");
+        let card = &session.queue.items[0].card;
+
+        let result = submit_flashcard_review_for_user(
+            &conn,
+            user_id,
+            submit_input(session.session_id, card, "good"),
+        )
+        .expect("submit review");
+
+        assert_eq!(result.card.reps, card.reps + 1);
+        assert_eq!(result.card.state, "review");
+        assert_eq!(result.card.due, "2026-01-02T00:00:00Z");
+        assert_eq!(result.session.reviewed_count, 1);
+        assert_eq!(result.session.correct_count, 1);
+        assert_eq!(result.session.good_count, 1);
+    }
+
+    #[test]
+    fn submit_flashcard_review_writes_review_log() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+        let session = start_flashcard_session_for_user_at(
+            &conn,
+            user_id,
+            flashcard_start(Some(deck_id), 1),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start session");
+        let card = &session.queue.items[0].card;
+
+        submit_flashcard_review_for_user(
+            &conn,
+            user_id,
+            submit_input(session.session_id, card, "again"),
+        )
+        .expect("submit review");
+
+        let log: (i64, i64, i64, i64, String, i64, Option<i64>) = conn
+            .query_row(
+                "SELECT user_id, session_id, review_card_id, word_id, mode, rating, response_time_ms
+                 FROM review_logs
+                 WHERE session_id = ?1",
+                params![session.session_id],
+                |row| {
+                    Ok((
+                        row.get(0)?,
+                        row.get(1)?,
+                        row.get(2)?,
+                        row.get(3)?,
+                        row.get(4)?,
+                        row.get(5)?,
+                        row.get(6)?,
+                    ))
+                },
+            )
+            .expect("review log");
+
+        assert_eq!(log.0, user_id);
+        assert_eq!(log.1, session.session_id);
+        assert_eq!(log.2, card.id);
+        assert_eq!(log.3, card.vocabulary_item_id);
+        assert_eq!(log.4, "flashcard");
+        assert_eq!(log.5, 1);
+        assert_eq!(log.6, Some(1500));
+    }
+
+    #[test]
+    fn submitting_multiple_flashcard_reviews_advances_session_counters() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+        let session = start_flashcard_session_for_user_at(
+            &conn,
+            user_id,
+            flashcard_start(Some(deck_id), 2),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start session");
+
+        let first = &session.queue.items[0].card;
+        let second = &session.queue.items[1].card;
+        submit_flashcard_review_for_user(
+            &conn,
+            user_id,
+            submit_input(session.session_id, first, "hard"),
+        )
+        .expect("first review");
+        let second_result = submit_flashcard_review_for_user(
+            &conn,
+            user_id,
+            submit_input(session.session_id, second, "easy"),
+        )
+        .expect("second review");
+
+        assert_eq!(second_result.session.reviewed_count, 2);
+        assert_eq!(second_result.session.correct_count, 1);
+        assert_eq!(second_result.session.hard_count, 1);
+        assert_eq!(second_result.session.easy_count, 1);
+    }
+
+    #[test]
+    fn completing_flashcard_session_returns_summary() {
+        let conn = db_with_data();
+        let user_id = login_as(&conn, "learner");
+        let deck_id = first_deck_id(&conn);
+        let session = start_flashcard_session_for_user_at(
+            &conn,
+            user_id,
+            flashcard_start(Some(deck_id), 1),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("start session");
+        let card = &session.queue.items[0].card;
+        submit_flashcard_review_for_user(
+            &conn,
+            user_id,
+            submit_input(session.session_id, card, "easy"),
+        )
+        .expect("submit");
+
+        let summary = complete_study_session_for_user_at(
+            &conn,
+            user_id,
+            CompleteStudySessionInputDto {
+                session_id: session.session_id,
+            },
+            "'2026-01-01T00:02:00Z'",
+        )
+        .expect("summary");
+
+        assert_eq!(summary.session_id, session.session_id);
+        assert_eq!(summary.reviewed_count, 1);
+        assert_eq!(summary.correct_count, 1);
+        assert_eq!(summary.accuracy, 100);
+        assert_eq!(summary.time_spent_seconds, 120);
+    }
+
+    #[test]
+    fn normal_user_cannot_submit_review_for_another_users_session() {
+        let conn = db_with_data();
+        let owner_id = login_as(&conn, "owner");
+        let deck_id = first_deck_id(&conn);
+        let owner_session = start_flashcard_session_for_user_at(
+            &conn,
+            owner_id,
+            flashcard_start(Some(deck_id), 1),
+            "'2026-01-01T00:00:00Z'",
+        )
+        .expect("owner session");
+        let owner_card = owner_session.queue.items[0].card.clone();
+
+        crate::auth::logout(&conn).expect("logout owner");
+        let learner_id = login_as(&conn, "learner");
+        let result = submit_flashcard_review_for_user(
+            &conn,
+            learner_id,
+            submit_input(owner_session.session_id, &owner_card, "good"),
+        );
+
+        assert!(matches!(result, Err(AppError::NotFound(_))));
     }
 }

@@ -94,7 +94,7 @@ describe("DeckDetailPage", () => {
     expect(screen.getByText("New deck")).toBeInTheDocument();
   });
 
-  it("routes study actions to study-session placeholders", async () => {
+  it("routes flashcard study actions to the real study-session entry", async () => {
     renderDeckDetail();
 
     expect(await screen.findByText("Choose a Study Mode")).toBeInTheDocument();
@@ -105,9 +105,13 @@ describe("DeckDetailPage", () => {
     expect(
       screen.getByRole("link", { name: "Start Learning" }),
     ).toHaveAttribute("href", "/study/session?deckId=1&mode=learn");
-    expect(screen.getByLabelText("Smart Review placeholder")).toHaveAttribute(
+    expect(screen.getByLabelText("Start Smart Review")).toHaveAttribute(
       "href",
       "/study/session?deckId=1&mode=smart-review",
+    );
+    expect(screen.getByLabelText("Start Flashcards")).toHaveAttribute(
+      "href",
+      "/study/session?deckId=1&mode=flashcard",
     );
   });
 

@@ -17,6 +17,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@lexora/review-engine':
+        specifier: workspace:*
+        version: link:../../packages/review-engine
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@18.3.28)(react@18.3.1)

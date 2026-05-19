@@ -35,6 +35,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "import_export_foundation",
         sql: include_str!("../../migrations/0004_import_export_foundation.sql"),
     },
+    Migration {
+        version: 5,
+        name: "flashcard_sessions",
+        sql: include_str!("../../migrations/0005_flashcard_sessions.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────

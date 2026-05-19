@@ -25,6 +25,113 @@ vi.mock("@tauri-apps/api/core", () => ({
     if (cmd === "list_discover_decks") {
       return Promise.resolve({ decks: [], total: 0 });
     }
+    if (cmd === "list_library_decks") {
+      return Promise.resolve({
+        decks: [
+          {
+            id: 1,
+            slug: "everyday-actions",
+            title: "Everyday Actions",
+            description: "Essential daily verbs",
+            level: "beginner",
+            wordCount: 5,
+            tags: ["verbs"],
+            packName: "English Essentials",
+            packSlug: "english-essentials",
+            installedAt: "2026-01-01T00:00:00Z",
+            masteredCount: 0,
+            dueCount: 0,
+            accuracy: 0,
+            lastStudied: null,
+            progress: 0,
+          },
+        ],
+        total: 1,
+      });
+    }
+    if (cmd === "get_deck_detail") {
+      return Promise.resolve({
+        id: 1,
+        slug: "everyday-actions",
+        title: "Everyday Actions",
+        description: "Essential daily verbs",
+        level: "beginner",
+        wordCount: 5,
+        tags: ["verbs"],
+        packName: "English Essentials",
+        packSlug: "english-essentials",
+        banner: null,
+        installed: true,
+        installedAt: "2026-01-01T00:00:00Z",
+        progress: {
+          masteredCount: 0,
+          dueCount: 0,
+          accuracy: 0,
+          lastStudied: null,
+          progress: 0,
+        },
+        words: [],
+      });
+    }
+    if (cmd === "get_word_detail") {
+      return Promise.resolve({
+        id: 1,
+        headword: "hello",
+        partOfSpeech: "interjection",
+        ipaUk: null,
+        ipaUs: null,
+        frequencyRank: null,
+        cefrLevel: "A1",
+        packName: "English Essentials",
+        packSlug: "english-essentials",
+        senses: [
+          {
+            id: 1,
+            senseIndex: 0,
+            definitionEn: "A greeting.",
+            definitionVi: "Xin chao.",
+            register: null,
+            domain: null,
+            examples: [],
+          },
+        ],
+        pronunciations: [],
+        relations: [],
+        reviewState: null,
+        reviewHistory: [],
+      });
+    }
+    if (cmd === "start_flashcard_session") {
+      return Promise.resolve({
+        sessionId: 1,
+        userId: 1,
+        deckId: null,
+        mode: "flashcard",
+        startedAt: "2026-01-01T00:00:00Z",
+        endedAt: null,
+        totalItems: 0,
+        reviewedCount: 0,
+        correctCount: 0,
+        againCount: 0,
+        hardCount: 0,
+        goodCount: 0,
+        easyCount: 0,
+        queue: {
+          userId: 1,
+          deckId: null,
+          mode: "smart_review",
+          generatedAt: "2026-01-01T00:00:00Z",
+          summary: {
+            dueCount: 0,
+            weakCount: 0,
+            newCount: 0,
+            requestedLength: 20,
+            returnedLength: 0,
+          },
+          items: [],
+        },
+      });
+    }
     return Promise.resolve(undefined);
   }),
 }));
@@ -105,8 +212,8 @@ describe("Route smoke tests", () => {
     ["/profile", "Minh"],
     ["/weak-words", "Weak Words"],
     ["/study/session", "Study Session"],
-    ["/library/deck-123", "Deck Detail"],
-    ["/word/hello", "Word Detail"],
+    ["/library/1", "Deck Detail"],
+    ["/word/1", "Word Detail"],
     ["/admin/data-studio", "Data Studio"],
   ];
 

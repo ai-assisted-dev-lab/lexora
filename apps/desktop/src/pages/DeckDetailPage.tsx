@@ -59,17 +59,16 @@ function buildStudyModes(deck: DeckDetailDto): StudyMode[] {
   return [
     {
       description:
-        "Open the study session placeholder for this deck's due cards.",
+        "Start a real flashcard session from due, weak, and new cards.",
       estimate: `${deck.progress.dueCount} due`,
       href: studyHref(deck.id, "smart-review"),
       Icon: Brain,
       title: "Smart Review",
     },
     {
-      description:
-        "Preview cards from this deck before the study engine lands.",
+      description: "Study this deck with the FSRS-powered flashcard flow.",
       estimate: `${Math.min(deck.wordCount, 20)} cards`,
-      href: studyHref(deck.id, "flashcards"),
+      href: studyHref(deck.id, "flashcard"),
       Icon: RotateCcw,
       title: "Flashcards",
     },
@@ -247,7 +246,7 @@ export function DeckDetailPage() {
           <section className="deck-detail-section" aria-label="Study modes">
             <SectionHeader
               title="Choose a Study Mode"
-              description="Study engine entry points are routed to placeholders for now."
+              description="Flashcard sessions now use the local Smart Review queue."
             />
             <div className="deck-detail-mode-grid">
               {studyModes.map((mode) => (
