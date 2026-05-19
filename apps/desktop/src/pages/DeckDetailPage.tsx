@@ -2,12 +2,16 @@ import "./deck-detail/DeckDetailPage.css";
 
 import { motion } from "framer-motion";
 import {
+  AlertCircle,
   BookOpenCheck,
+  Brain,
   ChevronLeft,
-  MessageSquareText,
+  ClipboardCheck,
+  Keyboard,
+  Layers3,
+  Loader2,
   Play,
-  Star,
-  Trophy,
+  RotateCcw,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
@@ -15,17 +19,168 @@ import {
   Badge,
   Button,
   Card,
+  EmptyState,
   ProgressBar,
   SectionHeader,
 } from "@/components/ui";
+import { useDeckDetail } from "@/hooks/useDeckDetail";
+import type { DeckDetailDto } from "@/services/commands/decks";
 
-import { deckDetailMock } from "./deck-detail/deckDetailMockData";
 import { StudyModeCard } from "./deck-detail/StudyModeCard";
+import type {
+  DeckProgressItem,
+  PreviewWord,
+  StudyMode,
+} from "./deck-detail/types";
 import { WordPreview } from "./deck-detail/WordPreview";
 
+function parseDeckId(value: string | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function formatLevel(level: string | null): string {
+  if (!level) {
+    return "New";
+  }
+
+  return level.charAt(0).toUpperCase() + level.slice(1);
+}
+
+function studyHref(deckId: number, mode: string): string {
+  return `/study/session?deckId=${deckId}&mode=${mode}`;
+}
+
+function buildStudyModes(deck: DeckDetailDto): StudyMode[] {
+  return [
+    {
+      description:
+        "Open the study session placeholder for this deck's due cards.",
+      estimate: `${deck.progress.dueCount} due`,
+      href: studyHref(deck.id, "smart-review"),
+      Icon: Brain,
+      title: "Smart Review",
+    },
+    {
+      description:
+        "Preview cards from this deck before the study engine lands.",
+      estimate: `${Math.min(deck.wordCount, 20)} cards`,
+      href: studyHref(deck.id, "flashcards"),
+      Icon: RotateCcw,
+      title: "Flashcards",
+    },
+    {
+      description: "Route to the placeholder for recognition practice.",
+      estimate: "Placeholder",
+      href: studyHref(deck.id, "multiple-choice"),
+      Icon: ClipboardCheck,
+      title: "Multiple Choice",
+    },
+    {
+      description: "Route to the placeholder for typed recall practice.",
+      estimate: "Placeholder",
+      href: studyHref(deck.id, "type-answer"),
+      Icon: Keyboard,
+      title: "Type Answer",
+    },
+    {
+      description: "Route to the placeholder for future weak-word drills.",
+      estimate: `${deck.progress.masteredCount} mastered`,
+      href: studyHref(deck.id, "weak-words"),
+      Icon: Layers3,
+      title: "Weak Words Drill",
+    },
+  ];
+}
+
+function toPreviewWords(deck: DeckDetailDto): PreviewWord[] {
+  return deck.words.map((word) => ({
+    headword: word.headword,
+    partOfSpeech: word.partOfSpeech ?? "word",
+    level: word.level ?? deck.level ?? "New",
+    definitionVi: word.definitionVi ?? word.definitionEn ?? "No definition yet",
+    example: word.example ?? "No example sentence yet.",
+    dueState: word.dueState,
+  }));
+}
+
+function progressItems(deck: DeckDetailDto): DeckProgressItem[] {
+  return [
+    { label: "Deck progress", value: deck.progress.progress },
+    { label: "Accuracy", value: deck.progress.accuracy },
+    {
+      label: "Mastered words",
+      value:
+        deck.wordCount > 0
+          ? Math.round((deck.progress.masteredCount * 100) / deck.wordCount)
+          : 0,
+    },
+  ];
+}
+
 export function DeckDetailPage() {
-  const { deckId } = useParams<{ deckId: string }>();
-  const deck = deckDetailMock;
+  const { deckId: deckIdParam } = useParams<{ deckId: string }>();
+  const deckId = parseDeckId(deckIdParam);
+  const { deck, error, isLoading, notFound } = useDeckDetail(deckId);
+
+  if (isLoading) {
+    return (
+      <div
+        className="deck-detail-page deck-detail-page--loading"
+        aria-label="Loading deck detail"
+      >
+        <Loader2
+          size={28}
+          className="deck-detail-page__spinner"
+          aria-hidden="true"
+        />
+        <p>Loading deck detail...</p>
+      </div>
+    );
+  }
+
+  if (error && !notFound) {
+    return (
+      <Card className="deck-detail-state-card" variant="glass">
+        <EmptyState
+          title="Could not load deck"
+          description={error}
+          icon={<AlertCircle size={28} aria-hidden="true" />}
+          actions={
+            <Button asChild variant="secondary">
+              <Link to="/library">Back to Library</Link>
+            </Button>
+          }
+        />
+      </Card>
+    );
+  }
+
+  if (notFound || !deck) {
+    return (
+      <Card className="deck-detail-state-card" variant="glass">
+        <EmptyState
+          title="Deck not found"
+          description="This local deck does not exist or is no longer available."
+          icon={<AlertCircle size={28} aria-hidden="true" />}
+          actions={
+            <Button asChild variant="primary">
+              <Link to="/discover">Open Discover</Link>
+            </Button>
+          }
+        />
+      </Card>
+    );
+  }
+
+  const level = formatLevel(deck.level);
+  const studyModes = buildStudyModes(deck);
+  const words = toPreviewWords(deck);
+  const progress = progressItems(deck);
 
   return (
     <motion.div
@@ -47,20 +202,22 @@ export function DeckDetailPage() {
         <div className="deck-detail-hero__cover" aria-hidden="true">
           <div className="deck-detail-hero__cover-panel">
             <BookOpenCheck size={64} />
-            <span>{deck.level}</span>
+            <span>{level}</span>
           </div>
         </div>
 
         <div className="deck-detail-hero__content">
           <p className="deck-detail-hero__eyebrow">
-            Installed deck {deckId ? `/${deckId}` : ""}
+            {deck.installed ? "Installed deck" : "Discover deck"} / {deck.slug}
           </p>
           <h1>{deck.title}</h1>
-          <p className="deck-detail-hero__description">{deck.description}</p>
+          <p className="deck-detail-hero__description">
+            {deck.description ?? "No description has been added for this deck."}
+          </p>
 
           <div className="deck-detail-hero__tags" aria-label="Deck metadata">
-            <Badge>{deck.level}</Badge>
-            <Badge variant="muted">{deck.topic}</Badge>
+            <Badge>{level}</Badge>
+            <Badge variant="muted">{deck.packName}</Badge>
             <Badge variant="muted">
               {deck.wordCount.toLocaleString()} words
             </Badge>
@@ -72,12 +229,14 @@ export function DeckDetailPage() {
           </div>
 
           <div className="deck-detail-hero__actions">
-            <Button type="button" variant="primary">
-              <Play size={16} aria-hidden="true" />
-              Continue
+            <Button asChild variant="primary">
+              <Link to={studyHref(deck.id, "continue")}>
+                <Play size={16} aria-hidden="true" />
+                Continue
+              </Link>
             </Button>
-            <Button type="button" variant="secondary">
-              Start Learning
+            <Button asChild variant="secondary">
+              <Link to={studyHref(deck.id, "learn")}>Start Learning</Link>
             </Button>
           </div>
         </div>
@@ -88,59 +247,26 @@ export function DeckDetailPage() {
           <section className="deck-detail-section" aria-label="Study modes">
             <SectionHeader
               title="Choose a Study Mode"
-              description="Mock launch cards for future local study flows."
+              description="Study engine entry points are routed to placeholders for now."
             />
             <div className="deck-detail-mode-grid">
-              {deck.studyModes.map((mode) => (
+              {studyModes.map((mode) => (
                 <StudyModeCard mode={mode} key={mode.title} />
               ))}
             </div>
           </section>
 
-          <WordPreview words={deck.words} />
-
-          <section className="deck-detail-section" aria-label="Learner notes">
-            <SectionHeader
-              title="Learner Notes"
-              description="Restrained local mock comments for platform texture."
-            />
-            <div className="deck-detail-review-list">
-              {deck.reviews.map((review) => (
-                <Card
-                  className="deck-detail-review"
-                  key={review.author}
-                  variant="compact"
-                >
-                  <div
-                    className="deck-detail-review__avatar"
-                    aria-hidden="true"
-                  >
-                    {review.author.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="deck-detail-review__header">
-                      <strong>{review.author}</strong>
-                      <span>
-                        <Star size={13} aria-hidden="true" />
-                        {review.rating.toFixed(1)}
-                      </span>
-                    </div>
-                    <p>{review.comment}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
+          <WordPreview words={words} />
         </main>
 
         <aside className="deck-detail-side" aria-label="Deck progress">
           <Card className="deck-detail-panel" variant="glass">
             <SectionHeader
               title="Progress Summary"
-              description="Local mock learning state."
+              description="Local progress fields, reported honestly from available data."
             />
             <div className="deck-detail-progress-list">
-              {deck.progress.map((item) => (
+              {progress.map((item) => (
                 <div className="deck-detail-progress-item" key={item.label}>
                   <div>
                     <span>{item.label}</span>
@@ -152,37 +278,29 @@ export function DeckDetailPage() {
             </div>
           </Card>
 
-          <Card className="deck-detail-panel" variant="glass">
+          <Card className="deck-detail-panel deck-detail-facts" variant="glass">
             <SectionHeader
-              title="Deck Achievements"
-              description="Preview badges tied to this deck."
+              title="Deck Facts"
+              description="Local metadata from the installed SQLite catalog."
             />
-            <div className="deck-detail-achievements">
-              {deck.achievements.map((achievement) => (
-                <div
-                  className="deck-detail-achievement"
-                  key={achievement.title}
-                >
-                  <Trophy size={18} aria-hidden="true" />
-                  <div>
-                    <strong>{achievement.title}</strong>
-                    <span>{achievement.description}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card
-            className="deck-detail-panel deck-detail-rating"
-            variant="compact"
-          >
-            <div>
-              <MessageSquareText size={20} aria-hidden="true" />
-              <span>Mock deck rating</span>
-            </div>
-            <strong>{deck.rating.toFixed(1)} / 5</strong>
-            <p>{deck.reviewCount} local learner notes</p>
+            <dl>
+              <div>
+                <dt>Installed</dt>
+                <dd>{deck.installed ? "Yes" : "No"}</dd>
+              </div>
+              <div>
+                <dt>Due now</dt>
+                <dd>{deck.progress.dueCount}</dd>
+              </div>
+              <div>
+                <dt>Mastered</dt>
+                <dd>{deck.progress.masteredCount}</dd>
+              </div>
+              <div>
+                <dt>Last studied</dt>
+                <dd>{deck.progress.lastStudied ?? "New deck"}</dd>
+              </div>
+            </dl>
           </Card>
         </aside>
       </div>

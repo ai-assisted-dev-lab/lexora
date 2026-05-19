@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Badge, Button, Card } from "@/components/ui";
 
@@ -26,12 +27,14 @@ export function StudyModeCard({ mode }: StudyModeCardProps) {
           <p>{mode.description}</p>
         </div>
         <Button
+          asChild
           aria-label={`${mode.title} placeholder`}
           className="study-mode-card__action"
-          type="button"
           variant="ghost"
         >
-          <ArrowRight size={16} aria-hidden="true" />
+          <Link to={mode.href}>
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
         </Button>
       </Card>
     </motion.article>

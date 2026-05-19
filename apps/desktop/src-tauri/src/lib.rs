@@ -42,6 +42,7 @@ pub fn run() {
             commands::decks::list_seeded_decks,
             commands::decks::list_discover_decks,
             commands::decks::list_library_decks,
+            commands::decks::get_deck_detail,
             commands::decks::install_deck,
             commands::decks::uninstall_deck,
             commands::auth::login_user,

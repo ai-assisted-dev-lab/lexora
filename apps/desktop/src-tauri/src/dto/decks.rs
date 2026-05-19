@@ -70,3 +70,45 @@ pub struct LibraryDecksDto {
     pub decks: Vec<LibraryDeckDto>,
     pub total: usize,
 }
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeckPreviewWordDto {
+    pub id: i64,
+    pub headword: String,
+    pub part_of_speech: Option<String>,
+    pub level: Option<String>,
+    pub definition_en: Option<String>,
+    pub definition_vi: Option<String>,
+    pub example: Option<String>,
+    pub due_state: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeckDetailProgressDto {
+    pub mastered_count: i64,
+    pub due_count: i64,
+    pub accuracy: i64,
+    pub last_studied: Option<String>,
+    pub progress: i64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeckDetailDto {
+    pub id: i64,
+    pub slug: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub level: Option<String>,
+    pub word_count: i64,
+    pub tags: Vec<String>,
+    pub pack_name: String,
+    pub pack_slug: String,
+    pub banner: Option<String>,
+    pub installed: bool,
+    pub installed_at: Option<String>,
+    pub progress: DeckDetailProgressDto,
+    pub words: Vec<DeckPreviewWordDto>,
+}

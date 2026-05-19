@@ -5,6 +5,7 @@ export interface StudyMode {
   description: string;
   estimate: string;
   Icon: LucideIcon;
+  href: string;
 }
 
 export interface PreviewWord {
@@ -13,7 +14,7 @@ export interface PreviewWord {
   level: string;
   definitionVi: string;
   example: string;
-  dueState: "Due today" | "Learning" | "Mastered";
+  dueState: "Due today" | "Learning" | "Mastered" | "New";
 }
 
 export interface DeckProgressItem {

@@ -41,12 +41,52 @@ export interface LibraryDecksDto {
   total: number;
 }
 
+export interface DeckPreviewWordDto {
+  id: number;
+  headword: string;
+  partOfSpeech: string | null;
+  level: string | null;
+  definitionEn: string | null;
+  definitionVi: string | null;
+  example: string | null;
+  dueState: "Due today" | "Learning" | "Mastered" | "New";
+}
+
+export interface DeckDetailProgressDto {
+  masteredCount: number;
+  dueCount: number;
+  accuracy: number;
+  lastStudied: string | null;
+  progress: number;
+}
+
+export interface DeckDetailDto {
+  id: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  level: string | null;
+  wordCount: number;
+  tags: string[];
+  packName: string;
+  packSlug: string;
+  banner: string | null;
+  installed: boolean;
+  installedAt: string | null;
+  progress: DeckDetailProgressDto;
+  words: DeckPreviewWordDto[];
+}
+
 export function listDiscoverDecks(): Promise<DiscoverDecksDto> {
   return invoke<DiscoverDecksDto>("list_discover_decks");
 }
 
 export function listLibraryDecks(): Promise<LibraryDecksDto> {
   return invoke<LibraryDecksDto>("list_library_decks");
+}
+
+export function getDeckDetail(deckId: number): Promise<DeckDetailDto> {
+  return invoke<DeckDetailDto>("get_deck_detail", { deckId });
 }
 
 export function installDeck(deckId: number): Promise<void> {
