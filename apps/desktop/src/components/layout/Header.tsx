@@ -3,6 +3,7 @@ import "./Header.css";
 import { Bell } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
+import { CommandPalette } from "@/components/command/CommandPalette";
 import { Badge, IconButton, PageHeader } from "@/components/ui";
 import { getPageLabel } from "@/router/routes";
 
@@ -49,6 +50,8 @@ export function Header() {
         <NotificationButton count={0} />
         <UserProfile />
       </div>
+
+      <CommandPalette />
     </PageHeader>
   );
 }

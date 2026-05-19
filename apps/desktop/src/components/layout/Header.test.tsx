@@ -1,15 +1,46 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { AuthContext, type AuthContextValue } from "@/store/authContext";
 
 import { Header } from "./Header";
 
-afterEach(cleanup);
+const invokeMock = vi.hoisted(() => vi.fn());
 
-function renderHeader(path = "/discover") {
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: invokeMock,
+}));
+
+afterEach(() => {
+  cleanup();
+  invokeMock.mockReset();
+});
+
+const learnerAuth: AuthContextValue = {
+  user: { userId: 1, username: "learner", role: "learner" },
+  isLoading: false,
+  login: vi.fn(),
+  logout: vi.fn(),
+};
+
+const ownerAuth: AuthContextValue = {
+  ...learnerAuth,
+  user: { userId: 2, username: "owner", role: "owner" },
+};
+
+function renderHeader(path = "/discover", auth: AuthContextValue = learnerAuth) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <Header />
+      <AuthContext.Provider value={auth}>
+        <Header />
+      </AuthContext.Provider>
     </MemoryRouter>,
   );
 }
@@ -60,17 +91,25 @@ describe("Header search bar", () => {
     expect(keys?.[1].textContent).toBe("K");
   });
 
-  it("Ctrl+K focuses the search input", () => {
+  it("Ctrl+K opens the command palette", async () => {
     renderHeader();
-    const input = screen.getByRole("searchbox");
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-    expect(document.activeElement).toBe(input);
+    expect(
+      screen.getByRole("dialog", { name: "Command Palette" }),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("searchbox", { name: "Command palette search" }),
+      ).toHaveFocus();
+    });
   });
 
   it("submits searches to the search results route", () => {
     render(
       <MemoryRouter initialEntries={["/discover"]}>
-        <Header />
+        <AuthContext.Provider value={learnerAuth}>
+          <Header />
+        </AuthContext.Provider>
         <LocationProbe />
       </MemoryRouter>,
     );
@@ -82,6 +121,97 @@ describe("Header search bar", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(
       "/search?q=hello",
     );
+  });
+});
+
+describe("Header command palette", () => {
+  it("does not render Data Studio for learner accounts", () => {
+    renderHeader("/discover", learnerAuth);
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+
+    expect(
+      screen.queryByRole("option", { name: /Data Studio/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders Data Studio for owner accounts", () => {
+    renderHeader("/discover", ownerAuth);
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+
+    expect(
+      screen.getByRole("option", { name: /Data Studio/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("supports keyboard selection and navigation", () => {
+    render(
+      <MemoryRouter initialEntries={["/library"]}>
+        <AuthContext.Provider value={learnerAuth}>
+          <Header />
+        </AuthContext.Provider>
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    const palette = screen.getByRole("dialog", { name: "Command Palette" });
+
+    fireEvent.keyDown(palette, { key: "ArrowDown" });
+    fireEvent.keyDown(palette, { key: "Enter" });
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/discover");
+  });
+
+  it("includes offline search results from the search command", async () => {
+    invokeMock.mockResolvedValueOnce({
+      query: "hel",
+      groups: [
+        {
+          resultType: "word",
+          label: "Words",
+          results: [
+            {
+              resultType: "word",
+              id: 42,
+              title: "hello",
+              subtitle: "interjection",
+              snippet: "used as a greeting",
+              deckTitle: "Core English",
+              packTitle: "Starter",
+              score: 1.2,
+              route: "/word/42",
+            },
+          ],
+        },
+      ],
+      total: 1,
+      elapsedMs: 4,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/discover"]}>
+        <AuthContext.Provider value={learnerAuth}>
+          <Header />
+        </AuthContext.Provider>
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Command palette search" }),
+      { target: { value: "hel" } },
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /hello/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("option", { name: /hello/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/word/42");
   });
 });
 
