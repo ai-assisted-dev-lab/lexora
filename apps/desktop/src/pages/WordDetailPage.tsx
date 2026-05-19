@@ -6,10 +6,12 @@ import {
   Brain,
   ChevronLeft,
   Link2,
+  Loader2,
   NotebookPen,
+  Square,
   Volume2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
@@ -32,6 +34,7 @@ import {
   CompactIPA,
   PronunciationPanel,
 } from "@/components/pronunciation/PronunciationPanel";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { SenseList } from "./word-detail/SenseList";
 import type { WordDetailTab, WordSense } from "./word-detail/types";
 
@@ -135,11 +138,22 @@ export function WordDetailPage() {
   const wordId = parseWordId(wordIdParam);
   const { error, isLoading, notFound, word } = useWordDetail(wordId);
   const [activeTab, setActiveTab] = useState<WordDetailTab>("overview");
+  const { state: audioState, play: playAudio, stop: stopAudio } = useAudioPlayer();
 
   const activeTabLabel = useMemo(
     () => tabs.find((tab) => tab.id === activeTab)?.label ?? "Overview",
     [activeTab],
   );
+
+  const handleHeroPlay = useCallback(() => {
+    const primary = word?.pronunciations[0];
+    if (!primary) return;
+    if (audioState === "playing") {
+      stopAudio();
+    } else {
+      void playAudio(primary.audioPath);
+    }
+  }, [audioState, playAudio, stopAudio, word]);
 
   if (isLoading) {
     return (
@@ -195,6 +209,7 @@ export function WordDetailPage() {
   const mastery = masteryValue(word.reviewState);
   const reviewStatus = formatReviewStatus(word.reviewState);
   const relations = groupedRelations(word.relations);
+  const primaryAudio = word.pronunciations[0] ?? null;
 
   return (
     <motion.div
@@ -228,11 +243,27 @@ export function WordDetailPage() {
               </p>
             </div>
             <Button
-              aria-label="Audio metadata placeholder"
+              aria-label={
+                audioState === "playing"
+                  ? "Stop pronunciation"
+                  : "Play pronunciation"
+              }
               type="button"
               variant="icon"
+              disabled={!primaryAudio || audioState === "loading"}
+              onClick={handleHeroPlay}
             >
-              <Volume2 size={20} aria-hidden="true" />
+              {audioState === "loading" ? (
+                <Loader2
+                  size={20}
+                  className="word-detail-page__spinner"
+                  aria-hidden="true"
+                />
+              ) : audioState === "playing" ? (
+                <Square size={20} aria-hidden="true" />
+              ) : (
+                <Volume2 size={20} aria-hidden="true" />
+              )}
             </Button>
           </div>
 

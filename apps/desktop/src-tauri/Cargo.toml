@@ -43,6 +43,8 @@ keyring = "2"
 # OS CSPRNG for key generation. Thin wrapper around platform primitives;
 # no heavy C compilation required.
 getrandom = "0.2"
+# Base64 encoding for returning audio byte data over the Tauri IPC bridge.
+base64 = "0.22"
 
 [profile.dev]
 incremental = true

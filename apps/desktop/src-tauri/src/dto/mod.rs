@@ -2,6 +2,7 @@
 ///
 /// Each sub-module mirrors a domain area and is consumed by the TypeScript
 /// layer. Keep DTOs flat and free of Rust-only types.
+pub mod audio;
 pub mod auth;
 pub mod db;
 pub mod decks;

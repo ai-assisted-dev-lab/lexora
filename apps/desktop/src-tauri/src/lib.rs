@@ -68,6 +68,9 @@ pub fn run() {
             commands::auth::get_current_session,
             commands::auth::init_default_accounts,
             commands::admin::get_admin_stats,
+            commands::audio::get_audio_cache_path,
+            commands::audio::check_audio_cached,
+            commands::audio::read_cached_audio,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

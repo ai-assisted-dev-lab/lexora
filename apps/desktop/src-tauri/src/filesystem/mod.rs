@@ -28,4 +28,11 @@ impl AppPaths {
     pub fn exports_dir(&self) -> PathBuf {
         self.app_data_dir.join("exports")
     }
+
+    /// Root directory for locally cached pronunciation audio files.
+    /// Relative audio paths from the pronunciations table are resolved
+    /// against this directory.
+    pub fn audio_cache_dir(&self) -> PathBuf {
+        self.app_data_dir.join("audio_cache")
+    }
 }

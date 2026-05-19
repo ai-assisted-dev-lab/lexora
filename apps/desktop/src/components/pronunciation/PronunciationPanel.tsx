@@ -1,8 +1,9 @@
 import "./PronunciationPanel.css";
 
-import { Volume2 } from "lucide-react";
+import { Loader2, Square, Volume2, VolumeX } from "lucide-react";
 
 import { Card } from "@/components/ui";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import type { WordPronunciationDto } from "@/services/commands/words";
 
 function stripDelimiters(ipa: string): string {
@@ -51,6 +52,63 @@ function AccentBlock({ label, ipa }: AccentBlockProps) {
   );
 }
 
+interface AudioRecordCardProps {
+  record: WordPronunciationDto;
+}
+
+function AudioRecordCard({ record }: AudioRecordCardProps) {
+  const { state, play, stop } = useAudioPlayer();
+
+  function handleToggle() {
+    if (state === "playing") {
+      stop();
+    } else {
+      void play(record.audioPath);
+    }
+  }
+
+  const isPlaying = state === "playing";
+  const isLoading = state === "loading";
+
+  return (
+    <Card className="pronunciation-panel__audio-record" variant="compact">
+      <button
+        className="pronunciation-panel__play-btn"
+        type="button"
+        aria-label={`${isPlaying ? "Stop" : "Play"} ${record.dialect.toUpperCase()} pronunciation`}
+        disabled={isLoading}
+        onClick={handleToggle}
+      >
+        {isLoading ? (
+          <Loader2
+            size={18}
+            className="pronunciation-panel__spinner"
+            aria-hidden="true"
+          />
+        ) : isPlaying ? (
+          <Square size={18} aria-hidden="true" />
+        ) : state === "error" ? (
+          <VolumeX size={18} aria-hidden="true" />
+        ) : (
+          <Volume2 size={18} aria-hidden="true" />
+        )}
+      </button>
+      <div className="pronunciation-panel__audio-info">
+        <strong>{record.dialect.toUpperCase()} audio</strong>
+        <p>{record.audioPath}</p>
+        {record.ttsEngine && (
+          <p className="pronunciation-panel__audio-engine">{record.ttsEngine}</p>
+        )}
+        {state === "error" && (
+          <p className="pronunciation-panel__audio-error">
+            Not in local cache — add files to the audio_cache directory.
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export interface PronunciationPanelProps {
   ipaUk: string | null | undefined;
   ipaUs: string | null | undefined;
@@ -77,22 +135,7 @@ export function PronunciationPanel({
           </p>
         ) : (
           pronunciations.map((record) => (
-            <Card
-              key={record.id}
-              className="pronunciation-panel__audio-record"
-              variant="compact"
-            >
-              <Volume2 size={18} aria-hidden="true" />
-              <div>
-                <strong>{record.dialect.toUpperCase()} audio</strong>
-                <p>{record.audioPath}</p>
-                {record.ttsEngine && (
-                  <p className="pronunciation-panel__audio-engine">
-                    {record.ttsEngine}
-                  </p>
-                )}
-              </div>
-            </Card>
+            <AudioRecordCard key={record.id} record={record} />
           ))
         )}
       </div>

@@ -86,19 +86,55 @@
   align-items: flex-start;
 }
 
-.pronunciation-panel__audio-record div {
+/* ── Play button ─────────────────────────────────────────────────── */
+.pronunciation-panel__play-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pronunciation-panel__play-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.pronunciation-panel__play-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes pronunciation-panel-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pronunciation-panel__spinner {
+  animation: pronunciation-panel-spin 0.8s linear infinite;
+}
+
+/* ── Audio info text ─────────────────────────────────────────────── */
+.pronunciation-panel__audio-info {
   flex: 1;
   min-width: 0;
 }
 
-.pronunciation-panel__audio-record strong {
+.pronunciation-panel__audio-info strong {
   display: block;
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--color-text);
 }
 
-.pronunciation-panel__audio-record p {
+.pronunciation-panel__audio-info p {
   margin: var(--space-1) 0 0;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
@@ -109,6 +145,12 @@
 
 .pronunciation-panel__audio-engine {
   font-size: 0.75rem;
+}
+
+.pronunciation-panel__audio-error {
+  color: var(--color-danger) !important;
+  font-style: italic;
+  white-space: normal !important;
 }
 
 /* ── Compact IPA chips (hero + study cards) ───────────────────────── */
