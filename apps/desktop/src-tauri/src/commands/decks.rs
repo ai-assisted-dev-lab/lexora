@@ -2,6 +2,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use tauri::State;
 
 use crate::auth;
+use crate::commands::achievements::evaluate_achievements_for_user;
 use crate::db::DbConn;
 use crate::dto::decks::{
     DeckDetailDto, DeckDetailProgressDto, DeckPreviewWordDto, DeckSummaryDto, DiscoverDeckDto,
@@ -516,7 +517,9 @@ pub fn install_deck(deck_id: i64, db: State<'_, DbConn>) -> Result<(), AppError>
         .lock()
         .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
     let user = auth::require_session(&conn)?;
-    do_install_deck(&conn, user.id, deck_id)
+    do_install_deck(&conn, user.id, deck_id)?;
+    evaluate_achievements_for_user(&conn, user.id)?;
+    Ok(())
 }
 
 /// Removes a deck from the current user's library.

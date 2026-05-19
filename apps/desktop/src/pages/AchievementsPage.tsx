@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 
 import { Button, Card, SectionHeader } from "@/components/ui";
+import { useAchievements } from "@/hooks/useAchievements";
 
 import { AchievementCard } from "./achievements/AchievementCard";
 import {
@@ -14,31 +15,33 @@ import type { AchievementCategory } from "./achievements/types";
 
 export function AchievementsPage() {
   const [category, setCategory] = useState<AchievementCategory>("All");
+  const { data } = useAchievements();
+  const activeAchievements = data?.achievements ?? achievements;
 
   const filteredAchievements = useMemo(
     () =>
       category === "All"
-        ? achievements
-        : achievements.filter((a) => a.category === category),
-    [category],
+        ? activeAchievements
+        : activeAchievements.filter((a) => a.category === category),
+    [activeAchievements, category],
   );
 
   const recentlyUnlocked = useMemo(
     () =>
-      achievements
+      activeAchievements
         .filter((a) => a.state === "unlocked" && a.unlockedAt)
         .sort((a, b) => (b.unlockedAt! > a.unlockedAt! ? 1 : -1))
         .slice(0, 5),
-    [],
+    [activeAchievements],
   );
 
-  const totalUnlocked = achievements.filter(
-    (a) => a.state === "unlocked",
-  ).length;
-  const totalInProgress = achievements.filter(
-    (a) => a.state === "in_progress",
-  ).length;
-  const totalCount = achievements.length;
+  const totalUnlocked =
+    data?.unlocked ??
+    activeAchievements.filter((a) => a.state === "unlocked").length;
+  const totalInProgress =
+    data?.inProgress ??
+    activeAchievements.filter((a) => a.state === "in_progress").length;
+  const totalCount = data?.total ?? activeAchievements.length;
 
   return (
     <motion.div

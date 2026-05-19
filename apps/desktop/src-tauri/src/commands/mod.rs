@@ -1,3 +1,4 @@
+pub mod achievements;
 /// Tauri command handlers exposed to the frontend via `invoke()`.
 ///
 /// Each sub-module groups commands by domain. Register every public command

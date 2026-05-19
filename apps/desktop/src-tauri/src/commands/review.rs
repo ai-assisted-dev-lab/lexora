@@ -2,6 +2,9 @@ use rusqlite::{params, Connection, OptionalExtension};
 use tauri::State;
 
 use crate::auth;
+use crate::commands::achievements::{
+    evaluate_achievements_for_user, evaluate_session_achievement_events,
+};
 use crate::commands::progress::award_completed_session_progress;
 use crate::db::DbConn;
 use crate::dto::review::{
@@ -1875,9 +1878,13 @@ fn complete_study_session_for_user_at(
     )
     .map_err(|e| AppError::Internal(format!("Failed to complete study session: {e}")))?;
 
-    if was_open {
+    let newly_unlocked_achievements = if was_open {
         award_completed_session_progress(conn, user_id, input.session_id, &ended_at)?;
-    }
+        evaluate_session_achievement_events(conn, user_id, input.session_id)?;
+        evaluate_achievements_for_user(conn, user_id)?
+    } else {
+        Vec::new()
+    };
 
     conn.query_row(
         "SELECT id, user_id, deck_id, session_type, started_at,
@@ -1918,6 +1925,7 @@ fn complete_study_session_for_user_at(
                 accuracy,
                 time_spent_seconds: row.get(13)?,
                 xp_earned: row.get(14)?,
+                newly_unlocked_achievements: newly_unlocked_achievements.clone(),
             })
         },
     )
@@ -2797,7 +2805,9 @@ mod tests {
 
         assert_eq!(first.xp_earned, 11);
         assert_eq!(second.xp_earned, 11);
-        assert_eq!(total_xp, 11);
+        assert_eq!(first.newly_unlocked_achievements.len(), 1);
+        assert_eq!(second.newly_unlocked_achievements.len(), 0);
+        assert_eq!(total_xp, 36);
     }
 
     #[test]

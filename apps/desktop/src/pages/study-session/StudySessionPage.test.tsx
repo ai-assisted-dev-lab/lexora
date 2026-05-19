@@ -184,6 +184,7 @@ function summaryFixture(reviewedCount = 2) {
     accuracy: 50,
     timeSpentSeconds: 300,
     xpEarned: 0,
+    newlyUnlockedAchievements: [],
   };
 }
 

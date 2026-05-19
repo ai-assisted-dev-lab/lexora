@@ -1,8 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AchievementsPage } from "@/pages/AchievementsPage";
+
+vi.mock("@/services/commands/achievements", () => ({
+  getAchievements: vi.fn().mockRejectedValue(new Error("Tauri unavailable")),
+}));
 
 afterEach(cleanup);
 

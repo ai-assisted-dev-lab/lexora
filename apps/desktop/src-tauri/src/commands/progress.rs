@@ -59,11 +59,11 @@ struct DailyProgress {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct LevelProgress {
-    level: i64,
-    current_level_xp: i64,
-    next_level_xp: i64,
-    xp_to_next_level: i64,
+pub(crate) struct LevelProgress {
+    pub(crate) level: i64,
+    pub(crate) current_level_xp: i64,
+    pub(crate) next_level_xp: i64,
+    pub(crate) xp_to_next_level: i64,
 }
 
 fn clamp_non_negative(value: i64) -> i64 {
@@ -114,7 +114,7 @@ fn level_threshold(level: i64) -> i64 {
     (safe_level - 1) * (safe_level - 1) * 100
 }
 
-fn level_from_xp(total_xp: i64) -> LevelProgress {
+pub(crate) fn level_from_xp(total_xp: i64) -> LevelProgress {
     let xp = clamp_non_negative(total_xp);
     let mut level = 1;
     while level_threshold(level + 1) <= xp {

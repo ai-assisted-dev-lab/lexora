@@ -55,6 +55,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "unified_search_fts",
         sql: include_str!("../../migrations/0008_unified_search_fts.sql"),
     },
+    Migration {
+        version: 9,
+        name: "achievement_events",
+        sql: include_str!("../../migrations/0009_achievement_events.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -436,6 +441,41 @@ mod tests {
                 "expected table '{expected}' to exist after migration 3; found: {tables:?}"
             );
         }
+    }
+
+    #[test]
+    fn migration_009_creates_achievement_events() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        let tables = tables_in(&conn);
+        assert!(
+            tables.iter().any(|t| t == "achievement_events"),
+            "achievement_events should exist after migration 9"
+        );
+
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('events', 'h', 'learner')",
+            [],
+        )
+        .unwrap();
+        let uid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+
+        conn.execute(
+            "INSERT INTO achievement_events (user_id, event_type, count)
+             VALUES (?1, 'pronunciation_play', 1)",
+            rusqlite::params![uid],
+        )
+        .expect("valid achievement event should insert");
+
+        let invalid = conn.execute(
+            "INSERT INTO achievement_events (user_id, event_type, count)
+             VALUES (?1, 'bad_event', 1)",
+            rusqlite::params![uid],
+        );
+        assert!(invalid.is_err(), "invalid achievement event should fail");
     }
 
     #[test]

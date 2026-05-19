@@ -9,7 +9,6 @@ import { motion } from "framer-motion";
 import {
   AlertCircle,
   BookOpen,
-  CheckCircle2,
   ChevronLeft,
   Clock3,
   Headphones,
@@ -22,15 +21,10 @@ import {
   Trophy,
   Volume2,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { type ReactNode,useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import {
-  gradeAnswer,
-  gradeToRating,
-  type MatchGrade,
-} from "@/lib/fuzzy-match";
-
+import { CompactIPA } from "@/components/pronunciation/PronunciationPanel";
 import {
   Badge,
   Button,
@@ -39,7 +33,11 @@ import {
   ProgressBar,
   StatCard,
 } from "@/components/ui";
-import { CompactIPA } from "@/components/pronunciation/PronunciationPanel";
+import {
+  gradeAnswer,
+  gradeToRating,
+  type MatchGrade,
+} from "@/lib/fuzzy-match";
 import {
   completeStudySession,
   type MultipleChoiceOptionDto,
@@ -1416,20 +1414,33 @@ function SessionSummary({ summary }: SessionSummaryProps) {
         />
       </motion.div>
 
-      {/* Achievement placeholder */}
-      <motion.div
-        className="session-summary__achievements"
-        variants={summaryItemVariants}
-      >
-        <Trophy size={16} aria-hidden="true" />
-        <div>
-          <strong>Achievements</strong>
-          <p>
-            Progress is being tracked. Unlock details coming in a future
-            update.
-          </p>
-        </div>
-      </motion.div>
+      {summary.newlyUnlockedAchievements.length > 0 && (
+        <motion.div
+          className="session-summary__achievements"
+          variants={summaryItemVariants}
+        >
+          <Trophy size={16} aria-hidden="true" />
+          <div>
+            <strong>
+              {summary.newlyUnlockedAchievements.length === 1
+                ? "Achievement unlocked"
+                : "Achievements unlocked"}
+            </strong>
+            <div className="session-summary__achievement-list">
+              {summary.newlyUnlockedAchievements.map((achievement) => (
+                <span
+                  key={`${achievement.slug}-${achievement.unlockedAt}`}
+                  className="session-summary__achievement-pill"
+                  data-tier={achievement.tier}
+                >
+                  {achievement.title}
+                  <small>+{achievement.xpReward} XP</small>
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Actions */}
       <motion.div

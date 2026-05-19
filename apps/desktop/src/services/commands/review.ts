@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
+import type { AchievementUnlockDto } from "./achievements";
+
 export interface ReviewCardDto {
   id: number;
   userId: number;
@@ -212,6 +214,7 @@ export interface StudySessionSummaryDto {
   accuracy: number;
   timeSpentSeconds: number;
   xpEarned: number;
+  newlyUnlockedAchievements: AchievementUnlockDto[];
 }
 
 export interface StartTypeAnswerSessionInputDto {

@@ -672,7 +672,6 @@
   gap: var(--gap-md);
 }
 
-/* Achievement placeholder */
 .session-summary__achievements {
   display: grid;
   width: 100%;
@@ -698,6 +697,33 @@
   font-size: 0.8125rem;
   color: var(--color-text-muted);
   line-height: 1.45;
+}
+
+.session-summary__achievement-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.session-summary__achievement-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: rgba(239, 246, 255, 0.82);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.session-summary__achievement-pill small {
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 850;
 }
 
 /* Action buttons */

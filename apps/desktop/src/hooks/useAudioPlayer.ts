@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { recordPronunciationPractice } from "@/services/commands/achievements";
 import { readCachedAudio } from "@/services/commands/audio";
-import { defaultPronunciationSettings } from "@/services/commands/settings";
 import type { PronunciationSettings } from "@/services/commands/settings";
+import { defaultPronunciationSettings } from "@/services/commands/settings";
 import { playTtsFallback, stopBrowserTts } from "@/services/tts";
 
 export type AudioPlayState = "idle" | "loading" | "playing" | "error";
@@ -101,6 +102,7 @@ export function useAudioPlayer() {
         accent: settings.pronunciationAccent,
         speed: settings.pronunciationSpeed,
       });
+      void recordPronunciationPractice().catch(() => undefined);
       setState("idle");
     },
     [],
@@ -131,6 +133,7 @@ export function useAudioPlayer() {
         if (audioPath) {
           try {
             await playLocalAudio(audioPath);
+            void recordPronunciationPractice().catch(() => undefined);
             return;
           } catch {
             cleanUp();

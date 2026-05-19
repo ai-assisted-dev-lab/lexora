@@ -60,6 +60,8 @@ pub fn run() {
             commands::review::get_weak_words,
             commands::review::start_weak_words_drill,
             commands::progress::get_gamification_summary,
+            commands::achievements::get_achievements,
+            commands::achievements::record_pronunciation_practice,
             commands::search::search,
             commands::import_export::get_import_export_schema,
             commands::import_export::list_exportable_decks,

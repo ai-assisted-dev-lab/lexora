@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::dto::achievements::AchievementUnlockDto;
+
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewCardDto {
@@ -290,4 +292,5 @@ pub struct StudySessionSummaryDto {
     pub accuracy: i64,
     pub time_spent_seconds: i64,
     pub xp_earned: i64,
+    pub newly_unlocked_achievements: Vec<AchievementUnlockDto>,
 }
