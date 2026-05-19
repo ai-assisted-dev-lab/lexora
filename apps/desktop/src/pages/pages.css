@@ -151,6 +151,64 @@
   font-weight: 600;
 }
 
+/* ── Unauthorized page ───────────────────────────────────────────────── */
+.unauthorized-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 320px;
+}
+
+.unauthorized-page__content {
+  text-align: center;
+  max-width: 400px;
+  padding: var(--page-pad);
+}
+
+.unauthorized-page__icon {
+  color: var(--color-danger);
+  opacity: 0.6;
+  margin-bottom: var(--gap-lg);
+}
+
+.unauthorized-page__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--gap-sm);
+}
+
+.unauthorized-page__desc {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--gap-lg);
+  line-height: 1.6;
+}
+
+.unauthorized-page__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: 10px 20px;
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 120ms ease;
+}
+
+.unauthorized-page__link:hover {
+  background: var(--color-accent-hover);
+}
+
+.unauthorized-page__link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
 /* ── Not Found page ──────────────────────────────────────────────────── */
 .not-found-page {
   display: flex;

@@ -140,3 +140,44 @@ describe("Route smoke tests", () => {
     ).toBeInTheDocument();
   });
 });
+
+/* ── RBAC verification ───────────────────────────────────────────────── */
+
+describe("RBAC route guards", () => {
+  const learnerAuth: AuthContextValue = {
+    ...ownerAuth,
+    user: { userId: 2, username: "learner", role: "learner" },
+  };
+
+  it("owner can access /admin/data-studio", async () => {
+    renderRoute("/admin/data-studio");
+    expect(
+      await screen.findByRole("heading", { level: 2, name: /data studio/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("learner sees Access Denied for /admin/data-studio", async () => {
+    renderRoute("/admin/data-studio", learnerAuth);
+    expect(
+      await screen.findByRole("heading", { level: 2, name: /access denied/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("unauthenticated user sees the login form", async () => {
+    // /login is the destination after ProtectedRoute redirects an unauthenticated user
+    renderRoute("/login", { ...ownerAuth, user: null });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: /welcome back/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("learner can still access normal protected routes", async () => {
+    renderRoute("/home", learnerAuth);
+    expect(
+      await screen.findByRole("heading", {
+        level: 2,
+        name: /expand words/i,
+      }),
+    ).toBeInTheDocument();
+  });
+});

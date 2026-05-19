@@ -178,6 +178,28 @@ pub fn current_session(conn: &Connection) -> Result<Option<AuthUser>, AppError> 
     }))
 }
 
+// ── Authorization guards ──────────────────────────────────────────────────────
+
+/// Returns the currently authenticated user, or `Unauthorized` if no session
+/// is active.  Use this in commands that require any authenticated user.
+pub fn require_session(conn: &Connection) -> Result<AuthUser, AppError> {
+    current_session(conn)?
+        .ok_or_else(|| AppError::Unauthorized("Authentication required".to_string()))
+}
+
+/// Returns the current user only when they hold the `owner` role.
+/// Returns `Unauthorized` when there is no active session or the user is not
+/// an owner.  Call this at the start of every admin/owner-only Tauri command.
+pub fn require_owner(conn: &Connection) -> Result<AuthUser, AppError> {
+    let user = require_session(conn)?;
+    if user.role != "owner" {
+        return Err(AppError::Unauthorized(
+            "Owner access required".to_string(),
+        ));
+    }
+    Ok(user)
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -382,6 +404,63 @@ mod tests {
         assert!(
             last_login.is_some(),
             "last_login_at should be set after login"
+        );
+    }
+
+    // ── Authorization guards ──────────────────────────────────────────────
+
+    #[test]
+    fn require_session_returns_user_when_logged_in() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        login(&conn, "owner", "owner").expect("login");
+
+        let user = require_session(&conn).expect("require_session");
+        assert_eq!(user.username, "owner");
+    }
+
+    #[test]
+    fn require_session_returns_unauthorized_when_no_session() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+
+        let err = require_session(&conn).unwrap_err();
+        assert!(matches!(err, AppError::Unauthorized(_)));
+    }
+
+    #[test]
+    fn require_owner_allows_owner_role() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        login(&conn, "owner", "owner").expect("login");
+
+        let user = require_owner(&conn).expect("require_owner");
+        assert_eq!(user.role, "owner");
+    }
+
+    #[test]
+    fn require_owner_denies_learner_role() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        login(&conn, "learner", "learner").expect("login");
+
+        let err = require_owner(&conn).unwrap_err();
+        assert!(
+            matches!(err, AppError::Unauthorized(_)),
+            "learner must be denied owner access"
+        );
+    }
+
+    #[test]
+    fn require_owner_denies_unauthenticated() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        // No login — no active session
+
+        let err = require_owner(&conn).unwrap_err();
+        assert!(
+            matches!(err, AppError::Unauthorized(_)),
+            "unauthenticated call must be denied"
         );
     }
 }

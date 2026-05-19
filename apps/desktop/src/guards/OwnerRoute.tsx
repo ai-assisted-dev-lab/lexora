@@ -1,10 +1,11 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
+import { UnauthorizedPage } from "@/pages/UnauthorizedPage";
 import { useAuth } from "@/store/authContext";
 
 export function OwnerRoute() {
   const { user } = useAuth();
 
-  if (user?.role !== "owner") return <Navigate to="/discover" replace />;
+  if (!user || user.role !== "owner") return <UnauthorizedPage />;
   return <Outlet />;
 }
