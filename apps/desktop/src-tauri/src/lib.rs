@@ -47,6 +47,8 @@ pub fn run() {
             commands::decks::install_deck,
             commands::decks::uninstall_deck,
             commands::words::get_word_detail,
+            commands::review::ensure_review_cards_for_deck,
+            commands::review::get_review_card,
             commands::import_export::get_import_export_schema,
             commands::import_export::list_exportable_decks,
             commands::import_export::export_deck_to_json,
