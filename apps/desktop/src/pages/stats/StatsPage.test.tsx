@@ -1,7 +1,33 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { StatsPage } from "@/pages/StatsPage";
+
+// Recharts uses SVG layout APIs unavailable in jsdom. Mock the components so
+// bar charts render their data labels as plain text we can assert against.
+vi.mock("recharts", () => ({
+  BarChart: ({
+    children,
+    data,
+  }: {
+    children: ReactNode;
+    data?: Array<{ day?: string }>;
+  }) => (
+    <div>
+      {data?.map((d) => d.day && <span key={d.day}>{d.day}</span>)}
+      {children}
+    </div>
+  ),
+  Bar: () => null,
+  XAxis: () => null,
+  YAxis: () => null,
+  Tooltip: () => null,
+  ResponsiveContainer: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  Cell: () => null,
+}));
 
 afterEach(cleanup);
 

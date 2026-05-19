@@ -60,6 +60,7 @@ pub fn run() {
             commands::review::get_weak_words,
             commands::review::start_weak_words_drill,
             commands::progress::get_gamification_summary,
+            commands::analytics::get_analytics,
             commands::achievements::get_achievements,
             commands::achievements::record_pronunciation_practice,
             commands::search::search,

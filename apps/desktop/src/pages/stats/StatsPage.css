@@ -96,10 +96,23 @@
   padding: var(--space-5);
 }
 
-/* ── Weekly chart (CSS bar chart) ───────────────────────── */
+/* ── Weekly chart (Recharts) ─────────────────────────────── */
 
 .weekly-chart {
   width: 100%;
+}
+
+.weekly-chart--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+}
+
+.weekly-chart__empty-text {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
 }
 
 .weekly-chart__bars {
@@ -163,6 +176,22 @@
 .weekly-chart__label--today {
   color: var(--color-primary);
   font-weight: 850;
+}
+
+/* ── Empty hint text ────────────────────────────────────── */
+
+.stats-empty-hint {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: var(--space-4) 0;
+}
+
+.stats-mastery-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
 }
 
 /* ── Mastery distribution ───────────────────────────────── */

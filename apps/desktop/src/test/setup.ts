@@ -13,3 +13,41 @@ process.on("unhandledRejection", (reason: unknown) => {
   }
   throw reason;
 });
+
+// Recharts uses ResizeObserver to determine container dimensions.
+// Provide a minimal mock that synchronously reports 800×300 to the callback
+// so charts render in jsdom without errors.
+class MockResizeObserver {
+  private readonly callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+  observe(target: Element) {
+    this.callback(
+      [
+        {
+          target,
+          contentRect: {
+            width: 800,
+            height: 300,
+            top: 0,
+            left: 0,
+            right: 800,
+            bottom: 300,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          },
+          borderBoxSize: [],
+          contentBoxSize: [],
+          devicePixelContentBoxSize: [],
+        } as ResizeObserverEntry,
+      ],
+      this as unknown as ResizeObserver,
+    );
+  }
+  unobserve() {}
+  disconnect() {}
+}
+(global as unknown as Record<string, unknown>).ResizeObserver =
+  MockResizeObserver;
