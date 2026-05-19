@@ -1,5 +1,6 @@
 pub mod encryption;
 pub mod migrations;
+pub mod seeder;
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;

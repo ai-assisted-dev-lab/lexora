@@ -20,11 +20,12 @@ pub fn run() {
             let paths = filesystem::AppPaths { app_data_dir };
             let db = db::open(&paths.user_db())?;
 
-            // Run pending migrations before handing the connection to Tauri.
+            // Run pending migrations, then load bundled seed data.
             {
                 let mut conn = db.conn.lock()
                     .map_err(|e| errors::AppError::Internal(format!("DB mutex poisoned: {e}")))?;
                 db::migrations::run(&mut conn)?;
+                db::seeder::load_bundled(&mut conn)?;
             }
 
             app.manage(db);
@@ -35,6 +36,7 @@ pub fn run() {
             commands::info::get_app_info,
             commands::db::db_health_check,
             commands::db::get_schema_version,
+            commands::decks::list_seeded_decks,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,0 +1,365 @@
+{
+  "pack": {
+    "slug": "english-essentials-demo",
+    "name": "English Essentials",
+    "description": "Core English vocabulary for everyday communication — a curated starter set for Vietnamese learners.",
+    "version": "1.0.0",
+    "author": "Lexora",
+    "source": "bundled"
+  },
+  "decks": [
+    {
+      "slug": "everyday-actions",
+      "name": "Everyday Actions",
+      "description": "Essential English verbs used in daily life",
+      "difficulty": "beginner",
+      "tags": ["verbs", "beginner", "A1"]
+    },
+    {
+      "slug": "around-the-house",
+      "name": "Around the House",
+      "description": "Common objects found in and around the home",
+      "difficulty": "beginner",
+      "tags": ["nouns", "beginner", "A1", "home"]
+    },
+    {
+      "slug": "greetings-and-social",
+      "name": "Greetings & Social",
+      "description": "Phrases and words for greeting people and everyday social situations",
+      "difficulty": "beginner",
+      "tags": ["phrases", "beginner", "A1", "social"]
+    }
+  ],
+  "words": [
+    {
+      "headword": "run",
+      "part_of_speech": "verb",
+      "ipa_uk": "/rʌn/",
+      "ipa_us": "/rʌn/",
+      "frequency_rank": 82,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To move quickly on foot",
+          "definition_vi": "Chạy nhanh bằng chân",
+          "examples": [
+            {
+              "sentence_en": "She runs five kilometres every morning.",
+              "sentence_vi": "Cô ấy chạy năm kilômét mỗi buổi sáng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "eat",
+      "part_of_speech": "verb",
+      "ipa_uk": "/iːt/",
+      "ipa_us": "/iːt/",
+      "frequency_rank": 134,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To put food in your mouth, chew, and swallow it",
+          "definition_vi": "Ăn thức ăn",
+          "examples": [
+            {
+              "sentence_en": "We eat dinner together as a family.",
+              "sentence_vi": "Chúng tôi ăn tối cùng nhau như một gia đình."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "sleep",
+      "part_of_speech": "verb",
+      "ipa_uk": "/sliːp/",
+      "ipa_us": "/sliːp/",
+      "frequency_rank": 210,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To rest with your eyes closed and your mind and body inactive",
+          "definition_vi": "Ngủ, nghỉ ngơi với mắt nhắm",
+          "examples": [
+            {
+              "sentence_en": "Children need to sleep at least eight hours a night.",
+              "sentence_vi": "Trẻ em cần ngủ ít nhất tám tiếng mỗi đêm."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "read",
+      "part_of_speech": "verb",
+      "ipa_uk": "/riːd/",
+      "ipa_us": "/riːd/",
+      "frequency_rank": 125,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To look at and understand written words or symbols",
+          "definition_vi": "Đọc, hiểu chữ viết",
+          "examples": [
+            {
+              "sentence_en": "He reads a book before bed every night.",
+              "sentence_vi": "Anh ấy đọc sách trước khi ngủ mỗi tối."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "write",
+      "part_of_speech": "verb",
+      "ipa_uk": "/raɪt/",
+      "ipa_us": "/raɪt/",
+      "frequency_rank": 165,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To make letters or words on a surface using a pen or pencil",
+          "definition_vi": "Viết, ghi chữ lên bề mặt",
+          "examples": [
+            {
+              "sentence_en": "Please write your name at the top of the page.",
+              "sentence_vi": "Xin hãy viết tên bạn ở đầu trang."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "book",
+      "part_of_speech": "noun",
+      "ipa_uk": "/bʊk/",
+      "ipa_us": "/bʊk/",
+      "frequency_rank": 312,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A set of printed pages bound together inside a cover",
+          "definition_vi": "Sách, tập giấy được đóng bìa",
+          "examples": [
+            {
+              "sentence_en": "There is a book on the desk.",
+              "sentence_vi": "Có một cuốn sách trên bàn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "chair",
+      "part_of_speech": "noun",
+      "ipa_uk": "/tʃeə/",
+      "ipa_us": "/tʃɛr/",
+      "frequency_rank": 890,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A separate seat for one person, with a back and usually four legs",
+          "definition_vi": "Ghế, đồ nội thất để ngồi có lưng tựa",
+          "examples": [
+            {
+              "sentence_en": "Please sit down on the chair.",
+              "sentence_vi": "Xin hãy ngồi xuống ghế."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "table",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈteɪbəl/",
+      "ipa_us": "/ˈteɪbəl/",
+      "frequency_rank": 245,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A piece of furniture with a flat top and legs",
+          "definition_vi": "Bàn, đồ nội thất có mặt phẳng và chân",
+          "examples": [
+            {
+              "sentence_en": "We put the food on the table.",
+              "sentence_vi": "Chúng tôi đặt thức ăn lên bàn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "window",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈwɪndəʊ/",
+      "ipa_us": "/ˈwɪndoʊ/",
+      "frequency_rank": 567,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "An opening in a wall fitted with glass to let in light or air",
+          "definition_vi": "Cửa sổ, ô mở trên tường có kính",
+          "examples": [
+            {
+              "sentence_en": "Please open the window — it is hot in here.",
+              "sentence_vi": "Xin hãy mở cửa sổ ra — ở đây rất nóng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "door",
+      "part_of_speech": "noun",
+      "ipa_uk": "/dɔː/",
+      "ipa_us": "/dɔːr/",
+      "frequency_rank": 445,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A flat panel that opens and closes to allow entry to a room or building",
+          "definition_vi": "Cửa ra vào, tấm chắn có thể mở để vào phòng",
+          "examples": [
+            {
+              "sentence_en": "He knocked on the door and waited.",
+              "sentence_vi": "Anh ấy gõ cửa và chờ đợi."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "hello",
+      "part_of_speech": "exclamation",
+      "ipa_uk": "/həˈləʊ/",
+      "ipa_us": "/həˈloʊ/",
+      "frequency_rank": 950,
+      "cefr_level": "A1",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A greeting used when meeting or welcoming someone",
+          "definition_vi": "Xin chào, lời chào hỏi khi gặp ai đó",
+          "examples": [
+            {
+              "sentence_en": "She smiled and said hello to everyone.",
+              "sentence_vi": "Cô ấy mỉm cười và nói xin chào với mọi người."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "thank you",
+      "part_of_speech": "phrase",
+      "ipa_uk": "/ˈθæŋk juː/",
+      "ipa_us": "/ˈθæŋk juː/",
+      "frequency_rank": null,
+      "cefr_level": "A1",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "An expression of gratitude said to someone who has helped you",
+          "definition_vi": "Cảm ơn, lời cảm ơn khi ai đó giúp đỡ bạn",
+          "examples": [
+            {
+              "sentence_en": "Thank you for your help.",
+              "sentence_vi": "Cảm ơn bạn đã giúp đỡ."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "please",
+      "part_of_speech": "adverb",
+      "ipa_uk": "/pliːz/",
+      "ipa_us": "/pliːz/",
+      "frequency_rank": 380,
+      "cefr_level": "A1",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Used to make a request more polite",
+          "definition_vi": "Làm ơn, từ lịch sự dùng khi yêu cầu",
+          "examples": [
+            {
+              "sentence_en": "Could you pass the salt, please?",
+              "sentence_vi": "Bạn có thể chuyền muối cho tôi được không, làm ơn?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "sorry",
+      "part_of_speech": "adjective",
+      "ipa_uk": "/ˈsɒri/",
+      "ipa_us": "/ˈsɔːri/",
+      "frequency_rank": 620,
+      "cefr_level": "A1",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Used to express apology or regret",
+          "definition_vi": "Xin lỗi, lời xin lỗi khi làm điều gì sai",
+          "examples": [
+            {
+              "sentence_en": "I am sorry for being late.",
+              "sentence_vi": "Tôi xin lỗi vì đã đến muộn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "friend",
+      "part_of_speech": "noun",
+      "ipa_uk": "/frɛnd/",
+      "ipa_us": "/frɛnd/",
+      "frequency_rank": 295,
+      "cefr_level": "A1",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A person you know well and like, who is not related to you",
+          "definition_vi": "Bạn bè, người bạn quen biết và quý mến",
+          "examples": [
+            {
+              "sentence_en": "She is my best friend from school.",
+              "sentence_vi": "Cô ấy là người bạn thân nhất của tôi từ hồi đi học."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
