@@ -1,14 +1,37 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 
+import { AuthContext, type AuthContextValue } from "@/store/authContext";
 import { SettingsPage } from "@/pages/SettingsPage";
 
 afterEach(cleanup);
 
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+function renderSettings(role?: "owner" | "learner") {
+  const user = role ? { userId: 1, username: role, role } : null;
+  const auth: AuthContextValue = {
+    user,
+    isLoading: false,
+    login: vi.fn(),
+    logout: vi.fn().mockResolvedValue(undefined),
+  };
+  render(
+    <AuthContext.Provider value={auth}>
+      <MemoryRouter>
+        <SettingsPage />
+      </MemoryRouter>
+    </AuthContext.Provider>,
+  );
+}
+
+// ── Standard section tests ────────────────────────────────────────────────────
+
 describe("SettingsPage", () => {
   it("renders all six section nav buttons", () => {
-    render(<SettingsPage />);
+    renderSettings();
 
     const nav = screen.getByRole("navigation", { name: "Settings sections" });
     for (const label of [
@@ -27,7 +50,7 @@ describe("SettingsPage", () => {
   });
 
   it("shows Account section by default", () => {
-    render(<SettingsPage />);
+    renderSettings();
 
     expect(
       screen.getByRole("button", { name: /Account/i }),
@@ -38,7 +61,7 @@ describe("SettingsPage", () => {
 
   it("switches to Learning section on click", async () => {
     const user = userEvent.setup();
-    render(<SettingsPage />);
+    renderSettings();
 
     await user.click(screen.getByRole("button", { name: /Learning/i }));
 
@@ -54,7 +77,7 @@ describe("SettingsPage", () => {
 
   it("toggles a switch in the Learning section", async () => {
     const user = userEvent.setup();
-    render(<SettingsPage />);
+    renderSettings();
 
     await user.click(screen.getByRole("button", { name: /Learning/i }));
 
@@ -70,7 +93,7 @@ describe("SettingsPage", () => {
 
   it("shows the FSRS note in Smart Review section", async () => {
     const user = userEvent.setup();
-    render(<SettingsPage />);
+    renderSettings();
 
     await user.click(screen.getByRole("button", { name: /Smart Review/i }));
 
@@ -80,7 +103,7 @@ describe("SettingsPage", () => {
 
   it("shows the Notifications section with toggles", async () => {
     const user = userEvent.setup();
-    render(<SettingsPage />);
+    renderSettings();
 
     await user.click(screen.getByRole("button", { name: /Notifications/i }));
 
@@ -95,7 +118,7 @@ describe("SettingsPage", () => {
 
   it("shows the Backup section with disabled action buttons", async () => {
     const user = userEvent.setup();
-    render(<SettingsPage />);
+    renderSettings();
 
     await user.click(screen.getByRole("button", { name: /Backup/i }));
 
@@ -106,5 +129,28 @@ describe("SettingsPage", () => {
       screen.getByRole("button", { name: "Export Data" }),
     ).toBeDisabled();
     expect(screen.getByLabelText("Export format")).toBeInTheDocument();
+  });
+
+  // ── Owner-only Data Studio entry ────────────────────────────────────────────
+
+  it("owner sees the Data Studio nav entry", () => {
+    renderSettings("owner");
+    expect(
+      screen.getByRole("button", { name: /data studio/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("learner does not see the Data Studio nav entry", () => {
+    renderSettings("learner");
+    expect(
+      screen.queryByRole("button", { name: /data studio/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("unauthenticated user does not see the Data Studio nav entry", () => {
+    renderSettings();
+    expect(
+      screen.queryByRole("button", { name: /data studio/i }),
+    ).not.toBeInTheDocument();
   });
 });

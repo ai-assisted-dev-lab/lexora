@@ -6,16 +6,19 @@ import {
   HardDrive,
   Mic,
   RotateCcw,
+  ShieldCheck,
   User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
 import { useAppInfo } from "@/hooks/useAppInfo";
 import { useDbHealth } from "@/hooks/useDbHealth";
 import { useSchemaVersion } from "@/hooks/useSchemaVersion";
+import { useAuth } from "@/store/authContext";
 
 // ── Primitive helpers ────────────────────────────────────────────────────────
 
@@ -494,6 +497,8 @@ const NAV_ITEMS: NavItem[] = [
 
 export function SettingsPage() {
   const [active, setActive] = useState<SettingsSection>("account");
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="settings-page">
@@ -509,6 +514,20 @@ export function SettingsPage() {
             {label}
           </button>
         ))}
+
+        {user?.role === "owner" && (
+          <>
+            <div className="settings-nav__divider" role="separator" />
+            <button
+              className="settings-nav__item settings-nav__item--admin"
+              onClick={() => navigate("/admin/data-studio")}
+              aria-label="Open Data Studio (owner only)"
+            >
+              <ShieldCheck size={15} aria-hidden="true" />
+              Data Studio
+            </button>
+          </>
+        )}
       </nav>
 
       <main aria-label="Settings content">
