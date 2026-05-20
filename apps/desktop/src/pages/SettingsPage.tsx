@@ -50,6 +50,14 @@ import type {
   AudioPriority,
   PronunciationAccent,
 } from "@/services/commands/settings";
+import type { NotificationSettings } from "@/services/commands/notifications";
+import {
+  defaultNotificationSettings,
+  getNotificationSettings,
+  sendTestNotification,
+  updateNotificationSettings,
+} from "@/services/commands/notifications";
+import { showBrowserNotification } from "@/services/notifications/browserNotifications";
 import { formatTauriError } from "@/services/tauri";
 import { useAuth } from "@/store/authContext";
 
@@ -437,10 +445,85 @@ function PronunciationSection() {
 }
 
 function NotificationsSection() {
-  const [reminder, setReminder] = useState(true);
-  const [reminderTime, setReminderTime] = useState("20:00");
-  const [streakAlert, setStreakAlert] = useState(true);
-  const [achievementNotif, setAchievementNotif] = useState(true);
+  const [settings, setSettings] = useState<NotificationSettings>(
+    defaultNotificationSettings,
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getNotificationSettings()
+      .then((result) => {
+        if (!cancelled && result) {
+          setSettings(result);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(formatTauriError(err));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function saveSettings(patch: Partial<NotificationSettings>) {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    setIsSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const saved = await updateNotificationSettings({
+        notificationEnabled: next.notificationEnabled,
+        inAppRemindersEnabled: next.inAppRemindersEnabled,
+        dueReviewNotificationsEnabled: next.dueReviewNotificationsEnabled,
+        streakNotificationsEnabled: next.streakNotificationsEnabled,
+        reminderTime: next.reminderTime,
+        reminderDaysOfWeek: next.reminderDaysOfWeek,
+      });
+      setSettings(saved);
+      setMessage("Notification settings saved.");
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleTestNotification() {
+    setIsSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await sendTestNotification();
+      const osResult = await showBrowserNotification(
+        result.reminder.title,
+        result.reminder.body,
+      );
+      setMessage(
+        osResult.status === "sent"
+          ? "Test notification sent. A matching in-app reminder was also created."
+          : `${result.message} ${osResult.message}`,
+      );
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <div className="settings-content">
@@ -452,23 +535,75 @@ function NotificationsSection() {
         OS-level notifications require platform permission — this will be wired
         up in Milestone 2.
       </p>
+      {(message || error) && (
+        <div
+          className={`settings-status ${error ? "settings-status--error" : "settings-status--success"}`}
+          role="status"
+        >
+          {error ? (
+            <AlertCircle size={16} aria-hidden="true" />
+          ) : (
+            <CheckCircle2 size={16} aria-hidden="true" />
+          )}
+          <span>{error ?? message}</span>
+        </div>
+      )}
       <Card className="settings-group">
         <SettingsRow
           label="Daily Reminder"
-          description="A push notification to start your study session."
+          description="Master switch for local due review and goal reminders."
+        >
+          <Toggle
+            checked={settings.notificationEnabled}
+            onChange={(notificationEnabled) =>
+              void saveSettings({ notificationEnabled })
+            }
+            aria-label="Toggle daily reminder"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Reminder Time"
+          description="Local time when Lexora starts checking for due work."
         >
           <input
             className="settings-input"
             type="time"
-            value={reminderTime}
-            onChange={(e) => setReminderTime(e.target.value)}
-            disabled={!reminder}
+            value={settings.reminderTime}
+            onChange={(e) => {
+              setSettings((current) => ({
+                ...current,
+                reminderTime: e.target.value,
+              }));
+              if (e.target.value) {
+                void saveSettings({ reminderTime: e.target.value });
+              }
+            }}
+            disabled={!settings.notificationEnabled || isLoading || isSaving}
             aria-label="Reminder time"
           />
+        </SettingsRow>
+        <SettingsRow
+          label="In-app Reminders"
+          description="Show active reminders in the header notification center."
+        >
           <Toggle
-            checked={reminder}
-            onChange={setReminder}
-            aria-label="Toggle daily reminder"
+            checked={settings.inAppRemindersEnabled}
+            onChange={(inAppRemindersEnabled) =>
+              void saveSettings({ inAppRemindersEnabled })
+            }
+            aria-label="Toggle in-app reminders"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Due Review Alerts"
+          description="Notify when locally scheduled review cards are due."
+        >
+          <Toggle
+            checked={settings.dueReviewNotificationsEnabled}
+            onChange={(dueReviewNotificationsEnabled) =>
+              void saveSettings({ dueReviewNotificationsEnabled })
+            }
+            aria-label="Toggle due review alerts"
           />
         </SettingsRow>
         <SettingsRow
@@ -476,22 +611,23 @@ function NotificationsSection() {
           description="Notifies you when your streak is at risk of breaking."
         >
           <Toggle
-            checked={streakAlert}
-            onChange={setStreakAlert}
+            checked={settings.streakNotificationsEnabled}
+            onChange={(streakNotificationsEnabled) =>
+              void saveSettings({ streakNotificationsEnabled })
+            }
             aria-label="Toggle streak alerts"
           />
         </SettingsRow>
-        <SettingsRow
-          label="Achievement Notifications"
-          description="Celebrates newly unlocked badges."
-        >
-          <Toggle
-            checked={achievementNotif}
-            onChange={setAchievementNotif}
-            aria-label="Toggle achievement notifications"
-          />
-        </SettingsRow>
       </Card>
+      <div className="settings-group-footer">
+        <Button
+          variant="secondary"
+          onClick={() => void handleTestNotification()}
+          disabled={isLoading || isSaving}
+        >
+          Send Test Notification
+        </Button>
+      </div>
     </div>
   );
 }

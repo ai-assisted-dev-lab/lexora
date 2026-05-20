@@ -175,6 +175,42 @@ describe("SettingsPage", () => {
               exists: true,
             },
           });
+        case "get_notification_settings":
+          return Promise.resolve({
+            userId: 1,
+            notificationEnabled: true,
+            inAppRemindersEnabled: true,
+            dueReviewNotificationsEnabled: true,
+            streakNotificationsEnabled: true,
+            reminderTime: "08:00",
+            reminderDaysOfWeek: "1111111",
+            updatedAt: "2026-05-20T00:00:00Z",
+          });
+        case "update_notification_settings":
+          return Promise.resolve({
+            userId: 1,
+            notificationEnabled: false,
+            inAppRemindersEnabled: true,
+            dueReviewNotificationsEnabled: true,
+            streakNotificationsEnabled: true,
+            reminderTime: "08:00",
+            reminderDaysOfWeek: "1111111",
+            updatedAt: "2026-05-20T00:00:01Z",
+          });
+        case "send_test_notification":
+          return Promise.resolve({
+            reminder: {
+              id: 1,
+              kind: "test",
+              title: "Lexora reminder test",
+              body: "Notifications are connected.",
+              actionLabel: "Open review",
+              route: "/review",
+              createdAt: "2026-05-20T00:00:00Z",
+            },
+            osStatus: "unavailable",
+            message: "Native Tauri notifications are not installed in this build.",
+          });
         case "export_deck_to_json":
           return Promise.resolve({
             deckId: 1,

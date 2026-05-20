@@ -4,6 +4,7 @@ export * from "./db";
 export * from "./decks";
 export * from "./importExport";
 export * from "./info";
+export * from "./notifications";
 export * from "./progress";
 export * from "./review";
 export * from "./search";

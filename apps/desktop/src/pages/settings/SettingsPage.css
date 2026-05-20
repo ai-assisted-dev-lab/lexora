@@ -69,6 +69,14 @@
   padding: 0;
 }
 
+/* ── Settings group footer ──────────────────────────────── */
+
+.settings-group-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) 0;
+}
+
 /* ── Settings row ───────────────────────────────────────── */
 
 .settings-row {

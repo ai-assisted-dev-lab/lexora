@@ -65,6 +65,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "admin_vocabulary_fields",
         sql: include_str!("../../migrations/0010_admin_vocabulary_fields.sql"),
     },
+    Migration {
+        version: 11,
+        name: "notification_preferences",
+        sql: include_str!("../../migrations/0011_notification_preferences.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -481,6 +486,64 @@ mod tests {
             rusqlite::params![uid],
         );
         assert!(invalid.is_err(), "invalid achievement event should fail");
+    }
+
+    #[test]
+    fn migration_011_creates_notification_preferences_and_events() {
+        let mut conn = in_memory();
+        run(&mut conn).expect("run migrations");
+
+        let tables = tables_in(&conn);
+        assert!(
+            tables.iter().any(|t| t == "notification_events"),
+            "notification_events should exist after migration 11"
+        );
+
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES ('notify', 'h', 'learner')",
+            [],
+        )
+        .unwrap();
+        let uid: i64 = conn
+            .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
+            .unwrap();
+
+        conn.execute("INSERT INTO user_settings (user_id) VALUES (?1)", params![uid])
+            .expect("settings should use notification preference defaults");
+
+        let prefs: (i64, i64, i64) = conn
+            .query_row(
+                "SELECT notification_enabled,
+                        due_review_notifications_enabled,
+                        in_app_reminders_enabled
+                 FROM user_settings
+                 WHERE user_id = ?1",
+                params![uid],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(prefs, (1, 1, 1));
+
+        conn.execute(
+            "INSERT INTO notification_events (
+                 user_id, kind, title, body, delivery, dedupe_key
+             )
+             VALUES (?1, 'due_review', 'Review due', '3 cards are due.', 'in_app', 'due_review:2026-05-20')",
+            params![uid],
+        )
+        .expect("valid notification event should insert");
+
+        let duplicate = conn.execute(
+            "INSERT INTO notification_events (
+                 user_id, kind, title, body, delivery, dedupe_key
+             )
+             VALUES (?1, 'due_review', 'Review due', '3 cards are due.', 'in_app', 'due_review:2026-05-20')",
+            params![uid],
+        );
+        assert!(
+            duplicate.is_err(),
+            "notification dedupe should prevent repeat daily reminders"
+        );
     }
 
     #[test]
