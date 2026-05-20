@@ -277,6 +277,67 @@
   font-weight: 800;
 }
 
+.settings-validation-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.settings-history {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-history__empty {
+  padding: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.settings-history__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.settings-history__main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-history__title {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 850;
+}
+
+.settings-history__meta,
+.settings-history__path,
+.settings-history__note {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.settings-history__path {
+  overflow-wrap: anywhere;
+}
+
 /* ── Owner-only divider + admin entry ───────────────────── */
 
 .settings-nav__divider {

@@ -1,5 +1,6 @@
 import "./settings/SettingsPage.css";
 
+import type { LucideIcon } from "lucide-react";
 import {
   AlertCircle,
   Bell,
@@ -14,9 +15,8 @@ import {
   Upload,
   User,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
@@ -25,10 +25,20 @@ import { useDbHealth } from "@/hooks/useDbHealth";
 import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
 import { useSchemaVersion } from "@/hooks/useSchemaVersion";
 import type {
-  AudioFallbackBehavior,
-  AudioPriority,
-  PronunciationAccent,
-} from "@/services/commands/settings";
+  BackupHistoryItemDto,
+  BackupValidationDto,
+} from "@/services/commands/backup";
+import {
+  createBackup,
+  ensureScheduledBackup,
+  listBackups,
+  restoreBackup,
+  validateBackup,
+} from "@/services/commands/backup";
+import type {
+  ExportableDeckDto,
+  ImportExportSchemaDto,
+} from "@/services/commands/importExport";
 import {
   exportDeckToJson,
   getImportExportSchema,
@@ -36,9 +46,10 @@ import {
   listExportableDecks,
 } from "@/services/commands/importExport";
 import type {
-  ExportableDeckDto,
-  ImportExportSchemaDto,
-} from "@/services/commands/importExport";
+  AudioFallbackBehavior,
+  AudioPriority,
+  PronunciationAccent,
+} from "@/services/commands/settings";
 import { formatTauriError } from "@/services/tauri";
 import { useAuth } from "@/store/authContext";
 
@@ -407,8 +418,7 @@ function PronunciationSection() {
             value={settings.audioFallbackBehavior}
             onChange={(e) =>
               updateSettings({
-                audioFallbackBehavior: e.target
-                  .value as AudioFallbackBehavior,
+                audioFallbackBehavior: e.target.value as AudioFallbackBehavior,
               })
             }
             aria-label="Audio fallback behavior"
@@ -486,10 +496,45 @@ function NotificationsSection() {
   );
 }
 
+function formatBackupDate(value: string | null | undefined) {
+  if (!value) return "Never";
+  return new Date(value).toLocaleString();
+}
+
+function formatBackupBytes(value: number | null | undefined) {
+  if (!value || value <= 0) return "Unknown size";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function describeBackupCounts(validation: BackupValidationDto | null) {
+  if (!validation) return null;
+  const rows = validation.tableCounts
+    .filter((count) => count.rows > 0)
+    .slice(0, 5)
+    .map((count) => `${count.table}: ${count.rows}`);
+  return rows.length > 0 ? rows.join(", ") : "No rows in backup.";
+}
+
 function BackupSection() {
   const [decks, setDecks] = useState<ExportableDeckDto[]>([]);
   const [schema, setSchema] = useState<ImportExportSchemaDto | null>(null);
+  const [history, setHistory] = useState<BackupHistoryItemDto[]>([]);
+  const [backupDirectory, setBackupDirectory] = useState("");
+  const [latestBackupAt, setLatestBackupAt] = useState<string | null>(null);
+  const [latestAutoBackupAt, setLatestAutoBackupAt] = useState<string | null>(
+    null,
+  );
   const [selectedDeckId, setSelectedDeckId] = useState("");
+  const [backupPath, setBackupPath] = useState("");
+  const [backupNote, setBackupNote] = useState("");
+  const [includeContent, setIncludeContent] = useState(true);
+  const [overwriteBackup, setOverwriteBackup] = useState(false);
+  const [restorePath, setRestorePath] = useState("");
+  const [restoreConfirmed, setRestoreConfirmed] = useState(false);
+  const [restoreValidation, setRestoreValidation] =
+    useState<BackupValidationDto | null>(null);
   const [exportPath, setExportPath] = useState("");
   const [importPath, setImportPath] = useState("");
   const [overwriteExport, setOverwriteExport] = useState(false);
@@ -502,7 +547,7 @@ function BackupSection() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadImportExportData() {
+    async function loadBackupData() {
       try {
         const [schemaResult, deckResult] = await Promise.all([
           getImportExportSchema(),
@@ -515,6 +560,10 @@ function BackupSection() {
           if (current) return current;
           return deckResult.decks[0]?.id.toString() ?? "";
         });
+
+        await ensureScheduledBackup();
+        if (cancelled) return;
+        await refreshBackupHistory(cancelled);
       } catch (err) {
         if (!cancelled) {
           setError(formatTauriError(err));
@@ -522,12 +571,114 @@ function BackupSection() {
       }
     }
 
-    void loadImportExportData();
+    void loadBackupData();
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  async function refreshBackupHistory(cancelled = false) {
+    const result = await listBackups();
+    if (cancelled) return;
+    setHistory(result.items);
+    setBackupDirectory(result.backupDirectory);
+    setLatestBackupAt(result.latestBackupAt);
+    setLatestAutoBackupAt(result.latestAutoBackupAt);
+  }
+
+  async function handleRefreshBackups() {
+    setIsBusy(true);
+    setError(null);
+    try {
+      await refreshBackupHistory();
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleCreateBackup() {
+    setIsBusy(true);
+    setError(null);
+    setMessage(null);
+    setRestoreValidation(null);
+    try {
+      const result = await createBackup({
+        filePath: backupPath.trim() ? backupPath.trim() : null,
+        note: backupNote.trim() ? backupNote.trim() : null,
+        includeContent,
+        overwrite: overwriteBackup,
+      });
+      setMessage(`Created ${result.backupKind} backup at ${result.filePath}.`);
+      await refreshBackupHistory();
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleValidateRestore() {
+    if (!restorePath.trim()) {
+      setError("Enter a local .lexora-backup.json file path to validate.");
+      return;
+    }
+
+    setIsBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const validation = await validateBackup(restorePath.trim());
+      setRestoreValidation(validation);
+      setMessage(
+        validation.valid
+          ? "Backup is compatible with this Lexora database."
+          : "Backup validation found problems.",
+      );
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleRestoreBackup() {
+    if (!restorePath.trim()) {
+      setError("Enter a local .lexora-backup.json file path to restore.");
+      return;
+    }
+    if (!restoreConfirmed) {
+      setError("Confirm restore before replacing local progress and settings.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Restore this backup? Current local progress and settings for this user will be replaced after a safety backup is created.",
+    );
+    if (!confirmed) return;
+
+    setIsBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await restoreBackup({
+        filePath: restorePath.trim(),
+        confirmRestore: true,
+        createSafetyBackup: true,
+      });
+      setMessage(
+        `Restored backup at ${formatBackupDate(result.restoredAt)}. A safety backup was ${result.safetyBackup ? "created" : "not created"}.`,
+      );
+      setRestoreConfirmed(false);
+      await refreshBackupHistory();
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsBusy(false);
+    }
+  }
 
   async function handleExportDeck() {
     const deckId = Number(selectedDeckId);
@@ -576,15 +727,18 @@ function BackupSection() {
     }
   }
 
+  const validationCounts = describeBackupCounts(restoreValidation);
+
   return (
     <div className="settings-content">
       <SectionHeader
-        title="Import & Export"
-        description="Move local decks through safe Lexora JSON files."
+        title="Backup & Restore"
+        description="Protect local progress, settings, and optional content metadata."
       />
       <p className="settings-note">
-        Deck JSON import creates new local content only. Existing pack or deck
-        slugs are rejected to avoid silent overwrites.
+        Backups are local JSON archives. Password hashes, app metadata, and
+        encryption keys are never exported. Restore always requires explicit
+        confirmation.
       </p>
       {(message || error) && (
         <div
@@ -623,11 +777,219 @@ function BackupSection() {
           </span>
         </SettingsRow>
         <SettingsRow
-          label="Last Backup"
-          description="Date and time of the most recent successful backup."
+          label="Backup Folder"
+          description={backupDirectory || "Local app-data backup folder."}
         >
-          <span className="settings-backup-meta">Never</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefreshBackups}
+            disabled={isBusy}
+          >
+            <RotateCcw size={15} aria-hidden="true" />
+            Refresh
+          </Button>
         </SettingsRow>
+        <SettingsRow
+          label="Last Backup"
+          description="Most recent manual or scheduled local backup."
+        >
+          <span className="settings-backup-meta">
+            {formatBackupDate(latestBackupAt)}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Last Auto Backup"
+          description="Scheduled local backups are created at most once per day."
+        >
+          <span className="settings-backup-meta">
+            {formatBackupDate(latestAutoBackupAt)}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Backup Path"
+          description="Optional full .lexora-backup.json path. Empty uses the local backup folder."
+        >
+          <input
+            className="settings-input settings-input--path"
+            type="text"
+            value={backupPath}
+            onChange={(e) => setBackupPath(e.target.value)}
+            placeholder="Use default backup folder"
+            aria-label="Backup file path"
+            disabled={isBusy}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Backup Note"
+          description="Optional label shown in backup history."
+        >
+          <input
+            className="settings-input settings-input--path"
+            type="text"
+            value={backupNote}
+            onChange={(e) => setBackupNote(e.target.value)}
+            placeholder="Before importing new decks"
+            aria-label="Backup note"
+            disabled={isBusy}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Include Content Metadata"
+          description="Includes decks, vocabulary metadata, examples, pronunciations, and provenance."
+        >
+          <Toggle
+            checked={includeContent}
+            onChange={setIncludeContent}
+            aria-label="Toggle content metadata in backup"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Overwrite Backup File"
+          description="Required before replacing an existing backup path."
+        >
+          <Toggle
+            checked={overwriteBackup}
+            onChange={setOverwriteBackup}
+            aria-label="Toggle overwrite backup file"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Create Manual Backup"
+          description="Exports local user data and selected metadata to a backup archive."
+        >
+          <Button
+            variant="soft"
+            size="sm"
+            onClick={handleCreateBackup}
+            disabled={isBusy}
+          >
+            <Download size={15} aria-hidden="true" />
+            Create Backup
+          </Button>
+        </SettingsRow>
+      </Card>
+
+      <Card className="settings-group">
+        <SettingsRow
+          label="Restore Path"
+          description="Full path to a compatible Lexora backup archive."
+        >
+          <input
+            className="settings-input settings-input--path"
+            type="text"
+            value={restorePath}
+            onChange={(e) => {
+              setRestorePath(e.target.value);
+              setRestoreValidation(null);
+            }}
+            placeholder="C:\\path\\lexora.lexora-backup.json"
+            aria-label="Restore backup path"
+            disabled={isBusy}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Validate Backup"
+          description={
+            restoreValidation
+              ? `${restoreValidation.valid ? "Valid" : "Invalid"}; ${validationCounts ?? "no table counts"}`
+              : "Checks schema compatibility and local references before restore."
+          }
+        >
+          <Button
+            variant="soft"
+            size="sm"
+            onClick={handleValidateRestore}
+            disabled={isBusy || !restorePath.trim()}
+          >
+            <CheckCircle2 size={15} aria-hidden="true" />
+            Validate
+          </Button>
+        </SettingsRow>
+        {restoreValidation?.warnings.length ? (
+          <div className="settings-validation-list" role="status">
+            {restoreValidation.warnings.map((warning) => (
+              <span key={warning}>{warning}</span>
+            ))}
+          </div>
+        ) : null}
+        <SettingsRow
+          label="Restore Confirmation"
+          description="Required before replacing current local progress and settings."
+        >
+          <Toggle
+            checked={restoreConfirmed}
+            onChange={setRestoreConfirmed}
+            aria-label="Confirm restore"
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Restore Backup"
+          description="Creates a safety backup first, then restores the selected archive."
+        >
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={handleRestoreBackup}
+            disabled={isBusy || !restorePath.trim() || !restoreConfirmed}
+          >
+            <Upload size={15} aria-hidden="true" />
+            Restore
+          </Button>
+        </SettingsRow>
+      </Card>
+
+      <Card className="settings-group">
+        <SettingsRow
+          label="Backup History"
+          description={
+            history.length
+              ? `${history.length} local backup${history.length === 1 ? "" : "s"} recorded.`
+              : "Manual and scheduled backups will appear here."
+          }
+        >
+          <Badge variant="muted">{history.length}</Badge>
+        </SettingsRow>
+        <div className="settings-history" aria-label="Backup history">
+          {history.length === 0 ? (
+            <div className="settings-history__empty">No backups yet.</div>
+          ) : (
+            history.slice(0, 8).map((item) => (
+              <div className="settings-history__item" key={item.id}>
+                <div className="settings-history__main">
+                  <span className="settings-history__title">
+                    {item.backupKind === "auto" ? "Auto" : "Manual"} backup
+                  </span>
+                  <span className="settings-history__meta">
+                    {formatBackupDate(item.createdAt)} -{" "}
+                    {formatBackupBytes(item.fileSizeBytes)} -{" "}
+                    {item.includeContent ? "with content" : "user data only"}
+                  </span>
+                  <span className="settings-history__path">
+                    {item.filePath}
+                  </span>
+                  {item.note && (
+                    <span className="settings-history__note">{item.note}</span>
+                  )}
+                </div>
+                <Badge variant={item.exists ? "muted" : "danger"}>
+                  {item.exists ? "File OK" : "Missing"}
+                </Badge>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
+      <SectionHeader
+        title="Deck JSON"
+        description="Move individual decks through safe Lexora JSON files."
+      />
+      <p className="settings-note">
+        Deck JSON import creates new local content only. Existing pack or deck
+        slugs are rejected to avoid silent overwrites.
+      </p>
+      <Card className="settings-group">
         <SettingsRow
           label="Deck JSON Schema"
           description={

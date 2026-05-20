@@ -1,10 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AuthContext, type AuthContextValue } from "@/store/authContext";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { AuthContext, type AuthContextValue } from "@/store/authContext";
 
 const invokeMock = vi.hoisted(() => vi.fn());
 
@@ -108,6 +108,72 @@ describe("SettingsPage", () => {
               },
             ],
             total: 1,
+          });
+        case "ensure_scheduled_backup":
+          return Promise.resolve({
+            created: false,
+            skippedReason:
+              "A scheduled backup already exists for the last 24 hours.",
+            backup: null,
+          });
+        case "list_backups":
+          return Promise.resolve({
+            items: [
+              {
+                id: 1,
+                filePath: "C:\\Backups\\lexora-manual.lexora-backup.json",
+                fileSizeBytes: 2048,
+                note: "Before import",
+                backupKind: "manual",
+                includeContent: true,
+                createdAt: "2026-05-20T00:00:00Z",
+                exists: true,
+              },
+            ],
+            total: 1,
+            latestBackupAt: "2026-05-20T00:00:00Z",
+            latestAutoBackupAt: null,
+            backupDirectory: "C:\\Backups",
+          });
+        case "create_backup":
+          return Promise.resolve({
+            backupId: 2,
+            filePath: "C:\\Backups\\lexora-new.lexora-backup.json",
+            bytesWritten: 4096,
+            createdAt: "2026-05-20T01:00:00Z",
+            backupKind: "manual",
+            includeContent: true,
+            tableCounts: [{ table: "user_settings", rows: 1 }],
+          });
+        case "validate_backup":
+          return Promise.resolve({
+            valid: true,
+            schema: "lexora.backup.v1",
+            schemaVersion: 1,
+            exportedAt: "2026-05-20T00:00:00Z",
+            backupKind: "manual",
+            username: "learner",
+            includeContent: true,
+            tableCounts: [
+              { table: "user_settings", rows: 1 },
+              { table: "review_cards", rows: 12 },
+            ],
+            warnings: [],
+          });
+        case "restore_backup":
+          return Promise.resolve({
+            restoredAt: "2026-05-20T02:00:00Z",
+            restoredTables: [{ table: "user_settings", rows: 1 }],
+            safetyBackup: {
+              id: 3,
+              filePath: "C:\\Backups\\safety.lexora-backup.json",
+              fileSizeBytes: 1024,
+              note: "pre_restore_safety",
+              backupKind: "auto",
+              includeContent: true,
+              createdAt: "2026-05-20T01:59:00Z",
+              exists: true,
+            },
           });
         case "export_deck_to_json":
           return Promise.resolve({
@@ -252,7 +318,66 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("button", { name: "Import JSON" })).toBeDisabled();
     expect(screen.getByLabelText("Deck to export")).toBeInTheDocument();
     expect(screen.getByLabelText("Export JSON path")).toBeInTheDocument();
+    expect(screen.getByText("Backup & Restore")).toBeInTheDocument();
+    expect(screen.getByText("Backup History")).toBeInTheDocument();
     expect(screen.getByText(/headword, part_of_speech/i)).toBeInTheDocument();
+  });
+
+  it("creates a manual backup from Backup section", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("button", { name: /Backup/i }));
+    await user.click(
+      await screen.findByRole("button", { name: "Create Backup" }),
+    );
+
+    expect(invokeMock).toHaveBeenCalledWith("create_backup", {
+      input: {
+        filePath: null,
+        note: null,
+        includeContent: true,
+        overwrite: false,
+      },
+    });
+    expect(
+      await screen.findByText(/Created manual backup at C:\\Backups/i),
+    ).toBeInTheDocument();
+  });
+
+  it("validates and restores a backup with confirmation", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderSettings();
+
+    await user.click(screen.getByRole("button", { name: /Backup/i }));
+    await user.type(
+      await screen.findByLabelText("Restore backup path"),
+      "C:\\Backups\\lexora-manual.lexora-backup.json",
+    );
+    await user.click(screen.getByRole("button", { name: "Validate" }));
+    expect(invokeMock).toHaveBeenCalledWith("validate_backup", {
+      filePath: "C:\\Backups\\lexora-manual.lexora-backup.json",
+    });
+    expect(
+      await screen.findByText(
+        /Backup is compatible with this Lexora database/i,
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("Confirm restore"));
+    await user.click(screen.getByRole("button", { name: "Restore" }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(invokeMock).toHaveBeenCalledWith("restore_backup", {
+      input: {
+        filePath: "C:\\Backups\\lexora-manual.lexora-backup.json",
+        confirmRestore: true,
+        createSafetyBackup: true,
+      },
+    });
+    expect(await screen.findByText(/Restored backup at/i)).toBeInTheDocument();
+    confirmSpy.mockRestore();
   });
 
   it("exports deck JSON from Backup section", async () => {

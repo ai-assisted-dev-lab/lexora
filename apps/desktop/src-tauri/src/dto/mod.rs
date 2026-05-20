@@ -7,6 +7,7 @@ pub mod analytics;
 /// layer. Keep DTOs flat and free of Rust-only types.
 pub mod audio;
 pub mod auth;
+pub mod backup;
 pub mod db;
 pub mod decks;
 pub mod import_export;

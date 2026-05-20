@@ -7,6 +7,7 @@ pub mod analytics;
 pub mod admin;
 pub mod audio;
 pub mod auth;
+pub mod backup;
 pub mod db;
 pub mod decks;
 pub mod import_export;

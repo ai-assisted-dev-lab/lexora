@@ -29,6 +29,11 @@ impl AppPaths {
         self.app_data_dir.join("exports")
     }
 
+    /// Default directory for user-created and scheduled local backups.
+    pub fn backups_dir(&self) -> PathBuf {
+        self.app_data_dir.join("backups")
+    }
+
     /// Root directory for locally cached pronunciation audio files.
     /// Relative audio paths from the pronunciations table are resolved
     /// against this directory.
