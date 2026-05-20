@@ -1241,4 +1241,52 @@ mod tests {
             .expect("rejected import record");
         assert_eq!(rejected, 1);
     }
+
+    #[test]
+    fn import_deck_json_rejects_unsupported_schema_version() {
+        let mut conn = db_with_data();
+        let path = temp_path("bad-schema");
+        fs::write(
+            &path,
+            r#"{
+              "schema": "lexora.deck.v0",
+              "schema_version": "0",
+              "exported_at": "2026-01-01T00:00:00Z",
+              "pack": {
+                "slug": "bad_schema_pack",
+                "name": "Bad Schema Pack",
+                "description": null,
+                "version": "1.0.0",
+                "author": "Lexora",
+                "cover_image_path": null
+              },
+              "deck": {
+                "slug": "bad_schema_deck",
+                "name": "Bad Schema Deck",
+                "description": null,
+                "cover_image_path": null,
+                "difficulty": "beginner",
+                "tags": []
+              },
+              "words": [],
+              "relations": []
+            }"#,
+        )
+        .expect("write invalid import file");
+
+        let result = import_deck_json(&mut conn, &path_string(&path));
+
+        assert!(matches!(result, Err(AppError::Validation(_))));
+        let rejected: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM content_imports
+                 WHERE status = 'rejected'
+                   AND pack_slug = 'bad_schema_pack'
+                   AND deck_slug = 'bad_schema_deck'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("rejected import record");
+        assert_eq!(rejected, 1);
+    }
 }

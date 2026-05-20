@@ -1128,6 +1128,13 @@ fn start_weak_words_drill_for_user_at(
     input: StartWeakWordsDrillInputDto,
     now_sql: &str,
 ) -> Result<StudySessionDto, AppError> {
+    if input.mode != WEAK_DRILL_MODE {
+        return Err(AppError::Validation(format!(
+            "Unsupported weak words mode '{}'. Only '{WEAK_DRILL_MODE}' is available.",
+            input.mode
+        )));
+    }
+
     if input.session_length < 1 || input.session_length > 100 {
         return Err(AppError::Validation(
             "Session length must be between 1 and 100.".to_string(),
@@ -1176,7 +1183,7 @@ fn start_weak_words_drill_for_user_at(
     })
 }
 
-fn start_flashcard_session_for_user_at(
+pub(crate) fn start_flashcard_session_for_user_at(
     conn: &Connection,
     user_id: i64,
     input: StartFlashcardSessionInputDto,
@@ -1554,7 +1561,7 @@ fn submit_type_answer_review_for_user(
     })
 }
 
-fn submit_flashcard_review_for_user(
+pub(crate) fn submit_flashcard_review_for_user(
     conn: &Connection,
     user_id: i64,
     input: SubmitFlashcardReviewInputDto,
@@ -1845,7 +1852,7 @@ fn submit_multiple_choice_review_for_user(
     })
 }
 
-fn complete_study_session_for_user_at(
+pub(crate) fn complete_study_session_for_user_at(
     conn: &Connection,
     user_id: i64,
     input: CompleteStudySessionInputDto,

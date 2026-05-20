@@ -58,6 +58,44 @@ describe("FSRS review engine", () => {
     );
   });
 
+  it("moves a new card into learning after an initial again rating", () => {
+    const result = scheduleReview({
+      card: createInitialReviewCard({ now: NOW }),
+      rating: "again",
+      reviewedAt: NOW,
+    });
+
+    expect(result.previous.state).toBe("new");
+    expect(result.next.state).toBe("learning");
+    expect(result.next.reps).toBe(1);
+    expect(result.next.lapses).toBe(0);
+    expect(result.next.lastReview).toBe(NOW.toISOString());
+    expect(new Date(result.next.due).getTime()).toBeGreaterThan(NOW.getTime());
+  });
+
+  it("keeps successful review transitions in review with monotonic counters", () => {
+    const first = scheduleReview({
+      card: createInitialReviewCard({ now: NOW }),
+      rating: "easy",
+      reviewedAt: NOW,
+    }).next;
+    const secondReviewedAt = new Date(first.due);
+    const second = scheduleReview({
+      card: first,
+      rating: "good",
+      reviewedAt: secondReviewedAt,
+    });
+
+    expect(second.previous.state).toBe("review");
+    expect(second.next.state).toBe("review");
+    expect(second.next.reps).toBe(second.previous.reps + 1);
+    expect(second.next.lapses).toBe(second.previous.lapses);
+    expect(second.next.scheduledDays).toBeGreaterThanOrEqual(
+      second.previous.scheduledDays,
+    );
+    expect(second.next.lastReview).toBe(secondReviewedAt.toISOString());
+  });
+
   it("schedules hard, good, and easy into valid future states", () => {
     const ratings: LexoraReviewRating[] = ["hard", "good", "easy"];
 
@@ -94,8 +132,11 @@ describe("FSRS review engine", () => {
 
   it("returns false before a card is due", () => {
     const card = createInitialReviewCard({ now: NOW });
-    const scheduled = scheduleReview({ card, rating: "good", reviewedAt: NOW })
-      .next;
+    const scheduled = scheduleReview({
+      card,
+      rating: "good",
+      reviewedAt: NOW,
+    }).next;
 
     expect(
       isDue({

@@ -366,7 +366,7 @@ fn group_results(results: Vec<SearchResultDto>) -> Vec<SearchResultGroupDto> {
         .collect()
 }
 
-fn search_with_conn(
+pub(crate) fn search_with_conn(
     conn: &Connection,
     query: String,
     filters: Option<SearchFiltersDto>,

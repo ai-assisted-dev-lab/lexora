@@ -101,6 +101,17 @@ vi.mock("@tauri-apps/api/core", () => ({
         reviewHistory: [],
       });
     }
+    if (cmd === "get_pronunciation_settings") {
+      return Promise.resolve({
+        userId: 1,
+        audioAutoplay: true,
+        pronunciationAccent: "us",
+        pronunciationSpeed: 1,
+        audioPriority: "local_first",
+        audioFallbackBehavior: "browser_tts",
+        updatedAt: "2026-01-01T00:00:00Z",
+      });
+    }
     if (cmd === "start_flashcard_session") {
       return Promise.resolve({
         sessionId: 1,

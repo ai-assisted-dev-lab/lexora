@@ -13,3 +13,5 @@ pnpm-lock.yaml
 
 # Coverage output
 coverage/
+test-results/
+playwright-report/

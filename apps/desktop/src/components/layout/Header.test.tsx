@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AuthContext, type AuthContextValue } from "@/store/authContext";
 
@@ -17,6 +17,36 @@ const invokeMock = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: invokeMock,
 }));
+
+function defaultInvoke(command: string) {
+  if (command === "evaluate_reminders") {
+    return Promise.resolve({
+      reminders: [],
+      newReminders: [],
+      dueReviewCount: 0,
+      dailyGoalCards: 20,
+      todayCardsReviewed: 0,
+      currentStreak: 0,
+      settings: {
+        userId: 1,
+        notificationEnabled: true,
+        inAppRemindersEnabled: true,
+        dueReviewNotificationsEnabled: true,
+        streakNotificationsEnabled: true,
+        reminderTime: "08:00",
+        reminderDaysOfWeek: "1111111",
+        updatedAt: "2026-01-01T00:00:00Z",
+      },
+      evaluatedAt: "2026-01-01T00:00:00Z",
+    });
+  }
+
+  return Promise.resolve(undefined);
+}
+
+beforeEach(() => {
+  invokeMock.mockImplementation(defaultInvoke);
+});
 
 afterEach(() => {
   cleanup();
@@ -35,7 +65,10 @@ const ownerAuth: AuthContextValue = {
   user: { userId: 2, username: "owner", role: "owner" },
 };
 
-function renderHeader(path = "/discover", auth: AuthContextValue = learnerAuth) {
+function renderHeader(
+  path = "/discover",
+  auth: AuthContextValue = learnerAuth,
+) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <AuthContext.Provider value={auth}>
@@ -47,7 +80,9 @@ function renderHeader(path = "/discover", auth: AuthContextValue = learnerAuth) 
 
 function LocationProbe() {
   const location = useLocation();
-  return <span data-testid="location">{location.pathname + location.search}</span>;
+  return (
+    <span data-testid="location">{location.pathname + location.search}</span>
+  );
 }
 
 describe("Header page title", () => {
@@ -118,9 +153,7 @@ describe("Header search bar", () => {
     fireEvent.change(input, { target: { value: "hello" } });
     fireEvent.submit(input.closest("form")!);
 
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      "/search?q=hello",
-    );
+    expect(screen.getByTestId("location")).toHaveTextContent("/search?q=hello");
   });
 });
 
@@ -165,29 +198,35 @@ describe("Header command palette", () => {
   });
 
   it("includes offline search results from the search command", async () => {
-    invokeMock.mockResolvedValueOnce({
-      query: "hel",
-      groups: [
-        {
-          resultType: "word",
-          label: "Words",
-          results: [
+    invokeMock.mockImplementation((command: string) => {
+      if (command === "search") {
+        return Promise.resolve({
+          query: "hel",
+          groups: [
             {
               resultType: "word",
-              id: 42,
-              title: "hello",
-              subtitle: "interjection",
-              snippet: "used as a greeting",
-              deckTitle: "Core English",
-              packTitle: "Starter",
-              score: 1.2,
-              route: "/word/42",
+              label: "Words",
+              results: [
+                {
+                  resultType: "word",
+                  id: 42,
+                  title: "hello",
+                  subtitle: "interjection",
+                  snippet: "used as a greeting",
+                  deckTitle: "Core English",
+                  packTitle: "Starter",
+                  score: 1.2,
+                  route: "/word/42",
+                },
+              ],
             },
           ],
-        },
-      ],
-      total: 1,
-      elapsedMs: 4,
+          total: 1,
+          elapsedMs: 4,
+        });
+      }
+
+      return defaultInvoke(command);
     });
 
     render(
@@ -206,7 +245,9 @@ describe("Header command palette", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("option", { name: /hello/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: /hello/i }),
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("option", { name: /hello/i }));

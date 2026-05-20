@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const host = process.env.TAURI_DEV_HOST;
+const isE2E = process.env.VITE_LEXORA_E2E === "1";
 
 export default defineConfig({
   plugins: [react()],
@@ -11,6 +12,16 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      ...(isE2E
+        ? {
+            "@tauri-apps/api/core": fileURLToPath(
+              new URL("./src/test/e2eTauriCoreMock.ts", import.meta.url),
+            ),
+            "@tauri-apps/api/window": fileURLToPath(
+              new URL("./src/test/e2eTauriWindowMock.ts", import.meta.url),
+            ),
+          }
+        : {}),
     },
   },
 

@@ -7,13 +7,16 @@
     "build": "pnpm --filter desktop build",
     "lint": "pnpm -r --parallel lint",
     "typecheck": "pnpm -r --parallel typecheck",
-    "test": "pnpm -r --parallel test",
-    "test:e2e": "playwright test",
+    "test": "pnpm run test:unit && pnpm run test:rust && pnpm run test:e2e",
+    "test:unit": "pnpm -r --parallel --if-present test",
+    "test:rust": "cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --lib",
+    "test:e2e": "node ./tests/e2e/run-playwright.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "pnpm -r --parallel --if-present clean && rimraf node_modules"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1"
   },

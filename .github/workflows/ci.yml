@@ -50,18 +50,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium
+
       # ── JavaScript / TypeScript ───────────────────────────────────────────
-      - name: Format check
-        run: pnpm format:check
-
-      - name: Lint
-        run: pnpm -r --if-present lint
-
       - name: Typecheck
         run: pnpm -r --if-present typecheck
 
       - name: Unit tests
-        run: pnpm -r --if-present test
+        run: pnpm test:unit
+
+      - name: Rust tests
+        run: pnpm test:rust
+
+      - name: E2E tests
+        run: pnpm test:e2e
 
       # ── Rust ─────────────────────────────────────────────────────────────
       - name: Rust format check
@@ -76,6 +79,8 @@ jobs:
         run: cargo clippy -- -D warnings
         working-directory: apps/desktop/src-tauri
 
-      # E2E tests — enabled once Playwright tests exist
-      # - name: E2E tests
-      #   run: pnpm test:e2e
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm -r --if-present lint
