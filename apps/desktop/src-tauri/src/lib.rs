@@ -1,6 +1,7 @@
 mod auth;
 mod commands;
 mod config;
+mod data_quality;
 mod db;
 mod dto;
 mod errors;
@@ -80,6 +81,9 @@ pub fn run() {
             commands::admin::admin_update_vocabulary_item,
             commands::admin::admin_list_decks,
             commands::admin::admin_get_validation_summary,
+            commands::admin::admin_run_data_quality_scan,
+            commands::admin::admin_list_data_quality_issues,
+            commands::admin::admin_get_data_quality_summary,
             commands::audio::get_audio_cache_path,
             commands::audio::check_audio_cached,
             commands::audio::read_cached_audio,

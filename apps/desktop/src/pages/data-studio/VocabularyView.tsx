@@ -544,7 +544,7 @@ interface DrawerProps {
   onSaved: () => void;
 }
 
-function VocabularyDetailDrawer({ id, onClose, onSaved }: DrawerProps) {
+export function VocabularyDetailDrawer({ id, onClose, onSaved }: DrawerProps) {
   const [detail, setDetail] = useState<AdminVocabularyDetail | null>(null);
   const [form, setForm] = useState<AdminVocabularyDetail | null>(null);
   const [loading, setLoading] = useState(true);

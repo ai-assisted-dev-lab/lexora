@@ -3,13 +3,17 @@ use serde::Serialize;
 use tauri::State;
 
 use crate::auth;
+use crate::data_quality;
 use crate::db::DbConn;
 use crate::dto::admin::{
-    AdminDeckListInputDto, AdminDeckPageDto, AdminDeckSummaryDto, AdminMissingFlagsDto,
+    AdminDeckListInputDto, AdminDeckPageDto, AdminDeckSummaryDto,
+    AdminListDataQualityIssuesInputDto, AdminMissingFlagsDto, AdminRunDataQualityScanInputDto,
     AdminValidationSummaryDto, AdminVocabularyDetailDto, AdminVocabularyListInputDto,
     AdminVocabularyListItemDto, AdminVocabularyPageDto, AdminVocabularyPatchDto,
+    DataQualityIssuePageDto, DataQualityScanResultDto, DataQualitySummaryDto,
 };
 use crate::errors::AppError;
+use crate::filesystem::AppPaths;
 
 const DEFAULT_PAGE_SIZE: i64 = 50;
 const MAX_PAGE_SIZE: i64 = 200;
@@ -421,19 +425,35 @@ fn apply_vocabulary_patch(
     }
     if let Some(v) = normalize_optional_text(patch.part_of_speech.clone()) {
         sets.push("part_of_speech = ?");
-        binds.push(if v.is_empty() { Value::Null } else { Value::Text(v) });
+        binds.push(if v.is_empty() {
+            Value::Null
+        } else {
+            Value::Text(v)
+        });
     }
     if let Some(v) = normalize_optional_text(patch.cefr_level.clone()) {
         sets.push("cefr_level = ?");
-        binds.push(if v.is_empty() { Value::Null } else { Value::Text(v) });
+        binds.push(if v.is_empty() {
+            Value::Null
+        } else {
+            Value::Text(v)
+        });
     }
     if let Some(v) = normalize_optional_text(patch.ipa_uk.clone()) {
         sets.push("ipa_uk = ?");
-        binds.push(if v.is_empty() { Value::Null } else { Value::Text(v) });
+        binds.push(if v.is_empty() {
+            Value::Null
+        } else {
+            Value::Text(v)
+        });
     }
     if let Some(v) = normalize_optional_text(patch.ipa_us.clone()) {
         sets.push("ipa_us = ?");
-        binds.push(if v.is_empty() { Value::Null } else { Value::Text(v) });
+        binds.push(if v.is_empty() {
+            Value::Null
+        } else {
+            Value::Text(v)
+        });
     }
     if let Some(v) = patch.review_status.clone() {
         sets.push("review_status = ?");
@@ -539,8 +559,7 @@ fn apply_vocabulary_patch(
     }
 
     // ── primary example ──────────────────────────────────────────────────
-    let touches_example =
-        patch.primary_example_en.is_some() || patch.primary_example_vi.is_some();
+    let touches_example = patch.primary_example_en.is_some() || patch.primary_example_vi.is_some();
     if touches_example {
         let primary_sense_id: Option<i64> = tx
             .query_row(
@@ -809,6 +828,47 @@ pub fn admin_get_validation_summary(
     validation_summary_impl(&conn)
 }
 
+#[tauri::command]
+pub fn admin_run_data_quality_scan(
+    input: Option<AdminRunDataQualityScanInputDto>,
+    db: State<'_, DbConn>,
+    paths: State<'_, AppPaths>,
+) -> Result<DataQualityScanResultDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    auth::require_owner(&conn)?;
+    data_quality::run_data_quality_scan(&conn, &paths, input.unwrap_or_default())
+}
+
+#[tauri::command]
+pub fn admin_list_data_quality_issues(
+    input: AdminListDataQualityIssuesInputDto,
+    db: State<'_, DbConn>,
+    paths: State<'_, AppPaths>,
+) -> Result<DataQualityIssuePageDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    auth::require_owner(&conn)?;
+    data_quality::list_data_quality_issues(&conn, &paths, input)
+}
+
+#[tauri::command]
+pub fn admin_get_data_quality_summary(
+    db: State<'_, DbConn>,
+    paths: State<'_, AppPaths>,
+) -> Result<DataQualitySummaryDto, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+    auth::require_owner(&conn)?;
+    data_quality::get_data_quality_summary(&conn, &paths)
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -897,8 +957,7 @@ mod tests {
     fn vocabulary_search_filter_narrows_results() {
         let conn = seeded_conn();
         login_as(&conn, "owner");
-        let all =
-            list_vocabulary_impl(&conn, AdminVocabularyListInputDto::default()).expect("all");
+        let all = list_vocabulary_impl(&conn, AdminVocabularyListInputDto::default()).expect("all");
         if all.total == 0 {
             return;
         }
@@ -1031,10 +1090,7 @@ mod tests {
         )
         .expect("apply patch");
         let after = load_vocabulary_detail(&conn, id).expect("after");
-        assert_eq!(
-            after.primary_definition_vi.as_deref(),
-            Some("nghĩa mới")
-        );
+        assert_eq!(after.primary_definition_vi.as_deref(), Some("nghĩa mới"));
     }
 
     #[test]

@@ -192,3 +192,130 @@ export interface AdminValidationSummary {
 export function adminGetValidationSummary(): Promise<AdminValidationSummary> {
   return invoke<AdminValidationSummary>("admin_get_validation_summary");
 }
+
+export type DataQualitySeverity = "critical" | "high" | "medium" | "low";
+
+export type DataQualityCategory =
+  | "missing_field"
+  | "duplicate"
+  | "conflict"
+  | "broken_reference"
+  | "provenance"
+  | "suspicious_content";
+
+export type DataQualityEntityType =
+  | "vocabulary_item"
+  | "vocabulary_sense"
+  | "pronunciation"
+  | "deck"
+  | "deck_item"
+  | "asset"
+  | "relation";
+
+export interface DataQualityNavigationTarget {
+  targetType: "vocabulary_item" | "deck" | string;
+  targetId: string;
+  label: string;
+}
+
+export interface DataQualityIssue {
+  id: string;
+  severity: DataQualitySeverity;
+  category: DataQualityCategory;
+  entityType: DataQualityEntityType;
+  entityId: string;
+  entityLabel: string | null;
+  field: string | null;
+  message: string;
+  recommendation: string | null;
+  canAutoFix: boolean;
+  createdAt: string | null;
+  navigationTarget: DataQualityNavigationTarget | null;
+}
+
+export interface DataQualityScannedEntityCounts {
+  vocabularyItems: number;
+  senses: number;
+  pronunciations: number;
+  decks: number;
+  deckItems: number;
+  relations: number;
+  assets: number;
+}
+
+export interface DataQualityQuickCounts {
+  critical: number;
+  high: number;
+  missingMeanings: number;
+  missingIpaAudio: number;
+  duplicates: number;
+  unverifiedEntries: number;
+}
+
+export interface DataQualityTopIssueType {
+  issueType: string;
+  label: string;
+  count: number;
+}
+
+export interface DataQualitySummary {
+  totalIssues: number;
+  bySeverity: Record<string, number>;
+  byCategory: Record<string, number>;
+  byEntityType: Record<string, number>;
+  topIssueTypes: DataQualityTopIssueType[];
+  lastScanTime: string | null;
+  scannedEntityCounts: DataQualityScannedEntityCounts;
+  quickCounts: DataQualityQuickCounts;
+}
+
+export interface AdminRunDataQualityScanInput {
+  categories?: DataQualityCategory[];
+  severity?: DataQualitySeverity[];
+  limit?: number;
+}
+
+export interface DataQualityScanResult {
+  issues: DataQualityIssue[];
+  returnedIssues: number;
+  totalIssues: number;
+  summary: DataQualitySummary;
+  scannedAt: string;
+}
+
+export interface AdminListDataQualityIssuesInput {
+  page: number;
+  pageSize: number;
+  category?: DataQualityCategory;
+  severity?: DataQualitySeverity;
+  entityType?: DataQualityEntityType;
+  search?: string;
+}
+
+export interface DataQualityIssuePage {
+  items: DataQualityIssue[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export function adminRunDataQualityScan(
+  input?: AdminRunDataQualityScanInput,
+): Promise<DataQualityScanResult> {
+  return invoke<DataQualityScanResult>("admin_run_data_quality_scan", {
+    input,
+  });
+}
+
+export function adminListDataQualityIssues(
+  input: AdminListDataQualityIssuesInput,
+): Promise<DataQualityIssuePage> {
+  return invoke<DataQualityIssuePage>("admin_list_data_quality_issues", {
+    input,
+  });
+}
+
+export function adminGetDataQualitySummary(): Promise<DataQualitySummary> {
+  return invoke<DataQualitySummary>("admin_get_data_quality_summary");
+}
