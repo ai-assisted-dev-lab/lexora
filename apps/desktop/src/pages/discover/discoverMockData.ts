@@ -1,5 +1,3 @@
-import type { CatalogDeck } from "./types";
-
 export const categoryFilters = [
   "All",
   "IELTS",
@@ -24,7 +22,7 @@ export const topicFilters = [
   "Science",
 ];
 
-export const catalogDecks: CatalogDeck[] = [
+export const catalogDecks = [
   {
     id: "ielts-band-7-lexis",
     title: "IELTS Band 7 Lexis",

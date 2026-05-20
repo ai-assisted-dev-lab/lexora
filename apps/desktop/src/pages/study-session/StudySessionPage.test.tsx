@@ -376,14 +376,15 @@ describe("StudySessionPage", () => {
   });
 
   it("disables rating buttons while a review submission is pending", async () => {
-    let resolveSubmit:
-      | ((value: {
-          session: ReturnType<typeof progress>;
-          card: typeof baseCard;
-          rating: string;
-          reviewedAt: string;
-        }) => void)
-      | null = null;
+    type SubmitReviewResult = {
+      session: ReturnType<typeof progress>;
+      card: typeof baseCard;
+      rating: string;
+      reviewedAt: string;
+    };
+    const pendingSubmit: {
+      resolve?: (value: SubmitReviewResult) => void;
+    } = {};
 
     invokeMock.mockImplementation((command: string) => {
       if (command === "start_flashcard_session") {
@@ -391,8 +392,8 @@ describe("StudySessionPage", () => {
       }
 
       if (command === "submit_flashcard_review") {
-        return new Promise((resolve) => {
-          resolveSubmit = resolve;
+        return new Promise<SubmitReviewResult>((resolve) => {
+          pendingSubmit.resolve = resolve;
         });
       }
 
@@ -417,7 +418,7 @@ describe("StudySessionPage", () => {
       expect(screen.getByRole("button", { name: /Again/i })).toBeDisabled();
     });
 
-    resolveSubmit?.({
+    pendingSubmit.resolve?.({
       session: progress(1, "good"),
       card: baseCard,
       rating: "good",

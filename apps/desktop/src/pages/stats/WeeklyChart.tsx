@@ -62,7 +62,7 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
               boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
             }}
             cursor={{ fill: "#f1f5f9" }}
-            formatter={(value: number) => [value, "Cards reviewed"]}
+            formatter={(value) => [Number(value ?? 0), "Cards reviewed"]}
           />
           <Bar dataKey="words" radius={[3, 3, 0, 0]} maxBarSize={40}>
             {data.map((_, index) => (

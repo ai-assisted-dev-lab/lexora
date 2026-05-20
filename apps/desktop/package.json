@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
+    "tauri:build:windows": "tauri build --bundles nsis,msi --ci",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -654,7 +654,7 @@ function updateStatusVariant(
 }
 
 function updateStatusLabel(status: string) {
-  return status.replaceAll("_", " ");
+  return status.split("_").join(" ");
 }
 
 function UpdatesSection() {

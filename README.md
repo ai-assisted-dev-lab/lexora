@@ -105,6 +105,7 @@ pnpm --filter desktop icons:generate
 | `pnpm --filter desktop dev`            | Start Vite dev server only                                  |
 | `pnpm --filter desktop tauri:dev`      | Start full Tauri app in dev mode                            |
 | `pnpm --filter desktop tauri:build`    | Build production Tauri binary + installer                   |
+| `pnpm --filter desktop tauri:build:windows` | Build Windows NSIS `.exe` and MSI `.msi` installers     |
 | `pnpm --filter desktop lint`           | ESLint (TypeScript, React hooks, import sort)               |
 | `pnpm --filter desktop typecheck`      | TypeScript check (no emit)                                  |
 | `pnpm --filter desktop test`           | Vitest unit tests (single run)                              |
@@ -120,6 +121,46 @@ pnpm --filter desktop icons:generate
 | `pnpm --filter desktop rust:fmt:check` | Check Rust formatting (used in CI)      |
 | `pnpm --filter desktop rust:check`     | Check Rust compilation without building |
 | `pnpm --filter desktop rust:lint`      | Run Clippy with warnings as errors      |
+
+---
+
+## Windows Packaging
+
+Lexora's Windows installer configuration lives in `apps/desktop/src-tauri/tauri.conf.json`.
+The bundle targets are NSIS (`.exe`) and WiX MSI (`.msi`), with the existing app
+icon, a placeholder publisher of `Lexora Labs`, current-user NSIS install mode,
+and a fixed MSI upgrade code so future versions replace the existing install.
+The updater plugin has an empty local config placeholder; release CI supplies
+the real endpoint and public key without committing them.
+
+```bash
+pnpm --filter desktop tauri:build:windows
+```
+
+Build outputs are written under:
+
+- `apps/desktop/src-tauri/target/release/bundle/nsis/`
+- `apps/desktop/src-tauri/target/release/bundle/msi/`
+
+The installer must not include a local user database, secrets, or downloaded
+audio packages. Runtime data is created after launch in Tauri's app-data
+directory, currently `%APPDATA%\com.kieran.lexora`, including `user.db`,
+`content.db` when content packs exist, backups, exports, and `audio_cache`.
+The bundled demo seed is compiled into the app and loaded idempotently on first
+launch after migrations run.
+
+Updater artifacts are disabled for local installer builds so packaging can run
+without committing an updater endpoint or signing key. Real release builds must
+enable updater artifacts with a CI config override and provide
+`TAURI_UPDATER_ENDPOINT`, `TAURI_UPDATER_PUBLIC_KEY`,
+`TAURI_SIGNING_PRIVATE_KEY`, and, when used,
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` through environment variables, GitHub
+Actions variables, or GitHub Actions secrets. Never commit signing keys or
+installer certificates.
+
+To smoke check an installer locally, build with the command above, install the
+generated `.exe` or `.msi`, launch Lexora, then verify that
+`%APPDATA%\com.kieran.lexora\user.db` is created and the seeded demo decks load.
 
 ---
 

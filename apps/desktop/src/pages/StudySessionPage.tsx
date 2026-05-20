@@ -5,7 +5,7 @@ import {
   type LexoraReviewRating,
   scheduleReview,
 } from "@lexora/review-engine";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import {
   AlertCircle,
   BookOpen,
@@ -1205,7 +1205,7 @@ interface SessionSummaryProps {
   summary: StudySessionSummaryDto;
 }
 
-const summaryItemVariants = {
+const summaryItemVariants: Variants = {
   hidden: { opacity: 0, y: 18 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
 };

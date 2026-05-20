@@ -28,16 +28,56 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": []
+    }
+  },
   "bundle": {
     "active": true,
-    "targets": "all",
-    "createUpdaterArtifacts": true,
+    "targets": [
+      "nsis",
+      "msi"
+    ],
+    "createUpdaterArtifacts": false,
+    "publisher": "Lexora Labs",
+    "copyright": "Copyright (c) 2026 Lexora Labs",
+    "license": "MIT",
+    "category": "Education",
+    "shortDescription": "Offline-first English-Vietnamese vocabulary learning for Windows.",
+    "longDescription": "Lexora is an offline-first Windows desktop vocabulary learning app for English-Vietnamese learners.",
+    "useLocalToolsDir": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "allowDowngrades": false,
+      "minimumWebview2Version": "109.0.1518.78",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "installMode": "currentUser",
+        "languages": [
+          "English"
+        ],
+        "displayLanguageSelector": false,
+        "compression": "lzma",
+        "startMenuFolder": "Lexora"
+      },
+      "wix": {
+        "version": "0.1.0",
+        "upgradeCode": "6042660a-fdd2-50f7-96dd-63379e7bc05d",
+        "language": "en-US"
+      }
+    }
   }
 }
