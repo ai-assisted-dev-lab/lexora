@@ -39,6 +39,9 @@ const libraryFilters: LibraryFilter[] = [
 ];
 
 const TONES: LibraryDeckTone[] = ["azure", "cyan", "mint", "sky", "violet"];
+const INITIAL_RENDER_LIMIT = 24;
+const RENDER_INCREMENT = 24;
+const SHELF_PREVIEW_LIMIT = 8;
 
 function deriveTone(id: number): LibraryDeckTone {
   return TONES[id % TONES.length];
@@ -128,6 +131,7 @@ function matchesFilter(filter: LibraryFilter, deck: InstalledDeck) {
 
 export function LibraryPage() {
   const [filter, setFilter] = useState<LibraryFilter>("All");
+  const [visibleLimit, setVisibleLimit] = useState(INITIAL_RENDER_LIMIT);
   const { decks: rawDecks, error, isLoading } = useLibraryDecks();
 
   const installedDecks = useMemo(
@@ -139,13 +143,22 @@ export function LibraryPage() {
     () => installedDecks.filter((deck) => matchesFilter(filter, deck)),
     [filter, installedDecks],
   );
+  const visibleFilteredDecks = useMemo(
+    () => filteredDecks.slice(0, visibleLimit),
+    [filteredDecks, visibleLimit],
+  );
 
-  const continueLearning = installedDecks.filter((deck) => deck.progress < 100);
+  const continueLearning = installedDecks
+    .filter((deck) => deck.progress < 100)
+    .slice(0, SHELF_PREVIEW_LIMIT);
   const recentlyStudied = [...installedDecks].sort(
     (a, b) => a.lastStudiedRank - b.lastStudiedRank,
   );
   const favorites = installedDecks.filter((deck) => deck.favorite);
   const weakDecks = installedDecks.filter((deck) => deck.weak);
+  const visibleAllDecks = installedDecks.slice(0, visibleLimit);
+  const hasMoreAllDecks = visibleLimit < installedDecks.length;
+  const hasMoreFilteredDecks = visibleLimit < filteredDecks.length;
   const dueToday = installedDecks.reduce(
     (total, deck) => total + deck.dueCount,
     0,
@@ -251,7 +264,10 @@ export function LibraryPage() {
       <LibraryFilterBar
         filters={libraryFilters}
         selectedFilter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={(next) => {
+          setFilter(next);
+          setVisibleLimit(INITIAL_RENDER_LIMIT);
+        }}
       />
 
       {installedDecks.length === 0 ? (
@@ -280,14 +296,27 @@ export function LibraryPage() {
           <LibraryShelf
             title="Favorites"
             description="Pinned decks you return to most often."
-            decks={favorites}
+            decks={favorites.slice(0, SHELF_PREVIEW_LIMIT)}
           />
           <LibraryShelf
             title="Weak Decks"
             description="Collections with lower mastery or higher due pressure."
-            decks={weakDecks}
+            decks={weakDecks.slice(0, SHELF_PREVIEW_LIMIT)}
           />
-          <LibraryShelf title="All Decks" decks={installedDecks} dense />
+          <LibraryShelf title="All Decks" decks={visibleAllDecks} dense />
+          {hasMoreAllDecks && (
+            <div className="library-load-more">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setVisibleLimit((current) => current + RENDER_INCREMENT)
+                }
+              >
+                Load more decks
+              </Button>
+            </div>
+          )}
         </div>
       ) : filteredDecks.length > 0 ? (
         <section className="library-filtered" aria-label={`${filter} Decks`}>
@@ -296,10 +325,23 @@ export function LibraryPage() {
             description="Filtered view of your installed collection."
           />
           <div className="library-grid">
-            {filteredDecks.map((deck) => (
+            {visibleFilteredDecks.map((deck) => (
               <LibraryShelf.Card deck={deck} key={deck.id} />
             ))}
           </div>
+          {hasMoreFilteredDecks && (
+            <div className="library-load-more">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setVisibleLimit((current) => current + RENDER_INCREMENT)
+                }
+              >
+                Load more decks
+              </Button>
+            </div>
+          )}
         </section>
       ) : (
         <Card variant="glass">

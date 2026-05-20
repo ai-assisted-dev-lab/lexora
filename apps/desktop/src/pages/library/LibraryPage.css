@@ -152,6 +152,12 @@
   padding: var(--space-8);
 }
 
+.library-load-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) 0 var(--space-4);
+}
+
 .library-shelf,
 .library-filtered {
   display: flex;

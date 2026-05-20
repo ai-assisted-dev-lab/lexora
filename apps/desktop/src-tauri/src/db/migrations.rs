@@ -70,6 +70,11 @@ static MIGRATIONS: &[Migration] = &[
         name: "notification_preferences",
         sql: include_str!("../../migrations/0011_notification_preferences.sql"),
     },
+    Migration {
+        version: 12,
+        name: "performance_indexes",
+        sql: include_str!("../../migrations/0012_performance_indexes.sql"),
+    },
 ];
 
 // ── Public API ────────────────────────────────────────────────────────────────

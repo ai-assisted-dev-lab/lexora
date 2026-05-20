@@ -1,180 +1,209 @@
 # Lexora
 
-A premium Windows desktop vocabulary learning platform for English–Vietnamese learners. Offline-first, locally installed, with FSRS-powered spaced repetition and a Steam-inspired library feel.
+Lexora is a local-first Windows desktop vocabulary app for English <-> Vietnamese learners. It combines a light-blue study dashboard, curated deck discovery, library management, FSRS-style review sessions, word details, achievements, and an owner-only Data Studio for maintaining the local vocabulary database.
 
-> **Status:** Repository skeleton and Tauri 2 app scaffold complete. UI shell is next.
+Status: portfolio / release-candidate pass. The app is functional as a local desktop project, but public release hardening still needs signed installers, production SQLCipher verification, and final content packaging.
 
----
+![Lexora Home](docs/assets/screenshots/home.png)
 
-## Stack
+## Screenshots
 
-| Layer           | Technology                                               |
-| --------------- | -------------------------------------------------------- |
-| Desktop shell   | Tauri 2                                                  |
-| UI              | React 18 + TypeScript + Vite                             |
-| Components      | shadcn/ui + Tailwind CSS                                 |
-| Animations      | Framer Motion                                            |
-| State           | Zustand                                                  |
-| Data fetching   | TanStack Query                                           |
-| Database        | SQLite + SQLCipher (encrypted, local)                    |
-| Search          | SQLite FTS5 + fuzzy ranking                              |
-| Review engine   | FSRS (Rust)                                              |
-| Charts          | Recharts                                                 |
-| Icons           | Lucide React                                             |
-| Package manager | pnpm (workspaces)                                        |
-| Testing         | Vitest + React Testing Library + Playwright + Rust tests |
+Screenshots are generated from the local E2E fixture so they can be refreshed without cloud services:
 
----
+```bash
+pnpm screenshots
+```
+
+| Home | Discover |
+| --- | --- |
+| ![Home dashboard](docs/assets/screenshots/home.png) | ![Discover catalog](docs/assets/screenshots/discover.png) |
+
+| Library | Study Session |
+| --- | --- |
+| ![Library](docs/assets/screenshots/library.png) | ![Study session](docs/assets/screenshots/study-session.png) |
+
+| Word Detail | Achievements |
+| --- | --- |
+| ![Word detail](docs/assets/screenshots/word-detail.png) | ![Achievements](docs/assets/screenshots/achievements.png) |
+
+| Owner Data Studio |
+| --- |
+| ![Owner-only Data Studio](docs/assets/screenshots/data-studio.png) |
+
+## Implemented Features
+
+- Local accounts seeded on first launch: `learner / learner` and `owner / owner`.
+- Owner-only Admin/Data Studio access enforced in the route layer and native command layer.
+- Home dashboard with daily goal, XP, streak, review activity, featured deck, and quick study entry points.
+- Discover catalog for local deck packs with filters, install state, and incremental rendering for larger lists.
+- My Library view for installed decks with progress, due counts, weak deck filtering, and incremental rendering.
+- Flashcard, multiple-choice, type-answer, and weak-word study session surfaces wired through Rust/Tauri commands.
+- Word Detail page with senses, examples, IPA/audio metadata, relations, review state, and review history.
+- Achievements and progress surfaces backed by native command DTOs.
+- Offline SQLite data model with FTS5/fuzzy search and performance indexes for larger vocabulary catalogs.
+- Owner Data Studio with paged vocabulary/deck tables, validation/data-quality views, and guarded edit flows.
+- Local settings, backup/restore, import/export, notification, updater, and content-update plumbing.
+
+Not included: cloud sync, marketplace/payments, dark mode, public community features, or AI tutor/chat.
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Desktop shell | Tauri 2 |
+| UI | React 18, TypeScript, Vite |
+| Styling | Local CSS, design tokens, light-blue Azure Glass identity |
+| Animation | Framer Motion |
+| Routing | React Router |
+| Icons | Lucide React |
+| Charts | Recharts |
+| Native layer | Rust |
+| Database | SQLite with FTS5; SQLCipher feature available via `--features sqlcipher` |
+| Review engine | Rust/TypeScript FSRS scheduling helpers |
+| Package manager | pnpm workspaces |
+| Testing | Vitest, React Testing Library, Playwright, Rust tests |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph UI["React/Tauri WebView"]
+    Shell["App shell and guarded routes"]
+    Pages["Home, Discover, Library, Review, Word Detail, Achievements"]
+    Admin["Owner-only Data Studio"]
+    Services["Typed command clients"]
+  end
+
+  subgraph Rust["Tauri Rust command layer"]
+    Auth["Auth and owner guard"]
+    Search["FTS5 search and fuzzy ranking"]
+    Review["FSRS review/session commands"]
+    Catalog["Deck, word, progress, achievement commands"]
+    AdminCmd["Admin vocabulary/deck/validation commands"]
+    Backup["Backup, import/export, updater, notifications"]
+  end
+
+  subgraph Local["Local machine"]
+    Db["SQLite app databases"]
+    Assets["Audio cache, backups, exports"]
+  end
+
+  Shell --> Pages
+  Shell --> Admin
+  Pages --> Services
+  Admin --> Services
+  Services --> Auth
+  Services --> Search
+  Services --> Review
+  Services --> Catalog
+  Services --> AdminCmd
+  Services --> Backup
+  Auth --> Db
+  Search --> Db
+  Review --> Db
+  Catalog --> Db
+  AdminCmd --> Db
+  Backup --> Db
+  Backup --> Assets
+```
+
+More detail: [docs/ARCHITECTURE_DIAGRAM.md](docs/ARCHITECTURE_DIAGRAM.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ## Repository Layout
 
-```
+```text
 lexora/
-├── apps/
-│   └── desktop/          # Tauri 2 desktop application
-├── packages/
-│   ├── ui/               # Shared React component library
-│   ├── review-engine/    # FSRS types and helpers (TS)
-│   ├── data-contracts/   # Shared IPC command types
-│   ├── validation/       # Shared input validation schemas
-│   └── seed-tools/       # Vocabulary content seeding utilities
-├── data/
-│   ├── seed/             # Seed word lists and pack definitions
-│   ├── packs/            # Built vocabulary pack archives
-│   ├── audio-manifests/  # Audio package manifests
-│   └── assets/           # Shared image assets
-├── tests/
-│   ├── e2e/              # Playwright end-to-end tests
-│   └── fixtures/         # Shared test fixtures
-├── docs/                 # Architecture, specs, data model, roadmap
-└── .github/workflows/    # CI/CD pipeline
+  apps/desktop/              Tauri 2 desktop application
+  packages/review-engine/    Shared review scheduling helpers
+  packages/data-contracts/   Shared IPC/data contracts
+  packages/validation/       Shared validation schemas
+  data/                      Seed data, packs, manifests, assets
+  docs/                      Product, architecture, UI, data model, performance notes
+  tests/e2e/                 Playwright tests and screenshot capture
 ```
-
----
-
-## Design
-
-- **Light theme only** — white and pale blue surfaces, azure accents
-- **Offline-first** — all core learning features work without a network connection
-- **Owner-only Admin** — Data Studio is never accessible to learner accounts
-
----
-
-## Prerequisites
-
-- [Node.js](https://nodejs.org/) >= 20
-- [pnpm](https://pnpm.io/) >= 9 — `npm install -g pnpm`
-- [Rust](https://rustup.rs/) stable toolchain
-- Windows 10/11 64-bit (primary development target)
-- [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (pre-installed on Windows 11)
-
----
 
 ## Setup
 
-```bash
-# Install all workspace dependencies
-pnpm install
+Prerequisites:
 
-# Generate app icons from the source SVG (only needed once, or after changing source.svg)
-pnpm --filter desktop icons:generate
+- Node.js 20+
+- pnpm 9+
+- Rust stable
+- Windows 10/11 with WebView2 for the desktop target
+
+Install dependencies:
+
+```bash
+pnpm install
 ```
 
----
+Run the renderer in browser dev mode:
 
-## Scripts
+```bash
+pnpm dev
+```
 
-### Root workspace
+Run the full Tauri desktop app:
 
-| Command             | Description                                           |
-| ------------------- | ----------------------------------------------------- |
-| `pnpm dev`          | Start the Tauri desktop app in development mode       |
-| `pnpm build`        | Production build (Vite bundle + Tauri binary)         |
-| `pnpm lint`         | Run ESLint across all workspace packages              |
-| `pnpm typecheck`    | Run TypeScript type checks across all packages        |
-| `pnpm test`         | Run all unit tests across all packages                |
-| `pnpm test:e2e`     | Run Playwright end-to-end tests                       |
-| `pnpm format`       | Auto-format all files with Prettier                   |
-| `pnpm format:check` | Check formatting without modifying files (used in CI) |
-| `pnpm clean`        | Remove all build artifacts and `node_modules`         |
+```bash
+pnpm --filter desktop tauri:dev
+```
 
-### Desktop app (`apps/desktop`)
+## Build and Package
 
-| Command                                | Description                                                 |
-| -------------------------------------- | ----------------------------------------------------------- |
-| `pnpm --filter desktop dev`            | Start Vite dev server only                                  |
-| `pnpm --filter desktop tauri:dev`      | Start full Tauri app in dev mode                            |
-| `pnpm --filter desktop tauri:build`    | Build production Tauri binary + installer                   |
-| `pnpm --filter desktop tauri:build:windows` | Build Windows NSIS `.exe` and MSI `.msi` installers     |
-| `pnpm --filter desktop lint`           | ESLint (TypeScript, React hooks, import sort)               |
-| `pnpm --filter desktop typecheck`      | TypeScript check (no emit)                                  |
-| `pnpm --filter desktop test`           | Vitest unit tests (single run)                              |
-| `pnpm --filter desktop test:watch`     | Vitest unit tests (watch mode)                              |
-| `pnpm --filter desktop test:coverage`  | Vitest with V8 coverage report                              |
-| `pnpm --filter desktop icons:generate` | Regenerate all icon sizes from `src-tauri/icons/source.svg` |
+Build the React/Vite renderer:
 
-### Rust (run from `apps/desktop/`)
+```bash
+pnpm build
+```
 
-| Command                                | Description                             |
-| -------------------------------------- | --------------------------------------- |
-| `pnpm --filter desktop rust:fmt`       | Auto-format Rust code with `cargo fmt`  |
-| `pnpm --filter desktop rust:fmt:check` | Check Rust formatting (used in CI)      |
-| `pnpm --filter desktop rust:check`     | Check Rust compilation without building |
-| `pnpm --filter desktop rust:lint`      | Run Clippy with warnings as errors      |
-
----
-
-## Windows Packaging
-
-Lexora's Windows installer configuration lives in `apps/desktop/src-tauri/tauri.conf.json`.
-The bundle targets are NSIS (`.exe`) and WiX MSI (`.msi`), with the existing app
-icon, a placeholder publisher of `Lexora Labs`, current-user NSIS install mode,
-and a fixed MSI upgrade code so future versions replace the existing install.
-The updater plugin has an empty local config placeholder; release CI supplies
-the real endpoint and public key without committing them.
+Build Windows NSIS and MSI installers:
 
 ```bash
 pnpm --filter desktop tauri:build:windows
 ```
 
-Build outputs are written under:
+Installer outputs are written under:
 
 - `apps/desktop/src-tauri/target/release/bundle/nsis/`
 - `apps/desktop/src-tauri/target/release/bundle/msi/`
 
-The installer must not include a local user database, secrets, or downloaded
-audio packages. Runtime data is created after launch in Tauri's app-data
-directory, currently `%APPDATA%\com.kieran.lexora`, including `user.db`,
-`content.db` when content packs exist, backups, exports, and `audio_cache`.
-The bundled demo seed is compiled into the app and loaded idempotently on first
-launch after migrations run.
+For a production release, build with the SQLCipher feature enabled and provide signing/updater secrets through CI. Do not commit installer certificates, updater keys, or local user databases.
 
-Updater artifacts are disabled for local installer builds so packaging can run
-without committing an updater endpoint or signing key. Real release builds must
-enable updater artifacts with a CI config override and provide
-`TAURI_UPDATER_ENDPOINT`, `TAURI_UPDATER_PUBLIC_KEY`,
-`TAURI_SIGNING_PRIVATE_KEY`, and, when used,
-`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` through environment variables, GitHub
-Actions variables, or GitHub Actions secrets. Never commit signing keys or
-installer certificates.
+## Quality Checks
 
-To smoke check an installer locally, build with the command above, install the
-generated `.exe` or `.msi`, launch Lexora, then verify that
-`%APPDATA%\com.kieran.lexora\user.db` is created and the seeded demo decks load.
+```bash
+pnpm typecheck
+pnpm --filter desktop test
+cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --lib
+pnpm test:e2e
+pnpm screenshots
+```
 
----
+Useful focused checks:
+
+```bash
+pnpm --filter desktop typecheck
+pnpm --filter desktop build
+cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml large_catalog_search_benchmark -- --ignored --nocapture
+```
 
 ## Documentation
 
-- [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) — Vision, scope, and module list
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Stack decisions and system design
-- [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) — Design system and screen inventory
-- [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — SQLite schema and entity relationships
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — V1 checklist and post-V1 features
-- [`docs/DECISIONS.md`](docs/DECISIONS.md) — Locked decisions and open questions
+- [Product Spec](docs/PRODUCT_SPEC.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Architecture Diagram](docs/ARCHITECTURE_DIAGRAM.md)
+- [UI/UX Spec](docs/UI_UX_SPEC.md)
+- [Data Model](docs/DATA_MODEL.md)
+- [Performance Notes](docs/PERFORMANCE.md)
+- [Decisions](docs/DECISIONS.md)
 
----
+## Roadmap
+
+- Finish public release hardening: signed installer pipeline, SQLCipher release verification, final update manifest flow, and clean install smoke tests.
+- Expand curated vocabulary packs, IPA/audio coverage, and Data Studio validation rules.
+- Keep cloud sync, marketplace/payments, public community features, dark mode, and AI tutor/chat out of the current release scope.
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT. See [LICENSE](LICENSE).

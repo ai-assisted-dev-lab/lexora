@@ -257,6 +257,12 @@
   margin-top: var(--space-5);
 }
 
+.discover-load-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) 0 var(--space-4);
+}
+
 .discover-state-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(180px, 1fr));

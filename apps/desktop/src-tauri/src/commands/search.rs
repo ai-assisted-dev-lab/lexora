@@ -13,7 +13,7 @@ use crate::errors::AppError;
 
 const DEFAULT_LIMIT: i64 = 24;
 const MAX_LIMIT: i64 = 80;
-const FUZZY_CANDIDATE_LIMIT: i64 = 600;
+const FUZZY_CANDIDATE_LIMIT: i64 = 300;
 
 #[derive(Debug, Clone)]
 struct SearchCandidate {
@@ -101,6 +101,31 @@ fn fuzzy_score(query: &str, title: &str) -> f64 {
     let distance = levenshtein(&q, &t) as f64;
     let max_len = q.chars().count().max(t.chars().count()) as f64;
     (72.0 * (1.0 - distance / max_len)).max(0.0)
+}
+
+fn fuzzy_title_prefix(query: &str) -> Option<String> {
+    let normalized = normalize_text(query);
+    let first_term = normalized.split_whitespace().next()?;
+    let take = if first_term.chars().count() >= 4 {
+        2
+    } else {
+        1
+    };
+    let prefix = first_term.chars().take(take).collect::<String>();
+    if prefix.is_empty() {
+        None
+    } else {
+        Some(format!("{prefix}%"))
+    }
+}
+
+fn should_run_fuzzy(query: &str, fts_count: usize, limit: i64) -> bool {
+    normalize_text(query)
+        .chars()
+        .filter(|ch| !ch.is_whitespace())
+        .count()
+        >= 3
+        && fts_count < limit as usize
 }
 
 fn filter_allows(filters: &SearchFiltersDto, result_type: &str) -> bool {
@@ -205,6 +230,9 @@ fn query_fuzzy_candidates(
     query: &str,
     filters: &SearchFiltersDto,
 ) -> Result<Vec<SearchCandidate>, AppError> {
+    let Some(title_prefix) = fuzzy_title_prefix(query) else {
+        return Ok(Vec::new());
+    };
     let mut candidates = Vec::new();
 
     if filter_allows(filters, "word") {
@@ -228,38 +256,42 @@ fn query_fuzzy_candidates(
                         COALESCE(p.name, '') AS pack_title
                  FROM words w
                  LEFT JOIN packs p ON p.id = w.pack_id
-                 WHERE ?1 IS NULL OR EXISTS (
+                 WHERE (?1 IS NULL OR EXISTS (
                     SELECT 1 FROM deck_words dw
                     WHERE dw.word_id = w.id AND dw.deck_id = ?1
-                 )
+                 ))
+                   AND w.headword COLLATE NOCASE LIKE ?2
                  ORDER BY w.frequency_rank IS NULL, w.frequency_rank, w.headword
-                 LIMIT ?2",
+                 LIMIT ?3",
             )
             .map_err(|e| AppError::Internal(format!("Failed to prepare fuzzy word query: {e}")))?;
 
         let rows = stmt
-            .query_map(params![filters.deck_id, FUZZY_CANDIDATE_LIMIT], |row| {
-                let title: String = row.get(1)?;
-                let pos: Option<String> = row.get(2)?;
-                let cefr: Option<String> = row.get(3)?;
-                Ok(SearchCandidate {
-                    result_type: "word".to_string(),
-                    id: row.get(0)?,
-                    title: title.clone(),
-                    subtitle: Some(
-                        [pos, cefr]
-                            .into_iter()
-                            .flatten()
-                            .collect::<Vec<_>>()
-                            .join(" · "),
-                    )
-                    .filter(|value| !value.is_empty()),
-                    snippet: row.get(4)?,
-                    deck_title: row.get(5)?,
-                    pack_title: row.get(6)?,
-                    score: fuzzy_score(query, &title),
-                })
-            })
+            .query_map(
+                params![filters.deck_id, &title_prefix, FUZZY_CANDIDATE_LIMIT],
+                |row| {
+                    let title: String = row.get(1)?;
+                    let pos: Option<String> = row.get(2)?;
+                    let cefr: Option<String> = row.get(3)?;
+                    Ok(SearchCandidate {
+                        result_type: "word".to_string(),
+                        id: row.get(0)?,
+                        title: title.clone(),
+                        subtitle: Some(
+                            [pos, cefr]
+                                .into_iter()
+                                .flatten()
+                                .collect::<Vec<_>>()
+                                .join(" · "),
+                        )
+                        .filter(|value| !value.is_empty()),
+                        snippet: row.get(4)?,
+                        deck_title: row.get(5)?,
+                        pack_title: row.get(6)?,
+                        score: fuzzy_score(query, &title),
+                    })
+                },
+            )
             .map_err(|e| AppError::Internal(format!("Failed to query fuzzy words: {e}")))?;
 
         for row in rows {
@@ -277,27 +309,31 @@ fn query_fuzzy_candidates(
                 "SELECT d.id, d.name, d.description, d.word_count, COALESCE(p.name, '')
                  FROM decks d
                  LEFT JOIN packs p ON p.id = d.pack_id
-                 WHERE ?1 IS NULL OR d.id = ?1
+                 WHERE (?1 IS NULL OR d.id = ?1)
+                   AND (d.name COLLATE NOCASE LIKE ?2 OR d.slug COLLATE NOCASE LIKE ?2)
                  ORDER BY d.name
-                 LIMIT ?2",
+                 LIMIT ?3",
             )
             .map_err(|e| AppError::Internal(format!("Failed to prepare fuzzy deck query: {e}")))?;
 
         let rows = stmt
-            .query_map(params![filters.deck_id, FUZZY_CANDIDATE_LIMIT], |row| {
-                let title: String = row.get(1)?;
-                let word_count: i64 = row.get(3)?;
-                Ok(SearchCandidate {
-                    result_type: "deck".to_string(),
-                    id: row.get(0)?,
-                    title: title.clone(),
-                    subtitle: Some(format!("{word_count} words")),
-                    snippet: row.get(2)?,
-                    deck_title: Some(title.clone()),
-                    pack_title: row.get(4)?,
-                    score: fuzzy_score(query, &title),
-                })
-            })
+            .query_map(
+                params![filters.deck_id, &title_prefix, FUZZY_CANDIDATE_LIMIT],
+                |row| {
+                    let title: String = row.get(1)?;
+                    let word_count: i64 = row.get(3)?;
+                    Ok(SearchCandidate {
+                        result_type: "deck".to_string(),
+                        id: row.get(0)?,
+                        title: title.clone(),
+                        subtitle: Some(format!("{word_count} words")),
+                        snippet: row.get(2)?,
+                        deck_title: Some(title.clone()),
+                        pack_title: row.get(4)?,
+                        score: fuzzy_score(query, &title),
+                    })
+                },
+            )
             .map_err(|e| AppError::Internal(format!("Failed to query fuzzy decks: {e}")))?;
 
         for row in rows {
@@ -390,7 +426,9 @@ pub(crate) fn search_with_conn(
     }
 
     let mut candidates = query_fts(conn, &trimmed, &filters, limit)?;
-    candidates.extend(query_fuzzy_candidates(conn, &trimmed, &filters)?);
+    if should_run_fuzzy(&trimmed, candidates.len(), limit) {
+        candidates.extend(query_fuzzy_candidates(conn, &trimmed, &filters)?);
+    }
 
     let results = merge_ranked(candidates, limit);
     let total = results.len();
@@ -426,6 +464,35 @@ mod tests {
         crate::db::migrations::run(&mut conn).expect("migrations");
         crate::db::seeder::load_bundled(&mut conn).expect("seeder");
         crate::auth::create_default_accounts(&conn).expect("accounts");
+        conn
+    }
+
+    fn db_with_large_catalog(count: usize) -> Connection {
+        let mut conn = Connection::open_in_memory().expect("in-memory DB");
+        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
+        crate::db::migrations::run(&mut conn).expect("migrations");
+
+        let tx = conn.transaction().expect("large fixture transaction");
+        tx.execute(
+            "INSERT INTO packs (slug, name, version, source)
+             VALUES ('large-fixture', 'Large Fixture', '0.0.0', 'imported')",
+            [],
+        )
+        .expect("fixture pack");
+        let pack_id = tx.last_insert_rowid();
+
+        for i in 0..count {
+            tx.execute(
+                "INSERT INTO words (
+                    pack_id, headword, part_of_speech, cefr_level, frequency_rank
+                 )
+                 VALUES (?1, ?2, 'noun', 'B1', ?3)",
+                params![pack_id, format!("largeword{i:05}"), i as i64 + 1],
+            )
+            .expect("fixture word");
+        }
+
+        tx.commit().expect("commit large fixture");
         conn
     }
 
@@ -518,5 +585,57 @@ mod tests {
             .iter()
             .flat_map(|group| &group.results)
             .any(|result| result.title == "book"));
+    }
+
+    #[test]
+    fn search_response_is_bounded_for_large_catalog() {
+        let conn = db_with_large_catalog(1_000);
+        let response = search_with_conn(
+            &conn,
+            "largeword".to_string(),
+            Some(SearchFiltersDto {
+                result_types: Some(vec!["word".to_string()]),
+                deck_id: None,
+                limit: Some(12),
+            }),
+        )
+        .expect("search");
+
+        assert!(response.total <= 12);
+        assert!(response
+            .groups
+            .iter()
+            .flat_map(|group| &group.results)
+            .all(|result| result.result_type == "word"));
+    }
+
+    #[test]
+    #[ignore = "manual large fixture benchmark for Prompt 59"]
+    fn large_catalog_search_benchmark() {
+        let conn = db_with_large_catalog(50_000);
+        let started = Instant::now();
+        let response = search_with_conn(
+            &conn,
+            "largeword49999".to_string(),
+            Some(SearchFiltersDto {
+                result_types: Some(vec!["word".to_string()]),
+                deck_id: None,
+                limit: Some(20),
+            }),
+        )
+        .expect("large catalog search");
+        let elapsed = started.elapsed();
+
+        println!(
+            "large_catalog_search_benchmark: {} results in {} ms",
+            response.total,
+            elapsed.as_millis()
+        );
+        assert!(response.total <= 20);
+        assert!(response
+            .groups
+            .iter()
+            .flat_map(|group| &group.results)
+            .any(|result| result.title == "largeword49999"));
     }
 }

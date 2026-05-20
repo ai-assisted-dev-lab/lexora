@@ -1,10 +1,10 @@
+import { lazy, Suspense } from "react";
 import { createHashRouter, Navigate } from "react-router-dom";
 
 import { AppShellLayout } from "@/app/AppShellLayout";
 import { OwnerRoute } from "@/guards/OwnerRoute";
 import { ProtectedRoute } from "@/guards/ProtectedRoute";
 import { AchievementsPage } from "@/pages/AchievementsPage";
-import { AdminDataStudioPage } from "@/pages/AdminDataStudioPage";
 import { DeckDetailPage } from "@/pages/DeckDetailPage";
 import { DiscoverPage } from "@/pages/DiscoverPage";
 import { HomePage } from "@/pages/HomePage";
@@ -19,6 +19,20 @@ import { StatsPage } from "@/pages/StatsPage";
 import { StudySessionPage } from "@/pages/StudySessionPage";
 import { WeakWordsPage } from "@/pages/WeakWordsPage";
 import { WordDetailPage } from "@/pages/WordDetailPage";
+
+const AdminDataStudioPage = lazy(() =>
+  import("@/pages/AdminDataStudioPage").then((module) => ({
+    default: module.AdminDataStudioPage,
+  })),
+);
+
+function RouteLoading({ label }: { label: string }) {
+  return (
+    <div className="page-shell" role="status" aria-label={label}>
+      {label}
+    </div>
+  );
+}
 
 /**
  * Route tree exported separately so tests can use createMemoryRouter
@@ -51,7 +65,13 @@ export const routeTree = [
             children: [
               {
                 path: "admin/data-studio",
-                element: <AdminDataStudioPage />,
+                element: (
+                  <Suspense
+                    fallback={<RouteLoading label="Loading Data Studio" />}
+                  >
+                    <AdminDataStudioPage />
+                  </Suspense>
+                ),
               },
             ],
           },

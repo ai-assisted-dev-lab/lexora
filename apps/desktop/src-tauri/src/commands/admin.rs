@@ -107,7 +107,7 @@ fn vocabulary_query_parts(
         .map(|s| s.trim())
         .filter(|s| !s.is_empty())
     {
-        where_clauses.push("w.headword LIKE ?".to_string());
+        where_clauses.push("w.headword COLLATE NOCASE LIKE ?".to_string());
         binds.push(Value::Text(format!("{}%", search)));
     }
     if let Some(t) = input.word_type.as_ref().filter(|s| !s.is_empty()) {

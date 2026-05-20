@@ -11,6 +11,7 @@
     "test:unit": "pnpm -r --parallel --if-present test",
     "test:rust": "cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --lib",
     "test:e2e": "node ./tests/e2e/run-playwright.mjs",
+    "screenshots": "node ./tests/e2e/capture-screenshots.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "pnpm -r --parallel --if-present clean && rimraf node_modules"

@@ -433,3 +433,8 @@ CREATE INDEX idx_words_pack     ON words (pack_id);
 CREATE INDEX idx_senses_word    ON senses (word_id);
 CREATE INDEX idx_deck_words_deck ON deck_words (deck_id);
 ```
+
+Additional Prompt 59 performance indexes are tracked in
+`apps/desktop/src-tauri/migrations/0012_performance_indexes.sql`. They cover
+case-insensitive vocabulary prefix search, Admin/Data Studio filters, duplicate
+checks, Discover deck lookup, and Library progress summary joins.

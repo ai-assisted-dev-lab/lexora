@@ -23,6 +23,8 @@ function deriveTone(id: number): CatalogTone {
 // ── Standard CEFR levels used for filter detection ───────────────────────────
 
 const CEFR_SET = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
+const INITIAL_RENDER_LIMIT = 24;
+const RENDER_INCREMENT = 24;
 
 // ── DTO → presentation model ──────────────────────────────────────────────────
 
@@ -46,11 +48,17 @@ function toDisplay(dto: DiscoverDeckDto, index: number): CatalogDeck {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export function DiscoverPage() {
-  const { decks: rawDecks, isLoading, error, install, uninstall } =
-    useDiscoverDecks();
+  const {
+    decks: rawDecks,
+    isLoading,
+    error,
+    install,
+    uninstall,
+  } = useDiscoverDecks();
 
   const [cefrLevel, setCefrLevel] = useState("All");
   const [tag, setTag] = useState("All");
+  const [visibleLimit, setVisibleLimit] = useState(INITIAL_RENDER_LIMIT);
 
   const decks: CatalogDeck[] = useMemo(
     () => rawDecks.map((d, i) => toDisplay(d, i)),
@@ -80,16 +88,29 @@ export function DiscoverPage() {
     [decks, cefrLevel, tag],
   );
 
+  const visibleDecks = useMemo(
+    () => filteredDecks.slice(0, visibleLimit),
+    [filteredDecks, visibleLimit],
+  );
+
   const featuredDecks = filteredDecks.filter((d) => d.featured);
-  const popularDecks = filteredDecks.filter((d) => d.section === "popular");
-  const recommendedDecks = filteredDecks.filter(
+  const popularDecks = visibleDecks.filter((d) => d.section === "popular");
+  const recommendedDecks = visibleDecks.filter(
     (d) => d.section === "recommended",
   );
+  const hasMoreDecks = visibleLimit < filteredDecks.length;
 
   if (isLoading) {
     return (
-      <div className="discover-page discover-page--loading" aria-label="Loading catalog">
-        <Loader2 size={28} className="discover-page__spinner" aria-hidden="true" />
+      <div
+        className="discover-page discover-page--loading"
+        aria-label="Loading catalog"
+      >
+        <Loader2
+          size={28}
+          className="discover-page__spinner"
+          aria-hidden="true"
+        />
         <p>Loading catalog…</p>
       </div>
     );
@@ -97,7 +118,10 @@ export function DiscoverPage() {
 
   if (error) {
     return (
-      <div className="discover-page discover-page--error" aria-label="Catalog error">
+      <div
+        className="discover-page discover-page--error"
+        aria-label="Catalog error"
+      >
         <AlertCircle size={28} aria-hidden="true" />
         <p>Could not load catalog: {error}</p>
       </div>
@@ -136,8 +160,14 @@ export function DiscoverPage() {
         tags={tagOptions}
         selectedCefrLevel={cefrLevel}
         selectedTag={tag}
-        onCefrLevelChange={setCefrLevel}
-        onTagChange={setTag}
+        onCefrLevelChange={(value) => {
+          setCefrLevel(value);
+          setVisibleLimit(INITIAL_RENDER_LIMIT);
+        }}
+        onTagChange={(value) => {
+          setTag(value);
+          setVisibleLimit(INITIAL_RENDER_LIMIT);
+        }}
       />
 
       <section className="discover-section" aria-labelledby="featured-decks">
@@ -160,10 +190,7 @@ export function DiscoverPage() {
 
       {filteredDecks.length > 0 ? (
         <>
-          <section
-            className="discover-section"
-            aria-labelledby="popular-decks"
-          >
+          <section className="discover-section" aria-labelledby="popular-decks">
             <SectionHeader
               title="Popular"
               description="Decks learners return to most often."
@@ -199,6 +226,20 @@ export function DiscoverPage() {
               ))}
             </div>
           </section>
+
+          {hasMoreDecks && (
+            <div className="discover-load-more">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setVisibleLimit((current) => current + RENDER_INCREMENT)
+                }
+              >
+                Load more decks
+              </Button>
+            </div>
+          )}
         </>
       ) : (
         <Card variant="glass">
@@ -213,6 +254,7 @@ export function DiscoverPage() {
                 onClick={() => {
                   setCefrLevel("All");
                   setTag("All");
+                  setVisibleLimit(INITIAL_RENDER_LIMIT);
                 }}
               >
                 Reset filters
