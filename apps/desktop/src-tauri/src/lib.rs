@@ -12,6 +12,7 @@ use tauri::Manager;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Resolve and create the app-data directory.
             let app_data_dir = app.path().app_data_dir()?;
@@ -74,6 +75,8 @@ pub fn run() {
             commands::backup::validate_backup,
             commands::backup::restore_backup,
             commands::backup::ensure_scheduled_backup,
+            commands::updates::check_app_update,
+            commands::updates::check_content_updates,
             commands::auth::login_user,
             commands::auth::logout_user,
             commands::auth::get_current_session,

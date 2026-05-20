@@ -1,0 +1,84 @@
+{
+  "schema": "lexora.content-manifest",
+  "schemaVersion": 1,
+  "manifestVersion": "2026.05.20-test",
+  "channel": "test",
+  "publishedAt": "2026-05-20T00:00:00Z",
+  "app": {
+    "minAppVersion": "0.1.0"
+  },
+  "packages": [
+    {
+      "id": "core-seed-db",
+      "kind": "seed_db",
+      "version": "0.1.0",
+      "title": "Core seed database",
+      "description": "Small deterministic seed content used by local test update checks.",
+      "required": true,
+      "optional": false,
+      "sizeBytes": 4096,
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "downloadPolicy": "auto",
+      "source": {
+        "type": "local",
+        "path": "packages/core-seed-db.lexora-data.json"
+      }
+    },
+    {
+      "id": "starter-catalog",
+      "kind": "catalog",
+      "version": "0.1.0",
+      "title": "Starter catalog metadata",
+      "description": "Catalog metadata for local/test Discover content.",
+      "required": true,
+      "optional": false,
+      "sizeBytes": 2048,
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "downloadPolicy": "auto",
+      "source": {
+        "type": "local",
+        "path": "packages/starter-catalog.lexora-catalog.json"
+      }
+    },
+    {
+      "id": "audio-en-us-starter",
+      "kind": "audio",
+      "version": "0.1.0",
+      "title": "Starter US English audio",
+      "description": "Optional US pronunciation package; never downloaded automatically.",
+      "required": false,
+      "optional": true,
+      "sizeBytes": 157286400,
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "downloadPolicy": "manual",
+      "source": {
+        "type": "local",
+        "path": "packages/audio-en-us-starter.lexora-audio.zip"
+      },
+      "audio": {
+        "language": "en",
+        "dialects": ["us"]
+      }
+    },
+    {
+      "id": "audio-en-uk-starter",
+      "kind": "audio",
+      "version": "0.1.0",
+      "title": "Starter UK English audio",
+      "description": "Optional UK pronunciation package; never downloaded automatically.",
+      "required": false,
+      "optional": true,
+      "sizeBytes": 146800640,
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "downloadPolicy": "manual",
+      "source": {
+        "type": "local",
+        "path": "packages/audio-en-uk-starter.lexora-audio.zip"
+      },
+      "audio": {
+        "language": "en",
+        "dialects": ["uk"]
+      }
+    }
+  ]
+}

@@ -17,4 +17,5 @@ pub mod progress;
 pub mod review;
 pub mod search;
 pub mod settings;
+pub mod updates;
 pub mod words;

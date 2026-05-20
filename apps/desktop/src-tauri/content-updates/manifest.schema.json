@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lexora.local/schemas/content-update-manifest.v1.json",
+  "title": "Lexora Content Update Manifest",
+  "description": "Versioned manifest for Lexora seed data, catalog, asset, and optional audio package updates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schemaVersion", "manifestVersion", "channel", "publishedAt", "app", "packages"],
+  "properties": {
+    "schema": {
+      "const": "lexora.content-manifest"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "manifestVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "channel": {
+      "type": "string",
+      "enum": ["test", "stable", "beta"]
+    },
+    "publishedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "app": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minAppVersion"],
+      "properties": {
+        "minAppVersion": {
+          "type": "string",
+          "pattern": "^v?\\d+\\.\\d+\\.\\d+([+-][0-9A-Za-z.-]+)?$"
+        }
+      }
+    },
+    "packages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/package"
+      }
+    }
+  },
+  "$defs": {
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "version",
+        "title",
+        "description",
+        "required",
+        "optional",
+        "sizeBytes",
+        "sha256",
+        "downloadPolicy",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["seed_db", "data_patch", "catalog", "audio", "asset"]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v?\\d+\\.\\d+\\.\\d+([+-][0-9A-Za-z.-]+)?$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "downloadPolicy": {
+          "type": "string",
+          "enum": ["auto", "manual"]
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "path"],
+              "properties": {
+                "type": {
+                  "const": "local"
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "url"],
+              "properties": {
+                "type": {
+                  "const": "remote"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        },
+        "audio": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["language", "dialects"],
+          "properties": {
+            "language": {
+              "type": "string",
+              "enum": ["en"]
+            },
+            "dialects": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": ["us", "uk"]
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "audio"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["audio"],
+            "properties": {
+              "required": {
+                "const": false
+              },
+              "optional": {
+                "const": true
+              },
+              "downloadPolicy": {
+                "const": "manual"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

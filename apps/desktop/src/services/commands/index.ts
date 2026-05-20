@@ -9,4 +9,5 @@ export * from "./progress";
 export * from "./review";
 export * from "./search";
 export * from "./settings";
+export * from "./updates";
 export * from "./words";

@@ -300,10 +300,13 @@ fn active_reminders(conn: &Connection, user_id: i64) -> Result<Vec<InAppReminder
         )
         .map_err(|e| AppError::Internal(format!("Failed to prepare reminders query: {e}")))?;
 
-    stmt.query_map(params![user_id], reminder_from_row)
+    let reminders = stmt
+        .query_map(params![user_id], reminder_from_row)
         .map_err(|e| AppError::Internal(format!("Failed to query reminders: {e}")))?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| AppError::Internal(format!("Failed to read reminders: {e}")))
+        .map_err(|e| AppError::Internal(format!("Failed to read reminders: {e}")))?;
+
+    Ok(reminders)
 }
 
 struct ReminderDraft<'a> {

@@ -1,10 +1,10 @@
 pub mod achievements;
-pub mod analytics;
 /// Tauri command handlers exposed to the frontend via `invoke()`.
 ///
 /// Each sub-module groups commands by domain. Register every public command
 /// function in the `invoke_handler!` macro inside `lib.rs`.
 pub mod admin;
+pub mod analytics;
 pub mod audio;
 pub mod auth;
 pub mod backup;
@@ -17,4 +17,5 @@ pub mod progress;
 pub mod review;
 pub mod search;
 pub mod settings;
+pub mod updates;
 pub mod words;

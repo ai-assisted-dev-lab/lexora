@@ -10,6 +10,8 @@ import {
   FileJson,
   HardDrive,
   Mic,
+  Package,
+  RefreshCw,
   RotateCcw,
   ShieldCheck,
   Upload,
@@ -45,11 +47,6 @@ import {
   importDeckFromJson,
   listExportableDecks,
 } from "@/services/commands/importExport";
-import type {
-  AudioFallbackBehavior,
-  AudioPriority,
-  PronunciationAccent,
-} from "@/services/commands/settings";
 import type { NotificationSettings } from "@/services/commands/notifications";
 import {
   defaultNotificationSettings,
@@ -57,6 +54,20 @@ import {
   sendTestNotification,
   updateNotificationSettings,
 } from "@/services/commands/notifications";
+import type {
+  AudioFallbackBehavior,
+  AudioPriority,
+  PronunciationAccent,
+} from "@/services/commands/settings";
+import type {
+  AppUpdateCheckResult,
+  ContentUpdateCheckResult,
+  UpdateCheckMode,
+} from "@/services/commands/updates";
+import {
+  checkAppUpdate,
+  checkContentUpdates,
+} from "@/services/commands/updates";
 import { showBrowserNotification } from "@/services/notifications/browserNotifications";
 import { formatTauriError } from "@/services/tauri";
 import { useAuth } from "@/store/authContext";
@@ -69,6 +80,7 @@ type SettingsSection =
   | "review"
   | "pronunciation"
   | "notifications"
+  | "updates"
   | "backup";
 
 interface SettingsRowProps {
@@ -626,6 +638,209 @@ function NotificationsSection() {
           disabled={isLoading || isSaving}
         >
           Send Test Notification
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function updateStatusVariant(
+  status: AppUpdateCheckResult["status"] | ContentUpdateCheckResult["status"],
+) {
+  if (status === "available") return "warning";
+  if (status === "up_to_date" || status === "empty") return "success";
+  if (status === "incompatible") return "danger";
+  return "muted";
+}
+
+function updateStatusLabel(status: string) {
+  return status.replaceAll("_", " ");
+}
+
+function UpdatesSection() {
+  const appInfo = useAppInfo();
+  const [appUpdate, setAppUpdate] = useState<AppUpdateCheckResult | null>(null);
+  const [contentUpdate, setContentUpdate] =
+    useState<ContentUpdateCheckResult | null>(null);
+  const [manifestPath, setManifestPath] = useState("");
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const checkMode: UpdateCheckMode =
+    appInfo?.environment === "production" ? "auto" : "test";
+
+  async function handleCheckUpdates() {
+    setIsChecking(true);
+    setError(null);
+    try {
+      const [appResult, contentResult] = await Promise.all([
+        checkAppUpdate(checkMode),
+        checkContentUpdates(
+          checkMode,
+          manifestPath.trim() ? manifestPath.trim() : null,
+        ),
+      ]);
+      setAppUpdate(appResult);
+      setContentUpdate(contentResult);
+      setLastCheckedAt(new Date().toISOString());
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsChecking(false);
+    }
+  }
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title="Updates"
+        description="App version checks and modular content package status."
+      />
+      {error && (
+        <div className="settings-status settings-status--error" role="status">
+          <AlertCircle size={16} aria-hidden="true" />
+          <span>{error}</span>
+        </div>
+      )}
+      <Card className="settings-group">
+        <SettingsRow
+          label="Update Check Mode"
+          description={
+            checkMode === "test"
+              ? "Uses local test data in development."
+              : "Uses configured release endpoint environment."
+          }
+        >
+          <Badge variant="muted">{checkMode}</Badge>
+        </SettingsRow>
+        <SettingsRow
+          label="App Updates"
+          description={appUpdate?.message ?? "No update check has run yet."}
+        >
+          <Badge
+            variant={
+              appUpdate ? updateStatusVariant(appUpdate.status) : "muted"
+            }
+          >
+            {appUpdate ? updateStatusLabel(appUpdate.status) : "not checked"}
+          </Badge>
+        </SettingsRow>
+        <SettingsRow
+          label="Installed Version"
+          description="Current Lexora build reported by the native layer."
+        >
+          <span className="settings-locked">
+            {appUpdate?.currentVersion ?? appInfo?.version ?? "-"}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Latest Version"
+          description="Newest version returned by the configured updater source."
+        >
+          <span className="settings-locked">
+            {appUpdate?.latestVersion ?? "-"}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Content Manifest"
+          description={
+            contentUpdate?.message ?? "No content check has run yet."
+          }
+        >
+          <Badge
+            variant={
+              contentUpdate
+                ? updateStatusVariant(contentUpdate.status)
+                : "muted"
+            }
+          >
+            {contentUpdate
+              ? updateStatusLabel(contentUpdate.status)
+              : "not checked"}
+          </Badge>
+        </SettingsRow>
+        <SettingsRow
+          label="Manifest Path"
+          description="Optional local manifest path. Empty uses env configuration or bundled test data."
+        >
+          <input
+            className="settings-input settings-input--path"
+            type="text"
+            value={manifestPath}
+            onChange={(e) => setManifestPath(e.target.value)}
+            placeholder="Use configured manifest"
+            aria-label="Content manifest path"
+            disabled={isChecking}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="Required Content"
+          description="Seed data, data patches, catalog updates, and assets eligible for automatic fetch."
+        >
+          <span className="settings-locked">
+            {contentUpdate
+              ? `${contentUpdate.requiredPackages} package(s), ${formatBackupBytes(contentUpdate.requiredDownloadBytes)}`
+              : "-"}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Optional Audio"
+          description="Audio packages stay modular and require explicit selection."
+        >
+          <span className="settings-locked">
+            {contentUpdate
+              ? `${contentUpdate.optionalAudioPackages} package(s), ${formatBackupBytes(contentUpdate.optionalAudioBytes)}`
+              : "-"}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Last Checked"
+          description="Timestamp for the latest local update status refresh."
+        >
+          <span className="settings-locked">
+            {formatBackupDate(lastCheckedAt)}
+          </span>
+        </SettingsRow>
+      </Card>
+
+      {contentUpdate?.packages.length ? (
+        <Card className="settings-group">
+          <SettingsRow
+            label="Available Packages"
+            description={`${contentUpdate.totalPackages} package(s) from ${contentUpdate.source}.`}
+          >
+            <Package size={18} aria-hidden="true" />
+          </SettingsRow>
+          <div className="settings-update-list" aria-label="Content packages">
+            {contentUpdate.packages.map((item) => (
+              <div className="settings-update-list__item" key={item.id}>
+                <div className="settings-update-list__main">
+                  <span className="settings-update-list__title">
+                    {item.title}
+                  </span>
+                  <span className="settings-update-list__meta">
+                    {item.kind} - v{item.version} -{" "}
+                    {formatBackupBytes(item.sizeBytes)}
+                  </span>
+                </div>
+                <Badge variant={item.audio ? "warning" : "muted"}>
+                  {item.audio ? "manual audio" : item.downloadPolicy}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      <div className="settings-group-footer">
+        <Button
+          variant="secondary"
+          onClick={() => void handleCheckUpdates()}
+          disabled={isChecking}
+        >
+          <RefreshCw size={15} aria-hidden="true" />
+          {isChecking ? "Checking" : "Check Updates"}
         </Button>
       </div>
     </div>
@@ -1263,6 +1478,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "review", label: "Smart Review", Icon: RotateCcw },
   { id: "pronunciation", label: "Pronunciation", Icon: Mic },
   { id: "notifications", label: "Notifications", Icon: Bell },
+  { id: "updates", label: "Updates", Icon: RefreshCw },
   { id: "backup", label: "Backup", Icon: HardDrive },
 ];
 
@@ -1309,6 +1525,7 @@ export function SettingsPage() {
         {active === "review" && <ReviewSection />}
         {active === "pronunciation" && <PronunciationSection />}
         {active === "notifications" && <NotificationsSection />}
+        {active === "updates" && <UpdatesSection />}
         {active === "backup" && <BackupSection />}
       </main>
     </div>

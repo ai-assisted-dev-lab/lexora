@@ -209,7 +209,55 @@ describe("SettingsPage", () => {
               createdAt: "2026-05-20T00:00:00Z",
             },
             osStatus: "unavailable",
-            message: "Native Tauri notifications are not installed in this build.",
+            message:
+              "Native Tauri notifications are not installed in this build.",
+          });
+        case "check_app_update":
+          return Promise.resolve({
+            status: "up_to_date",
+            currentVersion: "0.1.0",
+            latestVersion: "0.1.0",
+            updateAvailable: false,
+            source: "test-mode",
+            message: "Test update check completed; Lexora is up to date.",
+          });
+        case "check_content_updates":
+          return Promise.resolve({
+            status: "available",
+            manifestVersion: "2026.05.20-test",
+            channel: "test",
+            source: "bundled-test-manifest",
+            totalPackages: 3,
+            requiredPackages: 1,
+            optionalAudioPackages: 2,
+            requiredDownloadBytes: 4096,
+            optionalAudioBytes: 304087040,
+            message:
+              "Found 3 package(s); optional audio packages require manual install.",
+            packages: [
+              {
+                id: "core-seed-db",
+                kind: "seed_db",
+                version: "0.1.0",
+                title: "Core seed database",
+                required: true,
+                optional: false,
+                sizeBytes: 4096,
+                downloadPolicy: "auto",
+                audio: false,
+              },
+              {
+                id: "audio-en-us-starter",
+                kind: "audio",
+                version: "0.1.0",
+                title: "Starter US English audio",
+                required: false,
+                optional: true,
+                sizeBytes: 157286400,
+                downloadPolicy: "manual",
+                audio: true,
+              },
+            ],
           });
         case "export_deck_to_json":
           return Promise.resolve({
@@ -237,7 +285,7 @@ describe("SettingsPage", () => {
     });
   });
 
-  it("renders all six section nav buttons", () => {
+  it("renders all seven section nav buttons", () => {
     renderSettings();
 
     const nav = screen.getByRole("navigation", { name: "Settings sections" });
@@ -247,6 +295,7 @@ describe("SettingsPage", () => {
       "Smart Review",
       "Pronunciation",
       "Notifications",
+      "Updates",
       "Backup",
     ]) {
       expect(
@@ -357,6 +406,26 @@ describe("SettingsPage", () => {
     expect(screen.getByText("Backup & Restore")).toBeInTheDocument();
     expect(screen.getByText("Backup History")).toBeInTheDocument();
     expect(screen.getByText(/headword, part_of_speech/i)).toBeInTheDocument();
+  });
+
+  it("runs a dev/test update check from Settings", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("button", { name: /Updates/i }));
+    await user.click(screen.getByRole("button", { name: "Check Updates" }));
+
+    expect(invokeMock).toHaveBeenCalledWith("check_app_update", {
+      input: { mode: "test" },
+    });
+    expect(invokeMock).toHaveBeenCalledWith("check_content_updates", {
+      input: { mode: "test", manifestPath: null },
+    });
+    expect(
+      await screen.findByText(/Lexora is up to date/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Starter US English audio")).toBeInTheDocument();
+    expect(screen.getAllByText("manual audio").length).toBeGreaterThan(0);
   });
 
   it("creates a manual backup from Backup section", async () => {
