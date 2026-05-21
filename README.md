@@ -204,6 +204,16 @@ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml large_catalog_searc
 - Expand curated vocabulary packs, IPA/audio coverage, and Data Studio validation rules.
 - Keep cloud sync, marketplace/payments, public community features, dark mode, and AI tutor/chat out of the current release scope.
 
+## Community
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, conventions, quality gates.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards.
+- [SUPPORT.md](SUPPORT.md) — bug reports, feature requests, security reports.
+- [PRIVACY.md](PRIVACY.md) — what Lexora stores, what it never collects.
+- [CHANGELOG.md](CHANGELOG.md) — release-by-release history.
+- [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) — bundled dependencies.
+
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). For bundled third-party code, see
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

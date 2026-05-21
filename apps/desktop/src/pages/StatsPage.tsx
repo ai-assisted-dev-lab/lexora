@@ -13,15 +13,29 @@ import {
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useGamificationSummary } from "@/hooks/useGamificationSummary";
 
-import {
-  masteryDistribution,
-  masteryTotal,
-  summaryStats,
-  weakTopics,
-  weeklyActivity,
-  weeklyTotal,
-} from "./stats/statsMockData";
 import { WeeklyChart } from "./stats/WeeklyChart";
+
+const EMPTY_SUMMARY = {
+  streak: 0,
+  streakBest: 0,
+  xpToday: 0,
+  xpLevel: 0,
+  xpCurrent: 0,
+  xpNextLevel: 0,
+  accuracy: 0,
+  accuracySessions: 0,
+  mastered: 0,
+  masteredOf: 0,
+};
+
+const EMPTY_WEEK: { day: string; words: number }[] = [];
+const EMPTY_MASTERY: { label: string; count: number; color: string }[] = [];
+const EMPTY_WEAK: {
+  topic: string;
+  deck: string;
+  accuracy: number;
+  count: number;
+}[] = [];
 
 function accuracyVariant(acc: number): "success" | "warning" | "danger" {
   if (acc >= 85) return "success";
@@ -56,7 +70,7 @@ export function StatsPage() {
           gamification.totalCardsReviewed,
         ),
       }
-    : summaryStats;
+    : EMPTY_SUMMARY;
 
   // ── Weekly activity (7 days from gamification summary) ────
   const liveWeeklyActivity = gamification
@@ -67,8 +81,8 @@ export function StatsPage() {
         }),
         words: day.cardsReviewed,
       }))
-    : weeklyActivity;
-  const liveWeeklyTotal = gamification?.weeklyCardsReviewed ?? weeklyTotal;
+    : EMPTY_WEEK;
+  const liveWeeklyTotal = gamification?.weeklyCardsReviewed ?? 0;
 
   // ── Mastery distribution (real card states from analytics) ─
   const liveMastery = analytics
@@ -94,8 +108,8 @@ export function StatsPage() {
           color: MASTERY_COLORS.new,
         },
       ]
-    : masteryDistribution;
-  const liveMasteryTotal = analytics?.mastery.total ?? masteryTotal;
+    : EMPTY_MASTERY;
+  const liveMasteryTotal = analytics?.mastery.total ?? 0;
 
   // ── Weak words (real low-accuracy words from analytics) ────
   const liveWeakWords = analytics
@@ -105,9 +119,11 @@ export function StatsPage() {
         accuracy: w.accuracy,
         count: w.totalReviews,
       }))
-    : weakTopics;
+    : EMPTY_WEAK;
 
-  const hasActivity = gamification ? gamification.totalCardsReviewed > 0 : true;
+  const hasActivity = gamification
+    ? gamification.totalCardsReviewed > 0
+    : false;
 
   return (
     <motion.div

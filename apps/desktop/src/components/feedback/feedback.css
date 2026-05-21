@@ -1,0 +1,199 @@
+/* Toast viewport — top-right corner, above all panels */
+.lx-toast-viewport {
+  position: fixed;
+  top: calc(var(--title-bar-h) + 16px);
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 380px;
+  width: max-content;
+}
+
+.lx-toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.4;
+  min-width: 280px;
+}
+
+.lx-toast--info {
+  border-color: var(--color-border-strong);
+}
+.lx-toast--success {
+  border-color: #bbf7d0;
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+.lx-toast--warning {
+  border-color: #fde68a;
+  background: linear-gradient(180deg, #ffffff 0%, #fffbeb 100%);
+}
+.lx-toast--error {
+  border-color: #fecaca;
+  background: linear-gradient(180deg, #ffffff 0%, #fef2f2 100%);
+}
+
+.lx-toast__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  margin-top: 1px;
+}
+.lx-toast__icon--info {
+  color: var(--color-accent);
+  background: var(--color-primary-soft);
+}
+.lx-toast__icon--success {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+.lx-toast__icon--warning {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+.lx-toast__icon--error {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.lx-toast__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lx-toast__title {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.lx-toast__description {
+  color: var(--color-text-muted);
+  word-break: break-word;
+}
+
+.lx-toast__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.lx-toast__dismiss:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-text);
+}
+.lx-toast__dismiss:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Error boundary — full-page fallback */
+.lx-error-boundary {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  padding: var(--page-pad);
+  background: var(--color-canvas);
+}
+
+.lx-error-boundary__panel {
+  max-width: 560px;
+  width: 100%;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.lx-error-boundary__title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--color-text);
+}
+
+.lx-error-boundary__message {
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.lx-error-boundary__details {
+  text-align: left;
+  font-family: ui-monospace, "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 12px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 20px;
+  color: var(--color-danger);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.lx-error-boundary__actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lx-error-boundary__button {
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+.lx-error-boundary__button:hover {
+  background: var(--color-primary-soft);
+}
+.lx-error-boundary__button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.lx-error-boundary__button--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-on-accent);
+}
+.lx-error-boundary__button--primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}

@@ -17,6 +17,7 @@
     "clean": "pnpm -r --parallel --if-present clean && rimraf node_modules"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1"

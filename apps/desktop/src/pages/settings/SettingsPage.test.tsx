@@ -312,7 +312,7 @@ describe("SettingsPage", () => {
       "aria-pressed",
       "true",
     );
-    expect(screen.getByLabelText("Display name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Display Name")).toBeInTheDocument();
     expect(screen.getByText("English ↔ Vietnamese")).toBeInTheDocument();
   });
 

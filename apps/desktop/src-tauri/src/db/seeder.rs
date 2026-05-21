@@ -6,6 +6,15 @@ use serde::Deserialize;
 use crate::errors::AppError;
 
 const DEMO_PACK_JSON: &str = include_str!("../../../../../data/seed/demo_pack.json");
+const ESSENTIAL_500_JSON: &str =
+    include_str!("../../../../../data/seed/essential_500_pack.json");
+
+// Demo pack ships last so the single `bundled_seed_version` app_metadata
+// key reflects its version — this preserves the existing seeder tests.
+const BUNDLED_PACKS: &[(&str, &str)] = &[
+    ("essential-500", ESSENTIAL_500_JSON),
+    ("demo", DEMO_PACK_JSON),
+];
 
 #[derive(Debug, Deserialize)]
 struct SeedFile {
@@ -84,8 +93,36 @@ pub struct SeedReport {
 }
 
 pub fn load_bundled(conn: &mut Connection) -> Result<SeedReport, AppError> {
-    let seed: SeedFile = serde_json::from_str(DEMO_PACK_JSON)
-        .map_err(|e| AppError::Internal(format!("Failed to parse bundled seed data: {e}")))?;
+    let mut aggregate = SeedReport {
+        packs_loaded: 0,
+        decks_loaded: 0,
+        words_loaded: 0,
+        skipped: true,
+    };
+
+    for (label, json) in BUNDLED_PACKS {
+        let report = load_single_pack(conn, label, json)?;
+        aggregate.packs_loaded += report.packs_loaded;
+        aggregate.decks_loaded += report.decks_loaded;
+        aggregate.words_loaded += report.words_loaded;
+        if !report.skipped {
+            aggregate.skipped = false;
+        }
+    }
+
+    Ok(aggregate)
+}
+
+fn load_single_pack(
+    conn: &mut Connection,
+    label: &str,
+    json: &str,
+) -> Result<SeedReport, AppError> {
+    let seed: SeedFile = serde_json::from_str(json).map_err(|e| {
+        AppError::Internal(format!(
+            "Failed to parse bundled seed data for {label}: {e}"
+        ))
+    })?;
 
     let existing_pack: Option<(i64, String)> = conn
         .query_row(
@@ -94,7 +131,9 @@ pub fn load_bundled(conn: &mut Connection) -> Result<SeedReport, AppError> {
             |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
         )
         .optional()
-        .map_err(|e| AppError::Internal(format!("Seed idempotency check failed: {e}")))?;
+        .map_err(|e| {
+            AppError::Internal(format!("Seed idempotency check failed for {label}: {e}"))
+        })?;
 
     if let Some((_, version)) = &existing_pack {
         if version == &seed.pack.version {
@@ -107,14 +146,19 @@ pub fn load_bundled(conn: &mut Connection) -> Result<SeedReport, AppError> {
         }
     }
 
-    let tx = conn
-        .transaction()
-        .map_err(|e| AppError::Internal(format!("Failed to start seed transaction: {e}")))?;
+    let tx = conn.transaction().map_err(|e| {
+        AppError::Internal(format!(
+            "Failed to start seed transaction for {label}: {e}"
+        ))
+    })?;
 
     let report = upsert_seed_data(&tx, &seed, existing_pack.map(|(id, _)| id))?;
 
-    tx.commit()
-        .map_err(|e| AppError::Internal(format!("Failed to commit seed transaction: {e}")))?;
+    tx.commit().map_err(|e| {
+        AppError::Internal(format!(
+            "Failed to commit seed transaction for {label}: {e}"
+        ))
+    })?;
 
     Ok(report)
 }
@@ -518,9 +562,14 @@ mod tests {
     use super::*;
     use rusqlite::Connection;
 
-    const EXPECTED_DECKS: i64 = 9;
-    const EXPECTED_WORDS: i64 = 72;
-    const EXPECTED_RELATIONS: i64 = 8;
+    const DEMO_DECKS: i64 = 9;
+    const DEMO_WORDS: i64 = 72;
+    const DEMO_RELATIONS: i64 = 8;
+    const ESSENTIAL_DECKS: i64 = 10;
+    const ESSENTIAL_WORDS: i64 = 493;
+    const EXPECTED_DECKS: i64 = DEMO_DECKS + ESSENTIAL_DECKS;
+    const EXPECTED_WORDS: i64 = DEMO_WORDS + ESSENTIAL_WORDS;
+    const EXPECTED_RELATIONS: i64 = DEMO_RELATIONS;
 
     fn db_with_schema() -> Connection {
         let mut conn = Connection::open_in_memory().expect("in-memory DB");
@@ -535,9 +584,18 @@ mod tests {
             serde_json::from_str(DEMO_PACK_JSON).expect("demo_pack.json should be valid JSON");
         assert!(!seed.pack.slug.is_empty());
         assert_eq!(seed.pack.version, "2.0.0");
-        assert_eq!(seed.decks.len() as i64, EXPECTED_DECKS);
-        assert_eq!(seed.words.len() as i64, EXPECTED_WORDS);
-        assert_eq!(seed.relations.len() as i64, EXPECTED_RELATIONS);
+        assert_eq!(seed.decks.len() as i64, DEMO_DECKS);
+        assert_eq!(seed.words.len() as i64, DEMO_WORDS);
+        assert_eq!(seed.relations.len() as i64, DEMO_RELATIONS);
+    }
+
+    #[test]
+    fn load_bundled_essential_500_json_parses_without_error() {
+        let seed: SeedFile = serde_json::from_str(ESSENTIAL_500_JSON)
+            .expect("essential_500_pack.json should be valid JSON");
+        assert_eq!(seed.pack.slug, "essential-500");
+        assert_eq!(seed.decks.len() as i64, ESSENTIAL_DECKS);
+        assert_eq!(seed.words.len() as i64, ESSENTIAL_WORDS);
     }
 
     #[test]
@@ -546,14 +604,14 @@ mod tests {
         let report = load_bundled(&mut conn).expect("seed should succeed");
 
         assert!(!report.skipped);
-        assert_eq!(report.packs_loaded, 1);
+        assert_eq!(report.packs_loaded, 2);
         assert_eq!(report.decks_loaded, EXPECTED_DECKS as u32);
         assert_eq!(report.words_loaded, EXPECTED_WORDS as u32);
 
         let packs: i64 = conn
             .query_row("SELECT COUNT(*) FROM packs", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(packs, 1);
+        assert_eq!(packs, 2);
 
         let decks: i64 = conn
             .query_row("SELECT COUNT(*) FROM decks", [], |r| r.get(0))
@@ -593,10 +651,23 @@ mod tests {
         let linked: i64 = conn
             .query_row("SELECT COUNT(*) FROM deck_words", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(
-            linked, EXPECTED_WORDS,
-            "every word should be linked to exactly one deck"
+        // Each word lives in at least one deck. A handful of common words
+        // (e.g. "chicken", "hour") appear across two decks, so deck_words
+        // is allowed to exceed the unique-word count.
+        assert!(
+            linked >= EXPECTED_WORDS,
+            "every word should be linked to at least one deck (linked={linked}, expected≥{EXPECTED_WORDS})",
         );
+
+        let orphans: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM words w
+                 WHERE NOT EXISTS (SELECT 1 FROM deck_words dw WHERE dw.word_id = w.id)",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(orphans, 0, "no word should be orphaned from every deck");
     }
 
     #[test]
@@ -607,9 +678,11 @@ mod tests {
         let total: i64 = conn
             .query_row("SELECT SUM(word_count) FROM decks", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(
-            total, EXPECTED_WORDS,
-            "sum of deck word_counts should equal total words"
+        // Sum of denormalised deck word_counts counts each word once per
+        // deck it belongs to, which is ≥ the unique-word total.
+        assert!(
+            total >= EXPECTED_WORDS,
+            "denormalised deck word_count sum should be at least the total (got {total}, expected≥{EXPECTED_WORDS})",
         );
 
         let zeros: i64 = conn
@@ -650,14 +723,22 @@ mod tests {
     #[test]
     fn load_bundled_updates_older_pack_version_in_place() {
         let mut conn = db_with_schema();
+        // Pre-insert BOTH bundled packs at older versions so the seeder
+        // takes the in-place update path for each.
         conn.execute(
             "INSERT INTO packs (slug, name, version, source)
              VALUES ('english-essentials-demo', 'Old Demo', '1.0.0', 'bundled')",
             [],
         )
         .unwrap();
+        conn.execute(
+            "INSERT INTO packs (slug, name, version, source)
+             VALUES ('essential-500', 'Old Essential', '0.9.0', 'bundled')",
+            [],
+        )
+        .unwrap();
 
-        let report = load_bundled(&mut conn).expect("seed should update old pack");
+        let report = load_bundled(&mut conn).expect("seed should update old packs");
         assert!(!report.skipped);
         assert_eq!(report.packs_loaded, 0);
 
@@ -677,15 +758,18 @@ mod tests {
         let mut conn = db_with_schema();
         load_bundled(&mut conn).expect("seed");
 
-        let (slug, source, version): (String, String, String) = conn
-            .query_row("SELECT slug, source, version FROM packs LIMIT 1", [], |r| {
-                Ok((r.get(0)?, r.get(1)?, r.get(2)?))
-            })
+        let (source, version): (String, String) = conn
+            .query_row(
+                "SELECT source, version FROM packs WHERE slug = 'english-essentials-demo'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
             .unwrap();
-        assert_eq!(slug, "english-essentials-demo");
         assert_eq!(source, "bundled");
         assert_eq!(version, "2.0.0");
 
+        // The metadata key tracks whichever pack was processed last in the
+        // BUNDLED_PACKS list — currently the demo pack.
         let seed_version: String = conn
             .query_row(
                 "SELECT value FROM app_metadata WHERE key = 'bundled_seed_version'",

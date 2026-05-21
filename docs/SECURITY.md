@@ -1,7 +1,7 @@
 # Lexora — Security Notes
 
-> Version: 1.0 | Covers: V1 local desktop (Windows-first)  
-> Last updated: Prompt 22
+> Version: 1.1 | Covers: V1 local desktop (Windows-first)  
+> Last updated: 2026-05-21 (commercial-polish pass)
 
 ---
 
@@ -149,6 +149,62 @@ A migration utility (`sqlcipher_export` pragma) can be added later.
 | Windows Credential Manager is not disabled by policy | Enterprise machines with restrictive GPO may block this; add a fallback    |
 | First-launch key generation succeeds                 | If `getrandom` fails (rare), the app cannot open the DB                    |
 | User does not manually delete the keychain entry     | No self-service recovery path in V1                                        |
+
+---
+
+## Account Credentials
+
+### Default seeded accounts
+
+On first launch the database is seeded with two accounts:
+
+| Username  | Password  | Role    | Purpose                                  |
+| --------- | --------- | ------- | ---------------------------------------- |
+| `owner`   | `owner`   | owner   | Admin / Data Studio access for the owner |
+| `learner` | `learner` | learner | Day-to-day study account                 |
+
+These defaults exist so the app is usable on first launch without a setup
+wizard. **They are intentionally low-entropy and must be rotated before the
+device is shared, before publishing a build to other users, or before the
+backup file leaves the install machine.**
+
+### Rotating credentials
+
+- UI flow: **Settings → Security → Change Password**.
+- Backend command: `change_password` (Tauri command).
+- Backend module: `apps/desktop/src-tauri/src/auth/mod.rs#change_password`.
+- The minimum password length is enforced server-side
+  (`MIN_PASSWORD_LENGTH`). The frontend mirrors the rule but is not the
+  source of truth.
+- Passwords are stored as Argon2id PHC strings using OS-CSPRNG salts. The
+  raw password is never logged, persisted, or returned across the IPC
+  boundary.
+
+### First-run warning
+
+The `account_uses_default_password` command returns `true` whenever the
+currently authenticated account still hashes the seeded password. The
+Settings → Security panel surfaces an inline warning while this is true.
+Owners should treat shipping a build with this flag enabled as a release
+blocker.
+
+---
+
+## Backup Restore Hardening
+
+User-supplied backup paths are run through `fs::canonicalize` before any
+I/O. This:
+
+- Resolves `..` traversal components to a concrete absolute path before
+  validation.
+- Resolves symlinks to their real target so the reader sees a stable
+  path, not the link.
+- Rejects paths that resolve to anything other than a regular file
+  (directories, devices, sockets).
+- Requires the resolved file to carry a `.json` extension so obviously
+  wrong inputs (`.db`, `.exe`, …) are short-circuited before parsing.
+
+See `apps/desktop/src-tauri/src/commands/backup.rs#canonicalize_existing_file`.
 
 ---
 

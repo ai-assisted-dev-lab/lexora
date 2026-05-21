@@ -6,6 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DiscoverPage } from "@/pages/DiscoverPage";
@@ -68,7 +69,11 @@ afterEach(cleanup);
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function renderAndWait() {
-  render(<DiscoverPage />);
+  render(
+    <MemoryRouter>
+      <DiscoverPage />
+    </MemoryRouter>,
+  );
   // Wait for the async hook to resolve and decks to render
   await waitFor(() =>
     expect(screen.getAllByText("Everyday Actions").length).toBeGreaterThan(0),
@@ -79,7 +84,11 @@ async function renderAndWait() {
 
 describe("DiscoverPage", () => {
   it("shows loading state initially", () => {
-    render(<DiscoverPage />);
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByLabelText("Loading catalog")).toBeInTheDocument();
   });
 

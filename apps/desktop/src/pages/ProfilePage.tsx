@@ -1,58 +1,46 @@
 import "./profile/ProfilePage.css";
 
 import { motion } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
-import { Award, BookOpen, Flame, Layers, Target, Zap } from "lucide-react";
+import { BookOpen, Flame, Sparkles, Target, Zap } from "lucide-react";
 
 import {
   Badge,
   Card,
+  EmptyState,
   ProgressBar,
   SectionHeader,
   StatCard,
 } from "@/components/ui";
 import { useGamificationSummary } from "@/hooks/useGamificationSummary";
+import { useAuth } from "@/store/authContext";
 
-import {
-  favoriteDeck,
-  recentActivity,
-  showcaseAchievements,
-  userProfile,
-} from "./profile/profileMockData";
-
-const SHOWCASE_ICON_MAP: Record<string, LucideIcon> = {
-  Award,
-  BookOpen,
-  Flame,
-  Layers,
-  Target,
-  Zap,
-};
-
-function formatDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+function deriveInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export function ProfilePage() {
   const gamification = useGamificationSummary();
-  const { displayName, initials, joinedDate } = userProfile;
-  const level = gamification?.level ?? userProfile.level;
-  const xp = gamification?.currentLevelXp ?? userProfile.xp;
-  const xpNextLevel = gamification?.nextLevelXp ?? userProfile.xpNextLevel;
-  const currentStreak =
-    gamification?.currentStreak ?? userProfile.currentStreak;
-  const longestStreak =
-    gamification?.longestStreak ?? userProfile.longestStreak;
-  const totalXP = gamification?.totalXp ?? userProfile.totalXP;
-  const masteredWords =
-    gamification?.masteredWords ?? userProfile.masteredWords;
-  const totalSessions =
-    gamification?.totalSessions ?? userProfile.totalSessions;
+  const { user } = useAuth();
 
-  const xpPct = Math.round((xp / xpNextLevel) * 100);
+  const displayName = user?.username ?? "—";
+  const initials = user ? deriveInitials(user.username) : "?";
+
+  const level = gamification?.level ?? 0;
+  const xp = gamification?.currentLevelXp ?? 0;
+  const xpNextLevel = Math.max(gamification?.nextLevelXp ?? 0, 1);
+  const currentStreak = gamification?.currentStreak ?? 0;
+  const longestStreak = gamification?.longestStreak ?? 0;
+  const totalXP = gamification?.totalXp ?? 0;
+  const masteredWords = gamification?.masteredWords ?? 0;
+  const totalSessions = gamification?.totalSessions ?? 0;
+
+  const xpPct =
+    xpNextLevel > 0 ? Math.min(100, Math.round((xp / xpNextLevel) * 100)) : 0;
+
+  const isReady = gamification !== null;
 
   return (
     <motion.div
@@ -69,8 +57,8 @@ export function ProfilePage() {
         <div className="profile-hero__body">
           <h2 className="profile-hero__name">{displayName}</h2>
           <div className="profile-hero__meta">
-            <Badge>Level {level}</Badge>
-            <span>Member since {joinedDate}</span>
+            <Badge>{isReady ? `Level ${level}` : "Loading"}</Badge>
+            <span>{user ? `Signed in as ${user.role}` : "Not signed in"}</span>
           </div>
           <div className="profile-hero__xp-wrap">
             <div className="profile-hero__xp-label">
@@ -114,7 +102,7 @@ export function ProfilePage() {
           icon={<Zap size={18} aria-hidden="true" />}
           label="Total XP"
           value={totalXP.toLocaleString()}
-          meta={`Level ${level}`}
+          meta={isReady ? `Level ${level}` : "Loading…"}
         />
         <StatCard
           icon={<BookOpen size={18} aria-hidden="true" />}
@@ -129,99 +117,43 @@ export function ProfilePage() {
         />
       </div>
 
-      {/* Two-column body */}
+      {/* Showcase + activity panels: placeholder empty states until real
+          favourite-deck and session-history endpoints land. */}
       <div className="profile-columns">
         <div className="profile-main">
-          {/* Favorite Deck */}
           <Card className="profile-deck">
             <SectionHeader title="Favourite Deck" eyebrow="Most studied" />
-            <div className="profile-deck__top">
-              <div>
-                <p className="profile-deck__title">{favoriteDeck.title}</p>
-                <div className="profile-deck__meta">
-                  <Badge variant="muted">{favoriteDeck.level}</Badge>
-                  <span>{favoriteDeck.sessionsCount} sessions</span>
-                </div>
-              </div>
-              <Badge variant="default">
-                {favoriteDeck.progressPct}% complete
-              </Badge>
-            </div>
-            <div>
-              <div className="profile-deck__progress-labels">
-                <span>
-                  {favoriteDeck.wordsStudied} / {favoriteDeck.totalWords} words
-                </span>
-                <span>{favoriteDeck.progressPct}%</span>
-              </div>
-              <ProgressBar
-                value={favoriteDeck.progressPct}
-                label={`${favoriteDeck.progressPct}% complete`}
-              />
-            </div>
+            <EmptyState
+              icon={<Sparkles size={24} aria-hidden="true" />}
+              title="No favourite deck yet"
+              description="Once you've studied a deck a few times we'll feature it here with your progress."
+            />
           </Card>
 
-          {/* Achievement showcase */}
           <Card className="profile-showcase">
             <SectionHeader
               title="Achievement Showcase"
               eyebrow="Pinned badges"
             />
-            <div className="profile-showcase__grid">
-              {showcaseAchievements.map((achievement) => {
-                const IconComp =
-                  SHOWCASE_ICON_MAP[achievement.iconName] ?? Award;
-                return (
-                  <div
-                    key={achievement.title}
-                    className="profile-showcase__item"
-                  >
-                    <div className="profile-showcase__badge" aria-hidden="true">
-                      <IconComp size={18} />
-                    </div>
-                    <p className="profile-showcase__title">
-                      {achievement.title}
-                    </p>
-                    <p className="profile-showcase__cat">
-                      {achievement.category}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+            <EmptyState
+              icon={<Sparkles size={24} aria-hidden="true" />}
+              title="No badges pinned yet"
+              description="Unlock achievements and visit the Achievements page to pin your favourites here."
+            />
           </Card>
         </div>
 
-        {/* Recent Activity */}
         <div className="profile-side">
           <Card className="profile-activity">
             <SectionHeader
               title="Recent Activity"
-              description="Last 5 study sessions."
+              description="Your latest study sessions."
             />
-            <div
-              className="profile-activity__list"
-              aria-label="Recent sessions"
-            >
-              {recentActivity.map((entry) => (
-                <div key={entry.date} className="profile-activity__row">
-                  <div>
-                    <p className="profile-activity__deck">{entry.deck}</p>
-                    <p className="profile-activity__date">
-                      {formatDate(entry.date)} · {entry.wordsReviewed} words
-                    </p>
-                  </div>
-                  <div className="profile-activity__right">
-                    <span className="profile-activity__xp">
-                      +{entry.xpEarned} XP
-                    </span>
-                    <span className="profile-activity__acc">
-                      {entry.accuracy}% acc
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <EmptyState
+              icon={<Target size={24} aria-hidden="true" />}
+              title="No recent sessions"
+              description="Start a study session to populate your activity timeline."
+            />
           </Card>
         </div>
       </div>

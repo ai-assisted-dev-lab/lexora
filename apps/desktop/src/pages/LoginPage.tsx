@@ -3,6 +3,7 @@ import "./pages.css";
 import { motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -20,18 +21,22 @@ interface FieldErrors {
 
 // ── Validation ─────────────────────────────────────────────────────────────
 
-function validate(username: string, password: string): FieldErrors {
+function validate(
+  username: string,
+  password: string,
+  t: (key: string) => string,
+): FieldErrors {
   const errors: FieldErrors = {};
   const trimmed = username.trim();
 
   if (!trimmed) {
-    errors.username = "Username is required";
+    errors.username = t("login.usernameRequired");
   } else if (trimmed.length < 2) {
-    errors.username = "Username must be at least 2 characters";
+    errors.username = t("login.usernameTooShort");
   }
 
   if (!password) {
-    errors.password = "Password is required";
+    errors.password = t("login.passwordRequired");
   }
 
   return errors;
@@ -86,6 +91,7 @@ function LexoraLogoMark() {
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading: authLoading, user } = useAuth();
+  const { t } = useTranslation();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -105,7 +111,7 @@ export function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    const errors = validate(username, password);
+    const errors = validate(username, password, t);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -128,7 +134,7 @@ export function LoginPage() {
     <div className="login-page">
       <TitleBar />
 
-      <div className="login-page__content">
+      <main className="login-page__content" aria-label={t("auth.signInTitle")}>
         <motion.div
           className="login-page__card"
           initial={{ opacity: 0, y: 20 }}
@@ -141,18 +147,16 @@ export function LoginPage() {
           </div>
 
           {/* Header */}
-          <span className="login-page__wordmark">Lexora</span>
-          <h1 className="login-page__title">Welcome back</h1>
-          <p className="login-page__subtitle">
-            Sign in to continue your learning journey
-          </p>
+          <span className="login-page__wordmark">{t("app.name")}</span>
+          <h1 className="login-page__title">{t("auth.signInTitle")}</h1>
+          <p className="login-page__subtitle">{t("auth.signInSubtitle")}</p>
 
           {/* Form */}
           <form className="login-page__form" onSubmit={handleSubmit} noValidate>
             {/* Username field */}
             <div className="lx-form-group">
               <label className="lx-form-label" htmlFor="login-username">
-                Username
+                {t("auth.username")}
               </label>
               <input
                 id="login-username"
@@ -163,7 +167,7 @@ export function LoginPage() {
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                placeholder="Enter your username"
+                placeholder={t("login.usernamePlaceholder")}
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
@@ -196,7 +200,7 @@ export function LoginPage() {
             {/* Password field */}
             <div className="lx-form-group">
               <label className="lx-form-label" htmlFor="login-password">
-                Password
+                {t("auth.password")}
               </label>
               <input
                 id="login-password"
@@ -207,7 +211,7 @@ export function LoginPage() {
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                placeholder="Enter your password"
+                placeholder={t("login.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -259,22 +263,21 @@ export function LoginPage() {
               {isLoading ? (
                 <>
                   <span className="lx-spinner" aria-hidden="true" />
-                  Signing in…
+                  {t("auth.signingIn")}
                 </>
               ) : (
-                "Sign in"
+                t("auth.signIn")
               )}
             </Button>
           </form>
 
           {/* First-run hint */}
           <p className="login-page__setup-hint">
-            <strong>First time?</strong> Use the default accounts:{" "}
-            <strong>owner</strong> or <strong>learner</strong> (password matches
-            username).
+            <strong>{t("login.firstTime")}</strong>{" "}
+            {t("login.firstTimeHint", { learner: "learner", owner: "owner" })}
           </p>
         </motion.div>
-      </div>
+      </main>
     </div>
   );
 }

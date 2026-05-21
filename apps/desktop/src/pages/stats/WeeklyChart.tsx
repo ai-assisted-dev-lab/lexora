@@ -8,7 +8,7 @@ import {
   YAxis,
 } from "recharts";
 
-import type { WeeklyDataPoint } from "./statsMockData";
+import type { WeeklyDataPoint } from "./types";
 
 interface WeeklyChartProps {
   data: WeeklyDataPoint[];

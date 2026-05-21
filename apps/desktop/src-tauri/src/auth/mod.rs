@@ -86,6 +86,87 @@ pub fn create_default_accounts(conn: &Connection) -> Result<(), AppError> {
     Ok(())
 }
 
+// ── Password management ───────────────────────────────────────────────────────
+
+/// Minimum password length enforced for any password change. Matches the
+/// guidance surfaced in the UI; kept here so the backend is the source of
+/// truth and the frontend cannot bypass the check.
+pub const MIN_PASSWORD_LENGTH: usize = 4;
+
+/// Verifies the user's current password and replaces it with a freshly hashed
+/// `new_password`. Returns `Unauthorized` if `current_password` does not match,
+/// `Validation` if the new password fails the length policy, and `Internal`
+/// for unexpected DB errors.
+pub fn change_password(
+    conn: &Connection,
+    user_id: i64,
+    current_password: &str,
+    new_password: &str,
+) -> Result<(), AppError> {
+    if new_password.len() < MIN_PASSWORD_LENGTH {
+        return Err(AppError::Validation(format!(
+            "Password must be at least {MIN_PASSWORD_LENGTH} characters."
+        )));
+    }
+    if new_password == current_password {
+        return Err(AppError::Validation(
+            "New password must differ from the current password.".to_string(),
+        ));
+    }
+
+    let stored: Option<String> = conn
+        .query_row(
+            "SELECT password_hash FROM users WHERE id = ?1",
+            params![user_id],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(|e| AppError::Internal(format!("Failed to read user record: {e}")))?;
+
+    let current_hash =
+        stored.ok_or_else(|| AppError::Unauthorized("Invalid credentials".to_string()))?;
+
+    if !verify_password(current_password, &current_hash)? {
+        return Err(AppError::Unauthorized("Invalid credentials".to_string()));
+    }
+
+    let new_hash = hash_password(new_password)?;
+    conn.execute(
+        "UPDATE users
+         SET password_hash = ?1,
+             updated_at    = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ?2",
+        params![new_hash, user_id],
+    )
+    .map_err(|e| AppError::Internal(format!("Failed to update password: {e}")))?;
+
+    Ok(())
+}
+
+/// Returns true when the supplied account still uses the default seeded
+/// password ("owner" or "learner"). Used by the frontend to surface a
+/// first-run security warning until the user has rotated credentials.
+pub fn uses_default_password(conn: &Connection, user_id: i64) -> Result<bool, AppError> {
+    let row: Option<(String, String)> = conn
+        .query_row(
+            "SELECT username, password_hash FROM users WHERE id = ?1",
+            params![user_id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()
+        .map_err(|e| AppError::Internal(format!("Failed to read user record: {e}")))?;
+
+    let Some((username, hash)) = row else {
+        return Ok(false);
+    };
+
+    // Only the seeded usernames could ever have matched the seed defaults.
+    if username != "owner" && username != "learner" {
+        return Ok(false);
+    }
+    verify_password(&username, &hash)
+}
+
 // ── Session operations ────────────────────────────────────────────────────────
 
 /// Verifies credentials, updates `last_login_at`, and stores the session in
@@ -443,6 +524,91 @@ mod tests {
             matches!(err, AppError::Unauthorized(_)),
             "learner must be denied owner access"
         );
+    }
+
+    #[test]
+    fn change_password_requires_correct_current_password() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        let owner_id: i64 = conn
+            .query_row(
+                "SELECT id FROM users WHERE username = 'owner'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+
+        let err = change_password(&conn, owner_id, "wrong", "newer-password").unwrap_err();
+        assert!(matches!(err, AppError::Unauthorized(_)));
+    }
+
+    #[test]
+    fn change_password_enforces_minimum_length() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        let owner_id: i64 = conn
+            .query_row(
+                "SELECT id FROM users WHERE username = 'owner'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+
+        let err = change_password(&conn, owner_id, "owner", "abc").unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[test]
+    fn change_password_rejects_unchanged_password() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        let owner_id: i64 = conn
+            .query_row(
+                "SELECT id FROM users WHERE username = 'owner'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+
+        let err = change_password(&conn, owner_id, "owner", "owner").unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[test]
+    fn change_password_rotates_hash_and_authorises_new_password() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        let owner_id: i64 = conn
+            .query_row(
+                "SELECT id FROM users WHERE username = 'owner'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+
+        change_password(&conn, owner_id, "owner", "rotated-pw").expect("change");
+
+        let err = login(&conn, "owner", "owner").unwrap_err();
+        assert!(matches!(err, AppError::Unauthorized(_)));
+        let user = login(&conn, "owner", "rotated-pw").expect("new login");
+        assert_eq!(user.username, "owner");
+    }
+
+    #[test]
+    fn uses_default_password_reports_true_for_seed_then_false_after_change() {
+        let conn = db_with_schema();
+        create_default_accounts(&conn).expect("defaults");
+        let owner_id: i64 = conn
+            .query_row(
+                "SELECT id FROM users WHERE username = 'owner'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+
+        assert!(uses_default_password(&conn, owner_id).expect("check"));
+        change_password(&conn, owner_id, "owner", "rotated-pw").expect("change");
+        assert!(!uses_default_password(&conn, owner_id).expect("check"));
     }
 
     #[test]

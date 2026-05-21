@@ -14,7 +14,10 @@ import {
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui";
+import { AudioIpaView } from "@/pages/data-studio/AudioIpaView";
 import { DecksView } from "@/pages/data-studio/DecksView";
+import { ImportExportView } from "@/pages/data-studio/ImportExportView";
+import { ProvenanceView } from "@/pages/data-studio/ProvenanceView";
 import { ValidationView } from "@/pages/data-studio/ValidationView";
 import { VocabularyView } from "@/pages/data-studio/VocabularyView";
 import type { AdminStats } from "@/services/commands/admin";
@@ -34,21 +37,15 @@ interface TabDef {
   id: TabId;
   label: string;
   icon: LucideIcon;
-  enabled: boolean;
 }
 
 const TABS: TabDef[] = [
-  { id: "vocabulary", label: "Vocabulary", icon: BookText, enabled: true },
-  { id: "decks", label: "Decks", icon: LayoutGrid, enabled: true },
-  { id: "validation", label: "Validation", icon: CheckSquare, enabled: true },
-  { id: "provenance", label: "Provenance", icon: FileText, enabled: false },
-  { id: "audio-ipa", label: "Audio / IPA", icon: Mic2, enabled: false },
-  {
-    id: "import-export",
-    label: "Import / Export",
-    icon: ArrowLeftRight,
-    enabled: false,
-  },
+  { id: "vocabulary", label: "Vocabulary", icon: BookText },
+  { id: "decks", label: "Decks", icon: LayoutGrid },
+  { id: "validation", label: "Validation", icon: CheckSquare },
+  { id: "provenance", label: "Provenance", icon: FileText },
+  { id: "audio-ipa", label: "Audio / IPA", icon: Mic2 },
+  { id: "import-export", label: "Import / Export", icon: ArrowLeftRight },
 ];
 
 // ── Header stats ────────────────────────────────────────────────────────────
@@ -120,13 +117,11 @@ export function AdminDataStudioPage() {
                 aria-controls={`ds-tabpanel-${tab.id}`}
                 id={`ds-tab-${tab.id}`}
                 className="ds-tab"
-                onClick={() => tab.enabled && setActive(tab.id)}
-                disabled={!tab.enabled}
-                title={tab.enabled ? tab.label : `${tab.label} — coming soon`}
+                onClick={() => setActive(tab.id)}
+                title={tab.label}
               >
                 <Icon size={14} aria-hidden="true" />
                 <span>{tab.label}</span>
-                {!tab.enabled && <span className="ds-tab__count">soon</span>}
               </button>
             );
           })}
@@ -141,33 +136,10 @@ export function AdminDataStudioPage() {
           {active === "vocabulary" && <VocabularyView />}
           {active === "decks" && <DecksView />}
           {active === "validation" && <ValidationView />}
-          {active === "provenance" && (
-            <PlaceholderView title="Provenance audit" tab="Provenance" />
-          )}
-          {active === "audio-ipa" && (
-            <PlaceholderView title="Audio & IPA quality" tab="Audio / IPA" />
-          )}
-          {active === "import-export" && (
-            <PlaceholderView
-              title="Import & export pipelines"
-              tab="Import / Export"
-            />
-          )}
+          {active === "provenance" && <ProvenanceView />}
+          {active === "audio-ipa" && <AudioIpaView />}
+          {active === "import-export" && <ImportExportView />}
         </section>
-      </div>
-    </div>
-  );
-}
-
-function PlaceholderView({ title, tab }: { title: string; tab: string }) {
-  return (
-    <div className="ds-panel__inner">
-      <div className="ds-placeholder">
-        <h3 className="ds-placeholder__title">{title}</h3>
-        <p>
-          The {tab} module ships in a later prompt. The current MVP covers
-          Vocabulary, Decks, and Validation.
-        </p>
       </div>
     </div>
   );

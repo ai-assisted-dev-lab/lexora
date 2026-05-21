@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import "../i18n";
 
 // React Router v7 uses the Fetch API internally for client-side navigation.
 // jsdom's AbortSignal is incompatible with Node's undici implementation,

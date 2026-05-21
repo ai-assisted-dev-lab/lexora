@@ -893,3 +893,82 @@
   background: var(--color-primary-soft);
   color: var(--color-primary);
 }
+
+/* ── Import / Export view ─────────────────────────────────────────────── */
+
+.ds-import-export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--gap-md);
+  margin-top: var(--gap-md);
+}
+
+.ds-import-export-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--gap-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.ds-import-export-card h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.ds-muted {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 8px 0;
+}
+
+.ds-import-export-schema {
+  margin-top: var(--gap-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--gap-md);
+}
+
+.ds-import-export-schema h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--color-text);
+}
+
+.ds-import-export-schema__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.ds-import-export-schema__list > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ds-import-export-schema__list dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.ds-import-export-schema__list dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text);
+  word-break: break-word;
+}

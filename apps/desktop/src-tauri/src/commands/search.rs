@@ -524,13 +524,15 @@ mod tests {
     #[test]
     fn search_finds_decks_by_tags() {
         let conn = db_with_data();
+        // Both bundled packs surface decks containing "home"-related tags,
+        // so the limit is raised to keep the assertion target reachable.
         let response = search_with_conn(
             &conn,
             "home".to_string(),
             Some(SearchFiltersDto {
                 result_types: Some(vec!["deck".to_string()]),
                 deck_id: None,
-                limit: Some(10),
+                limit: Some(25),
             }),
         )
         .expect("search");

@@ -9,6 +9,8 @@ import {
   Download,
   FileJson,
   HardDrive,
+  KeyRound,
+  Lock,
   Mic,
   Package,
   RefreshCw,
@@ -19,10 +21,22 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
+import { useToast } from "@/components/feedback";
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
 import { useAppInfo } from "@/hooks/useAppInfo";
+import {
+  LANGUAGE_LABELS,
+  type SupportedLanguage,
+  SUPPORTED_LANGUAGES,
+} from "@/i18n";
+import { useLanguage } from "@/i18n/useLanguage";
+import {
+  accountUsesDefaultPassword,
+  changePassword,
+} from "@/services/commands/auth";
 import { useDbHealth } from "@/hooks/useDbHealth";
 import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
 import { useSchemaVersion } from "@/hooks/useSchemaVersion";
@@ -76,6 +90,7 @@ import { useAuth } from "@/store/authContext";
 
 type SettingsSection =
   | "account"
+  | "security"
   | "learning"
   | "review"
   | "pronunciation"
@@ -128,58 +143,228 @@ function Toggle({ checked, onChange, "aria-label": ariaLabel }: ToggleProps) {
 function AccountSection() {
   const [displayName, setDisplayName] = useState("Minh Quân");
   const appInfo = useAppInfo();
+  const { t } = useTranslation();
+  const language = useLanguage();
 
   return (
     <div className="settings-content">
       <SectionHeader
-        title="Account"
-        description="Display name, language pair, and data reset."
+        title={t("settings.account.title")}
+        description={t("settings.account.description")}
       />
       <Card className="settings-group">
         <SettingsRow
-          label="Display Name"
-          description="Shown in the profile and leaderboard."
+          label={t("settings.account.displayName")}
+          description={t("settings.account.displayNameDesc")}
         >
           <input
             className="settings-input settings-input--wide"
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            aria-label="Display name"
+            aria-label={t("settings.account.displayName")}
           />
         </SettingsRow>
         <SettingsRow
-          label="Language Pair"
-          description="The source and target language for all decks."
+          label={t("settings.account.languagePair")}
+          description={t("settings.account.languagePairDesc")}
         >
-          <span className="settings-locked">English ↔ Vietnamese</span>
-          <Badge variant="muted">Locked</Badge>
+          <span className="settings-locked">
+            {t("settings.account.languagePairValue")}
+          </span>
+          <Badge variant="muted">{t("settings.account.locked")}</Badge>
         </SettingsRow>
         <SettingsRow
-          label="Interface Language"
-          description="Language used for menus and labels."
+          label={t("settings.language")}
+          description={t("settings.languageDescription")}
         >
-          <select className="settings-select" aria-label="Interface language">
-            <option value="vi">Vietnamese</option>
-            <option value="en">English</option>
+          <select
+            className="settings-select"
+            aria-label={t("settings.language")}
+            value={language.current}
+            onChange={(e) =>
+              language.change(e.target.value as SupportedLanguage)
+            }
+          >
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <option key={lang} value={lang}>
+                {LANGUAGE_LABELS[lang]}
+              </option>
+            ))}
           </select>
         </SettingsRow>
         <SettingsRow
-          label="Reset Learning Data"
-          description="Permanently clears all FSRS progress and review history."
+          label={t("settings.account.resetData")}
+          description={t("settings.account.resetDataDesc")}
         >
           <Button variant="danger" size="sm" disabled>
-            Reset Data
+            {t("settings.account.resetButton")}
           </Button>
         </SettingsRow>
         <SettingsRow
-          label="App Version"
-          description="Currently installed build of Lexora."
+          label={t("settings.account.appVersion")}
+          description={t("settings.account.appVersionDesc")}
         >
-          <span className="settings-locked" aria-label="App version">
+          <span
+            className="settings-locked"
+            aria-label={t("settings.account.appVersion")}
+          >
             {appInfo ? `v${appInfo.version} (${appInfo.environment})` : "—"}
           </span>
         </SettingsRow>
+      </Card>
+    </div>
+  );
+}
+
+function SecuritySection() {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const [usesDefault, setUsesDefault] = useState<boolean | null>(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    accountUsesDefaultPassword()
+      .then((value) => {
+        if (!cancelled) setUsesDefault(value);
+      })
+      .catch(() => {
+        if (!cancelled) setUsesDefault(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+
+    if (newPassword.length < 4) {
+      setError(t("settings.security.errorTooShort"));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError(t("settings.security.errorMismatch"));
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setError(t("settings.security.errorSamePassword"));
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      toast.push({
+        variant: "success",
+        title: t("settings.security.successTitle"),
+        description: t("settings.security.successDescription"),
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      const stillDefault = await accountUsesDefaultPassword().catch(() => null);
+      setUsesDefault(stillDefault);
+    } catch (err) {
+      setError(formatTauriError(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="settings-content">
+      <SectionHeader
+        title={t("settings.security.title")}
+        description={t("settings.security.description")}
+      />
+      {usesDefault === true && (
+        <div className="settings-status settings-status--error" role="alert">
+          <AlertCircle size={16} aria-hidden="true" />
+          <span>{t("settings.security.defaultWarning")}</span>
+        </div>
+      )}
+      <Card className="settings-group">
+        <form onSubmit={handleSubmit}>
+          <SettingsRow
+            label={t("settings.security.currentPassword")}
+            description={t("settings.security.currentPasswordDesc")}
+          >
+            <input
+              className="settings-input settings-input--wide"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              autoComplete="current-password"
+              aria-label={t("settings.security.currentPassword")}
+              required
+              disabled={isSubmitting}
+            />
+          </SettingsRow>
+          <SettingsRow
+            label={t("settings.security.newPassword")}
+            description={t("settings.security.newPasswordDesc")}
+          >
+            <input
+              className="settings-input settings-input--wide"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+              aria-label={t("settings.security.newPassword")}
+              required
+              disabled={isSubmitting}
+            />
+          </SettingsRow>
+          <SettingsRow
+            label={t("settings.security.confirmPassword")}
+            description={t("settings.security.confirmPasswordDesc")}
+          >
+            <input
+              className="settings-input settings-input--wide"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              aria-label={t("settings.security.confirmPassword")}
+              required
+              disabled={isSubmitting}
+            />
+          </SettingsRow>
+          {error && (
+            <div
+              className="settings-status settings-status--error"
+              role="alert"
+            >
+              <AlertCircle size={16} aria-hidden="true" />
+              <span>{error}</span>
+            </div>
+          )}
+          <div className="settings-group-footer">
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={
+                isSubmitting ||
+                !currentPassword ||
+                !newPassword ||
+                !confirmPassword
+              }
+            >
+              <KeyRound size={15} aria-hidden="true" />
+              {isSubmitting
+                ? t("settings.security.changing")
+                : t("settings.security.changeButton")}
+            </Button>
+          </div>
+        </form>
       </Card>
     </div>
   );
@@ -1474,6 +1659,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "account", label: "Account", Icon: User },
+  { id: "security", label: "Security", Icon: Lock },
   { id: "learning", label: "Learning", Icon: BookOpen },
   { id: "review", label: "Smart Review", Icon: RotateCcw },
   { id: "pronunciation", label: "Pronunciation", Icon: Mic },
@@ -1519,15 +1705,16 @@ export function SettingsPage() {
         )}
       </nav>
 
-      <main aria-label="Settings content">
+      <section aria-label="Settings content">
         {active === "account" && <AccountSection />}
+        {active === "security" && <SecuritySection />}
         {active === "learning" && <LearningSection />}
         {active === "review" && <ReviewSection />}
         {active === "pronunciation" && <PronunciationSection />}
         {active === "notifications" && <NotificationsSection />}
         {active === "updates" && <UpdatesSection />}
         {active === "backup" && <BackupSection />}
-      </main>
+      </section>
     </div>
   );
 }

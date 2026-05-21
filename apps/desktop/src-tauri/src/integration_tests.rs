@@ -91,15 +91,28 @@ fn seeded_database_loads_searchable_demo_content() {
         )
         .expect("seed counts");
 
-    assert_eq!(counts, (1, 9, 72));
+    // Two bundled packs (demo + essential-500) → 19 decks and ~565 unique
+    // words. We assert >= so the test stays stable if either pack grows.
+    let (packs, decks, words) = counts;
+    assert_eq!(packs, 2, "expected both bundled packs to load");
+    assert!(
+        decks >= 19,
+        "expected at least 19 decks across both packs, got {decks}",
+    );
+    assert!(
+        words >= 565,
+        "expected at least 565 words across both packs, got {words}",
+    );
 
+    // Raise the search limit so the "run" word from either bundled pack
+    // still appears in the result set after the catalog grew.
     let response = crate::commands::search::search_with_conn(
         &conn,
         "run".to_string(),
         Some(SearchFiltersDto {
             result_types: Some(vec!["word".to_string()]),
             deck_id: None,
-            limit: Some(5),
+            limit: Some(25),
         }),
     )
     .expect("search");

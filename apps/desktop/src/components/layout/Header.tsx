@@ -2,6 +2,7 @@ import "./Header.css";
 
 import { Bell } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { CommandPalette } from "@/components/command/CommandPalette";
@@ -16,16 +17,21 @@ import { UserProfile } from "./UserProfile";
 function NotificationButton() {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(0);
+  const { t } = useTranslation();
 
   const handleCountChange = useCallback((next: number) => {
     setCount(next);
   }, []);
 
+  const baseLabel = t("notifications.ariaLabel");
+  const buttonLabel =
+    count > 0 ? t("notifications.unreadCount", { count }) : baseLabel;
+
   return (
     <div className="page-header__notif">
       <IconButton
-        label={count > 0 ? `Notifications, ${count} unread` : "Notifications"}
-        title="Notifications"
+        label={buttonLabel}
+        title={baseLabel}
         onClick={() => setOpen((prev) => !prev)}
       >
         <Bell size={20} aria-hidden="true" />
@@ -52,7 +58,9 @@ export function Header() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const title = getPageLabel(pathname);
+  void i18n.language; // ensures component re-renders on language change
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -60,7 +68,10 @@ export function Header() {
   }, [logout, navigate]);
 
   return (
-    <PageHeader className="page-header" aria-label="Page header">
+    <PageHeader
+      className="page-header"
+      aria-label={t("notifications.pageHeader")}
+    >
       <h1 className="page-header__title">{title}</h1>
 
       <SearchBar />
@@ -68,7 +79,7 @@ export function Header() {
       <div className="page-header__actions">
         <NotificationButton />
         <UserProfile
-          name={user?.username ?? "User"}
+          name={user?.username ?? t("user.defaultName")}
           role={user?.role ?? "learner"}
           onLogout={handleLogout}
         />

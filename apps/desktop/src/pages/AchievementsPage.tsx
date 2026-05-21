@@ -1,22 +1,20 @@
 import "./achievements/AchievementsPage.css";
 
 import { motion } from "framer-motion";
+import { Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { Button, Card, SectionHeader } from "@/components/ui";
+import { Button, Card, EmptyState, SectionHeader } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 
 import { AchievementCard } from "./achievements/AchievementCard";
-import {
-  achievements,
-  categoryFilters,
-} from "./achievements/achievementsMockData";
+import { categoryFilters } from "./achievements/achievementCategories";
 import type { AchievementCategory } from "./achievements/types";
 
 export function AchievementsPage() {
   const [category, setCategory] = useState<AchievementCategory>("All");
   const { data } = useAchievements();
-  const activeAchievements = data?.achievements ?? achievements;
+  const activeAchievements = data?.achievements ?? [];
 
   const filteredAchievements = useMemo(
     () =>
@@ -130,15 +128,33 @@ export function AchievementsPage() {
           {category !== "All" && ` in ${category}`}
         </p>
 
-        <div
-          className="achievements-grid"
-          style={{ marginTop: "var(--space-4)" }}
-          aria-label="Achievements list"
-        >
-          {filteredAchievements.map((achievement) => (
-            <AchievementCard key={achievement.id} achievement={achievement} />
-          ))}
-        </div>
+        {filteredAchievements.length === 0 ? (
+          <div style={{ marginTop: "var(--space-4)" }}>
+            <EmptyState
+              icon={<Trophy size={28} aria-hidden="true" />}
+              title={
+                activeAchievements.length === 0
+                  ? "No achievements yet"
+                  : "No achievements in this category"
+              }
+              description={
+                activeAchievements.length === 0
+                  ? "Start studying to unlock your first achievements — they will appear here automatically."
+                  : "Try a different category filter or keep studying to unlock more."
+              }
+            />
+          </div>
+        ) : (
+          <div
+            className="achievements-grid"
+            style={{ marginTop: "var(--space-4)" }}
+            aria-label="Achievements list"
+          >
+            {filteredAchievements.map((achievement) => (
+              <AchievementCard key={achievement.id} achievement={achievement} />
+            ))}
+          </div>
+        )}
       </section>
     </motion.div>
   );

@@ -60,3 +60,36 @@ pub fn init_default_accounts(db: State<'_, DbConn>) -> Result<(), AppError> {
 
     auth::create_default_accounts(&conn)
 }
+
+/// Changes the password of the currently authenticated user. Verifies
+/// `current_password` against the stored hash before writing the new one.
+/// Returns `Unauthorized` for credential mismatches and `Validation` for
+/// password policy failures.
+#[tauri::command]
+pub fn change_password(
+    current_password: String,
+    new_password: String,
+    db: State<'_, DbConn>,
+) -> Result<(), AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+
+    let user = auth::require_session(&conn)?;
+    auth::change_password(&conn, user.id, &current_password, &new_password)
+}
+
+/// Reports whether the currently authenticated account still uses its
+/// seeded default password. Drives the first-run security banner shown in
+/// the UI until owners rotate the placeholder credentials.
+#[tauri::command]
+pub fn account_uses_default_password(db: State<'_, DbConn>) -> Result<bool, AppError> {
+    let conn = db
+        .conn
+        .lock()
+        .map_err(|_| AppError::Internal("Database connection lock poisoned".to_string()))?;
+
+    let user = auth::require_session(&conn)?;
+    auth::uses_default_password(&conn, user.id)
+}

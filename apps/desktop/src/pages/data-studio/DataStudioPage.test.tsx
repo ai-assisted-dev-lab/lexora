@@ -82,7 +82,7 @@ describe("AdminDataStudioPage", () => {
     expect(screen.getByText(/owner only/i)).toBeInTheDocument();
   });
 
-  it("renders all six module tabs and marks future ones disabled", () => {
+  it("renders all six module tabs as enabled", () => {
     render(<AdminDataStudioPage />);
     const tablist = screen.getByRole("tablist", {
       name: /data studio modules/i,
@@ -97,11 +97,10 @@ describe("AdminDataStudioPage", () => {
     expect(labels.some((l) => /audio/i.test(l))).toBe(true);
     expect(labels.some((l) => /import/i.test(l))).toBe(true);
 
-    // Provenance / Audio / Import-Export are not in scope yet — they must be disabled
-    const provenance = within(tablist).getByRole("tab", {
-      name: /provenance/i,
-    });
-    expect(provenance).toBeDisabled();
+    // All six tabs should now be enabled — no "coming soon" placeholders.
+    for (const tab of tabs) {
+      expect(tab).not.toBeDisabled();
+    }
   });
 
   it("activates the Vocabulary tab by default and renders the filter bar", () => {

@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import type { InAppReminder } from "@/services/commands/notifications";
@@ -22,6 +23,7 @@ export function NotificationCenter({
   const [reminders, setReminders] = useState<InAppReminder[]>([]);
   const navigate = useNavigate();
   const panelRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const refresh = useCallback(async () => {
     try {
@@ -81,20 +83,20 @@ export function NotificationCenter({
       className="notif-panel"
       ref={panelRef}
       role="dialog"
-      aria-label="Notifications"
+      aria-label={t("notifications.ariaLabel")}
     >
       <div className="notif-panel__header">
-        <span className="notif-panel__title">Reminders</span>
+        <span className="notif-panel__title">{t("notifications.title")}</span>
         <button
           className="notif-panel__close"
           onClick={onClose}
-          aria-label="Close notifications"
+          aria-label={t("notifications.close")}
         >
           <X size={14} aria-hidden="true" />
         </button>
       </div>
       {reminders.length === 0 ? (
-        <p className="notif-panel__empty">No active reminders.</p>
+        <p className="notif-panel__empty">{t("notifications.empty")}</p>
       ) : (
         <ul className="notif-panel__list" role="list">
           {reminders.map((r) => (
@@ -115,7 +117,7 @@ export function NotificationCenter({
                 <button
                   className="notif-item__dismiss"
                   onClick={() => void handleDismiss(r.id)}
-                  aria-label="Dismiss"
+                  aria-label={t("notifications.dismiss")}
                 >
                   <X size={12} aria-hidden="true" />
                 </button>

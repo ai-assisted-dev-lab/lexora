@@ -953,6 +953,65 @@ export function invoke<T>(command: string, args?: InvokeArgs): Promise<T> {
         scannedAt: NOW,
       } as T);
 
+    case "admin_get_validation_summary":
+      requireOwner();
+      return Promise.resolve({
+        totalWords: 320,
+        missingMeanings: 4,
+        missingDefinitions: 2,
+        missingExamples: 28,
+        missingIpa: 12,
+        missingAudio: 47,
+        unverified: 18,
+        needsReview: 3,
+        draft: 1,
+        rejected: 0,
+        verified: 280,
+        potentialDuplicates: 2,
+      } as T);
+
+    case "account_uses_default_password":
+      return Promise.resolve(true as T);
+
+    case "change_password":
+      return Promise.resolve(undefined as T);
+
+    case "get_import_export_schema":
+      return Promise.resolve({
+        jsonSchemaName: "lexora.deck",
+        jsonSchemaVersion: 1,
+        jsonRequiredTopLevelFields: ["slug", "title", "words"],
+        csvHeaders: ["headword", "definition_en", "definition_vi"],
+        csvNotes: [
+          "Headwords are deduplicated case-insensitively before import.",
+        ],
+      } as T);
+
+    case "list_exportable_decks":
+      requireOwner();
+      return Promise.resolve({
+        decks: libraryDecks.map((deck) => ({
+          id: deck.id,
+          slug: deck.slug,
+          title: deck.title,
+          wordCount: deck.wordCount,
+        })),
+      } as T);
+
+    case "export_deck_to_json":
+      requireOwner();
+      return Promise.resolve({
+        filePath: "C:/lexora/exports/everyday-actions.lexora-deck.json",
+        wordCount: 320,
+      } as T);
+
+    case "import_deck_from_json":
+      requireOwner();
+      return Promise.resolve({
+        deckSlug: "imported-deck",
+        wordsImported: 64,
+      } as T);
+
     default:
       return Promise.resolve(undefined as T);
   }

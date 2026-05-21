@@ -84,6 +84,8 @@ pub fn run() {
             commands::auth::logout_user,
             commands::auth::get_current_session,
             commands::auth::init_default_accounts,
+            commands::auth::change_password,
+            commands::auth::account_uses_default_password,
             commands::settings::get_pronunciation_settings,
             commands::settings::update_pronunciation_settings,
             commands::notifications::get_notification_settings,

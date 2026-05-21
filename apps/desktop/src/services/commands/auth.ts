@@ -25,3 +25,14 @@ export function getCurrentSession(): Promise<LoginResult | null> {
 export function initDefaultAccounts(): Promise<void> {
   return invoke<void>("init_default_accounts");
 }
+
+export function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  return invoke<void>("change_password", { currentPassword, newPassword });
+}
+
+export function accountUsesDefaultPassword(): Promise<boolean> {
+  return invoke<boolean>("account_uses_default_password");
+}

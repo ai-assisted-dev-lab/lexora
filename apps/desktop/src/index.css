@@ -1,4 +1,5 @@
 @import "./components/ui/primitives.css";
+@import "./components/feedback/feedback.css";
 
 @tailwind base;
 @tailwind components;

@@ -1,5 +1,12 @@
 name: Release Windows Installer
 
+# Triggers:
+# 1. Manual `workflow_dispatch` — useful for testing the release pipeline
+#    without cutting a real tag. Artifacts are uploaded but no GitHub
+#    Release is published.
+# 2. Pushing an annotated tag of the form `v1.2.3`. CI auto-bumps the
+#    project version to match the tag, builds signed installers, and
+#    publishes a draft GitHub Release with the artifacts attached.
 on:
   workflow_dispatch:
     inputs:
@@ -7,14 +14,21 @@ on:
         description: "Optional release label for the uploaded artifact."
         required: false
         type: string
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-windows:
     name: Build Windows installers
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.resolve-version.outputs.version }}
+      is_tag_release: ${{ steps.resolve-version.outputs.is_tag_release }}
     env:
       TAURI_UPDATER_ENDPOINT: ${{ vars.TAURI_UPDATER_ENDPOINT }}
       TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
@@ -45,6 +59,44 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Resolve version
+        id: resolve-version
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref }}"
+          if ($ref -match "^refs/tags/v(?<v>[0-9]+\.[0-9]+\.[0-9]+(?:-.*)?)$") {
+            $version = $Matches.v
+            "is_tag_release=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            # Manual run — read whatever version the working tree carries.
+            $config = Get-Content apps/desktop/src-tauri/tauri.conf.json | ConvertFrom-Json
+            $version = $config.version
+            "is_tag_release=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+          Write-Host "Resolved version: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Apply tag version to tauri.conf.json and Cargo.toml
+        if: steps.resolve-version.outputs.is_tag_release == 'true'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.resolve-version.outputs.version }}"
+
+          # tauri.conf.json
+          $configPath = "apps/desktop/src-tauri/tauri.conf.json"
+          $config = Get-Content $configPath -Raw | ConvertFrom-Json
+          $config.version = $version
+          $config | ConvertTo-Json -Depth 32 |
+            Set-Content -Path $configPath -Encoding utf8
+
+          # Cargo.toml — replace the [package] version line only
+          $cargoPath = "apps/desktop/src-tauri/Cargo.toml"
+          $cargo = Get-Content $cargoPath -Raw
+          $cargo = $cargo -replace '(?m)^version\s*=\s*"[^"]+"', "version = `"$version`""
+          Set-Content -Path $cargoPath -Value $cargo -Encoding utf8
+
+          Write-Host "Applied version $version to project manifests."
 
       - name: Require updater signing key
         shell: pwsh
@@ -89,3 +141,59 @@ jobs:
             apps/desktop/src-tauri/target/release/bundle/msi/*.msi
             apps/desktop/src-tauri/target/release/bundle/msi/*.sig
             apps/desktop/src-tauri/target/release/bundle/msi/*.zip
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: build-windows
+    if: needs.build-windows.outputs.is_tag_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: lexora-windows-installers
+          path: dist
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        shell: bash
+        run: |
+          version="${{ needs.build-windows.outputs.version }}"
+          notes_file="release-notes.md"
+          if [ -f CHANGELOG.md ]; then
+            awk -v tag="$version" '
+              BEGIN { found = 0 }
+              /^## \[/ {
+                if (found) exit
+                if ($0 ~ "\\[" tag "\\]") { found = 1; next }
+              }
+              found { print }
+            ' CHANGELOG.md > "$notes_file"
+            if [ ! -s "$notes_file" ]; then
+              echo "Release $version" > "$notes_file"
+              echo "" >> "$notes_file"
+              echo "_No matching CHANGELOG entry found. See the diff for changes._" >> "$notes_file"
+            fi
+          else
+            echo "Release $version" > "$notes_file"
+          fi
+          echo "notes_path=$notes_file" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Lexora ${{ needs.build-windows.outputs.version }}
+          body_path: ${{ steps.notes.outputs.notes_path }}
+          draft: true
+          prerelease: ${{ contains(needs.build-windows.outputs.version, '-') }}
+          files: |
+            dist/**/*.exe
+            dist/**/*.msi
+            dist/**/*.sig
+            dist/**/*.zip

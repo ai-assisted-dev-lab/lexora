@@ -21,7 +21,7 @@ describe("Sidebar — brand block", () => {
     expect(screen.getByText("Lexora")).toBeInTheDocument();
   });
 
-  it("renders the EN ↔ VI subtitle", () => {
+  it("renders the bilingual subtitle", () => {
     renderSidebar();
     expect(screen.getByText("EN ↔ VI")).toBeInTheDocument();
   });

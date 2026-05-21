@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BookPlus, Check, Layers3 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Badge, Button, Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -25,37 +26,52 @@ export function CatalogCard({
         className={cn("catalog-card", featured && "catalog-card--featured")}
         variant="interactive"
       >
-        <div
-          className={cn(
-            "catalog-card__cover",
-            `catalog-card__cover--${deck.tone}`,
-          )}
+        <Link
+          to={`/library/${deck.id}`}
+          className="catalog-card__link"
+          aria-label={`Open ${deck.title}`}
         >
-          <div>
-            <p>{deck.level}</p>
-            <h3>{deck.title}</h3>
+          <div
+            className={cn(
+              "catalog-card__cover",
+              `catalog-card__cover--${deck.tone}`,
+            )}
+          >
+            <div>
+              <p>{deck.level}</p>
+              <h3>{deck.title}</h3>
+            </div>
+            {featured && <Badge variant="muted">Featured</Badge>}
           </div>
-          {featured && <Badge variant="muted">Featured</Badge>}
-        </div>
-        <div className="catalog-card__body">
-          <p className="catalog-card__meta">
-            <Layers3 size={13} aria-hidden="true" />
-            {deck.wordCount.toLocaleString()} words
-          </p>
-          <p className="catalog-card__description">{deck.description}</p>
-          <div className="catalog-card__tags" aria-label={`${deck.title} tags`}>
-            {deck.tags.map((tag) => (
-              <Badge key={tag} variant="muted">
-                {tag}
-              </Badge>
-            ))}
+          <div className="catalog-card__body">
+            <p className="catalog-card__meta">
+              <Layers3 size={13} aria-hidden="true" />
+              {deck.wordCount.toLocaleString()} words
+            </p>
+            <p className="catalog-card__description">{deck.description}</p>
+            <div
+              className="catalog-card__tags"
+              aria-label={`${deck.title} tags`}
+            >
+              {deck.tags.map((tag) => (
+                <Badge key={tag} variant="muted">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
           </div>
+        </Link>
+        <div className="catalog-card__actions">
           {deck.installed ? (
             <Button
               className="catalog-card__action"
               type="button"
               variant="soft"
-              onClick={() => onUninstall?.(deck.id)}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onUninstall?.(deck.id);
+              }}
             >
               <Check size={15} aria-hidden="true" />
               Installed
@@ -65,7 +81,11 @@ export function CatalogCard({
               className="catalog-card__action"
               type="button"
               variant={featured ? "primary" : "secondary"}
-              onClick={() => onInstall?.(deck.id)}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onInstall?.(deck.id);
+              }}
             >
               <BookPlus size={15} aria-hidden="true" />
               Add to Library

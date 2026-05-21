@@ -309,10 +309,17 @@ mod tests {
     fn get_word_detail_returns_core_fields_senses_and_examples() {
         let conn = db_with_data();
         let user_id = login_as(&conn, "learner");
+        // Scope to the demo pack's "run" entry, which carries multiple
+        // senses. Both bundled packs include the headword, so we filter on
+        // pack slug to keep the assertion stable.
         let word_id: i64 = conn
-            .query_row("SELECT id FROM words WHERE headword = 'run'", [], |row| {
-                row.get(0)
-            })
+            .query_row(
+                "SELECT w.id FROM words w
+                 JOIN packs p ON p.id = w.pack_id
+                 WHERE w.headword = 'run' AND p.slug = 'english-essentials-demo'",
+                [],
+                |row| row.get(0),
+            )
             .expect("seed word");
 
         let detail = query_word_detail(&conn, user_id, word_id).expect("word detail");

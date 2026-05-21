@@ -877,20 +877,62 @@ fn missing_ids(conn: &Connection, table: &str, ids: &HashSet<i64>) -> Result<Vec
 }
 
 fn read_backup_file_strict(file_path: &str) -> Result<BackupFile, AppError> {
-    let source = Path::new(file_path);
-    if !source.exists() {
-        return Err(AppError::Validation(format!(
-            "Backup file does not exist: {}",
-            source.display()
-        )));
-    }
-    let raw = fs::read_to_string(source)
+    let canonical = canonicalize_existing_file(file_path)?;
+    let raw = fs::read_to_string(&canonical)
         .map_err(|e| AppError::Validation(format!("Could not read backup file: {e}")))?;
     serde_json::from_str::<BackupFile>(&raw).map_err(|e| {
         AppError::Validation(format!(
             "Backup JSON is not compatible with Lexora backup v1: {e}"
         ))
     })
+}
+
+/// Canonicalises a user-supplied file path so symlinks and `..` components
+/// are resolved to their concrete target. The resulting path is verified to
+/// (a) exist, (b) be a regular file rather than a directory or special
+/// device, and (c) carry the expected `.json` extension so that obviously
+/// wrong inputs are rejected before any I/O happens. Returns the resolved
+/// path on success.
+fn canonicalize_existing_file(file_path: &str) -> Result<PathBuf, AppError> {
+    let trimmed = file_path.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::Validation(
+            "Backup path must not be empty.".to_string(),
+        ));
+    }
+    let source = Path::new(trimmed);
+    if !source.exists() {
+        return Err(AppError::Validation(format!(
+            "Backup file does not exist: {}",
+            source.display()
+        )));
+    }
+    let canonical = fs::canonicalize(source).map_err(|e| {
+        AppError::Validation(format!(
+            "Backup path could not be resolved (possible broken symlink): {e}"
+        ))
+    })?;
+    let metadata = fs::symlink_metadata(&canonical).map_err(|e| {
+        AppError::Validation(format!("Backup path could not be inspected: {e}"))
+    })?;
+    if !metadata.file_type().is_file() {
+        return Err(AppError::Validation(format!(
+            "Backup path is not a regular file: {}",
+            canonical.display()
+        )));
+    }
+    let has_json_extension = canonical
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.eq_ignore_ascii_case("json"))
+        .unwrap_or(false);
+    if !has_json_extension {
+        return Err(AppError::Validation(format!(
+            "Backup file must have a .json extension: {}",
+            canonical.display()
+        )));
+    }
+    Ok(canonical)
 }
 
 fn insert_rows(

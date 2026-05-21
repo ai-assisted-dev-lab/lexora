@@ -3,11 +3,16 @@ import "./Sidebar.css";
 import type { LucideIcon } from "lucide-react";
 import { BookOpen, ChevronLeft, ChevronRight, Flame, User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { Card, IconButton } from "@/components/ui";
 import { useGamificationSummary } from "@/hooks/useGamificationSummary";
-import { SIDEBAR_BOTTOM_ITEMS, SIDEBAR_MAIN_ITEMS } from "@/router/routes";
+import {
+  type RouteConfig,
+  SIDEBAR_BOTTOM_ITEMS,
+  SIDEBAR_MAIN_ITEMS,
+} from "@/router/routes";
 
 const AUTO_COLLAPSE_BREAKPOINT = 1024;
 
@@ -37,9 +42,26 @@ function SidebarLink({ path, label, Icon, isCollapsed }: SidebarLinkProps) {
   );
 }
 
+function renderLink(
+  route: RouteConfig,
+  label: string,
+  isCollapsed: boolean,
+): JSX.Element {
+  return (
+    <SidebarLink
+      key={route.path}
+      path={route.path}
+      label={label}
+      Icon={route.icon}
+      isCollapsed={isCollapsed}
+    />
+  );
+}
+
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const summary = useGamificationSummary();
+  const { t } = useTranslation();
 
   useEffect(() => {
     function handleResize() {
@@ -51,10 +73,12 @@ export function Sidebar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const streak = summary?.currentStreak ?? 0;
+
   return (
     <nav
       className={`sidebar${isCollapsed ? " sidebar--collapsed" : ""}`}
-      aria-label="Main navigation"
+      aria-label={t("nav.mainNavigation")}
     >
       <div className="sidebar__brand">
         <div className="sidebar__brand-mark" aria-hidden="true">
@@ -63,14 +87,18 @@ export function Sidebar() {
         </div>
         {!isCollapsed && (
           <div className="sidebar__brand-text">
-            <span className="sidebar__wordmark">Lexora</span>
-            <span className="sidebar__subtitle">EN ↔ VI</span>
+            <span className="sidebar__wordmark">{t("app.name")}</span>
+            <span className="sidebar__subtitle">
+              {t("app.bilingualTagline")}
+            </span>
           </div>
         )}
         <IconButton
           className="sidebar__toggle"
           onClick={() => setIsCollapsed((c) => !c)}
-          label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          label={
+            isCollapsed ? t("nav.expandSidebar") : t("nav.collapseSidebar")
+          }
         >
           {isCollapsed ? (
             <ChevronRight size={14} aria-hidden="true" />
@@ -81,34 +109,22 @@ export function Sidebar() {
       </div>
 
       <div className="sidebar__section">
-        {SIDEBAR_MAIN_ITEMS.map(({ path, label, icon: Icon }) => (
-          <SidebarLink
-            key={path}
-            path={path}
-            label={label}
-            Icon={Icon}
-            isCollapsed={isCollapsed}
-          />
-        ))}
+        {SIDEBAR_MAIN_ITEMS.map((route) =>
+          renderLink(route, t(route.labelKey), isCollapsed),
+        )}
       </div>
 
       <div className="sidebar__divider" />
 
       <div className="sidebar__section sidebar__section--bottom">
-        {SIDEBAR_BOTTOM_ITEMS.map(({ path, label, icon: Icon }) => (
-          <SidebarLink
-            key={path}
-            path={path}
-            label={label}
-            Icon={Icon}
-            isCollapsed={isCollapsed}
-          />
-        ))}
+        {SIDEBAR_BOTTOM_ITEMS.map((route) =>
+          renderLink(route, t(route.labelKey), isCollapsed),
+        )}
 
         <Card
           className="sidebar__profile-card"
           data-testid="sidebar-profile"
-          title={isCollapsed ? "Profile" : undefined}
+          title={isCollapsed ? t("user.profileLabel") : undefined}
           variant="compact"
         >
           <div className="sidebar__profile-avatar">
@@ -116,10 +132,12 @@ export function Sidebar() {
           </div>
           {!isCollapsed && (
             <div className="sidebar__profile-info">
-              <span className="sidebar__profile-name">User</span>
+              <span className="sidebar__profile-name">
+                {t("user.defaultName")}
+              </span>
               <span className="sidebar__profile-streak">
                 <Flame size={11} aria-hidden="true" />
-                {summary?.currentStreak ?? 0} day streak
+                {t("common.dayStreak", { count: streak })}
               </span>
             </div>
           )}
