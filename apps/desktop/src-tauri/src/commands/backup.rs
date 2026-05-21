@@ -264,6 +264,7 @@ pub fn ensure_scheduled_backup(
     ensure_scheduled_backup_for_user(&conn, &paths, &user)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_backup_internal(
     conn: &Connection,
     paths: &AppPaths,

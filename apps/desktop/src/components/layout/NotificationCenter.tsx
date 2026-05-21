@@ -1,6 +1,6 @@
+import { X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X } from "lucide-react";
 
 import type { InAppReminder } from "@/services/commands/notifications";
 import {

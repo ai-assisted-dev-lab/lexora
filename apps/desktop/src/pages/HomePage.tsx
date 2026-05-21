@@ -9,9 +9,17 @@ import {
   Target,
   Zap,
 } from "lucide-react";
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
 
 import { Button, Card, StatCard } from "@/components/ui";
+import { useDiscoverDecks } from "@/hooks/useDiscoverDecks";
 import { useGamificationSummary } from "@/hooks/useGamificationSummary";
+import { useLibraryDecks } from "@/hooks/useLibraryDecks";
+import type {
+  DiscoverDeckDto,
+  LibraryDeckDto,
+} from "@/services/commands/decks";
 import type { DailyProgressPointDto } from "@/services/commands/progress";
 
 import { DeckShelf } from "./home/DeckShelf";
@@ -29,8 +37,11 @@ import {
   ProgressWidget,
   StudyActivityWidget,
 } from "./home/ProgressWidget";
+import type { DeckCardData, DeckTone } from "./home/types";
 
 const statIcons = [Target, Sparkles, Flame, GraduationCap, Zap];
+const deckTones: DeckTone[] = ["azure", "cyan", "mint", "sky", "violet"];
+const CEFR_TAGS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
 
 function shortWeekday(date: string): string {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", {
@@ -49,10 +60,63 @@ function weeklyActivityFromSummary(
   }));
 }
 
+function fallbackSampleWords(tags: string[]): string[] {
+  return tags.filter((tag) => !CEFR_TAGS.has(tag)).slice(0, 3);
+}
+
+function toDeckCard(
+  deck: DiscoverDeckDto | LibraryDeckDto,
+  index: number,
+  progress = "progress" in deck ? deck.progress : 0,
+): DeckCardData {
+  const samples =
+    deck.sampleWords && deck.sampleWords.length > 0
+      ? deck.sampleWords
+      : fallbackSampleWords(deck.tags);
+
+  return {
+    id: deck.slug,
+    title: deck.title,
+    subtitle: deck.description ?? "Curated local vocabulary deck.",
+    level: deck.level ?? "New",
+    pack: deck.packName,
+    wordCount: deck.wordCount,
+    progress,
+    tone: deckTones[index % deckTones.length],
+    sampleWords: samples.length > 0 ? samples : [deck.slug],
+  };
+}
+
 export function HomePage() {
   const gamification = useGamificationSummary();
+  const discover = useDiscoverDecks();
+  const library = useLibraryDecks();
   const dailyGoal = gamification?.dailyGoalCards ?? 20;
   const todayCards = gamification?.todayCardsReviewed ?? 16;
+  const livePopularDecks = useMemo(
+    () =>
+      discover.decks.length > 0
+        ? discover.decks.slice(0, 3).map((deck, index) => toDeckCard(deck, index))
+        : popularDecks,
+    [discover.decks],
+  );
+  const liveLibraryDecks = useMemo(
+    () =>
+      library.decks.length > 0
+        ? library.decks.slice(0, 3).map((deck, index) => toDeckCard(deck, index))
+        : libraryDecks,
+    [library.decks],
+  );
+  const liveRecommendedDecks = useMemo(() => {
+    if (discover.decks.length === 0) {
+      return recommendedDecks;
+    }
+    const source = discover.decks.filter((deck) => !deck.installed);
+    return (source.length > 0 ? source : discover.decks)
+      .slice(0, 3)
+      .map((deck, index) => toDeckCard(deck, index));
+  }, [discover.decks]);
+  const liveFeaturedDeck = livePopularDecks[0] ?? featuredDeck;
   const realMissionStats = gamification
     ? [
         {
@@ -129,9 +193,11 @@ export function HomePage() {
                 ? `You reviewed ${gamification.weeklyCardsReviewed.toLocaleString()} cards this week. Start with your highest-impact review queue, then continue your strongest deck.`
                 : "You studied 86 words this week. Start with your highest-impact review queue, then continue your IELTS Core deck."}
             </p>
-            <Button className="home-hero__cta">
-              Start Today&apos;s Session
-              <ArrowRight size={16} aria-hidden="true" />
+            <Button asChild className="home-hero__cta">
+              <Link to="/study/session?mode=smart-review">
+                Start Today&apos;s Session
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </Button>
           </div>
           <div className="home-hero__scene" aria-hidden="true">
@@ -163,22 +229,22 @@ export function HomePage() {
         <DeckShelf
           title="Most Popular"
           description="Curated English decks Vietnamese learners open most often."
-          decks={popularDecks}
+          decks={livePopularDecks}
         />
         <DeckShelf
           title="My Library"
           description="Installed decks with recent review progress."
-          decks={libraryDecks}
+          decks={liveLibraryDecks}
         />
         <DeckShelf
           title="Recommended for You"
           description="Next-step decks based on your B1-B2 learning profile."
-          decks={recommendedDecks}
+          decks={liveRecommendedDecks}
         />
       </div>
 
       <aside className="home-page__widgets" aria-label="Home widgets">
-        <FeaturedDeckWidget deck={featuredDeck} />
+        <FeaturedDeckWidget deck={liveFeaturedDeck} />
         <ProgressWidget items={realProgressItems} />
         <StudyActivityWidget activity={realStudyActivity} />
       </aside>

@@ -8,6 +8,7 @@ export interface DiscoverDeckDto {
   level: string | null;
   wordCount: number;
   tags: string[];
+  sampleWords?: string[];
   packName: string;
   packSlug: string;
   installed: boolean;
@@ -26,6 +27,7 @@ export interface LibraryDeckDto {
   level: string | null;
   wordCount: number;
   tags: string[];
+  sampleWords?: string[];
   packName: string;
   packSlug: string;
   installedAt: string;

@@ -7,8 +7,8 @@ import {
   useState,
 } from "react";
 
-import { getCurrentSession, logoutUser } from "@/services/commands/auth";
 import type { LoginResult } from "@/services/commands/auth";
+import { getCurrentSession, logoutUser } from "@/services/commands/auth";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

@@ -160,7 +160,6 @@ export function LoginPage() {
                 }}
                 disabled={isLoading}
                 autoComplete="username"
-                // eslint-disable-next-line jsx-a11y/no-autofocus
                 autoFocus
                 aria-describedby={
                   fieldErrors.username ? "login-username-error" : undefined

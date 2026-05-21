@@ -1002,7 +1002,12 @@ mod tests {
             },
         )
         .expect("verified");
-        assert!(unverified.total >= verified.total);
+        assert_eq!(unverified.total, 0);
+        assert!(verified.total > 0);
+        assert!(verified
+            .items
+            .iter()
+            .all(|item| item.review_status == "verified"));
     }
 
     #[test]

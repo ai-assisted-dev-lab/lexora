@@ -5,8 +5,8 @@ import {
   Brain,
   Compass,
   Home,
-  Settings2,
   Search,
+  Settings2,
   Trophy,
 } from "lucide-react";
 

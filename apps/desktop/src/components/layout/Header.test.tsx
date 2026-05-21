@@ -282,7 +282,7 @@ describe("Header user profile", () => {
 
   it("shows the display name", () => {
     renderHeader();
-    expect(screen.getByText("User")).toBeInTheDocument();
+    expect(screen.getByText("learner")).toBeInTheDocument();
   });
 
   it("shows the role subtitle", () => {
@@ -294,5 +294,36 @@ describe("Header user profile", () => {
     renderHeader();
     const profileBtn = screen.getByRole("button", { name: /open menu for/i });
     expect(profileBtn.querySelector("svg")).toBeInTheDocument();
+  });
+
+  it("opens a sign out action from the profile menu", () => {
+    renderHeader();
+
+    fireEvent.click(screen.getByRole("button", { name: /open menu for/i }));
+
+    expect(
+      screen.getByRole("menuitem", { name: /sign out/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("logs out and returns to the login page", async () => {
+    const logout = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter initialEntries={["/discover"]}>
+        <AuthContext.Provider value={{ ...learnerAuth, logout }}>
+          <Header />
+        </AuthContext.Provider>
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /open menu for/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /sign out/i }));
+
+    await waitFor(() => {
+      expect(logout).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("location")).toHaveTextContent("/login");
+    });
   });
 });

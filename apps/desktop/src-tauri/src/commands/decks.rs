@@ -56,11 +56,53 @@ pub fn list_seeded_decks(db: State<'_, DbConn>) -> Result<SeededDecksDto, AppErr
 
 // ── Discover: inner helpers ────────────────────────────────────────────────────
 
+const CEFR_LEVELS: [&str; 6] = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+fn parse_tags(tags_json: Option<&str>) -> Vec<String> {
+    tags_json
+        .and_then(|s| serde_json::from_str(s).ok())
+        .unwrap_or_default()
+}
+
+fn level_from_tags(tags: &[String]) -> Option<String> {
+    CEFR_LEVELS
+        .iter()
+        .find(|level| tags.iter().any(|tag| tag.eq_ignore_ascii_case(level)))
+        .map(|level| (*level).to_string())
+}
+
+fn display_level(fallback: Option<String>, tags: &[String]) -> Option<String> {
+    level_from_tags(tags).or(fallback)
+}
+
+fn split_sample_words(sample_words: Option<&str>) -> Vec<String> {
+    sample_words
+        .map(|words| {
+            words
+                .split(char::from(31))
+                .filter(|word| !word.is_empty())
+                .map(ToString::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 fn query_discover_decks(conn: &Connection, user_id: i64) -> Result<Vec<DiscoverDeckDto>, AppError> {
     let mut stmt = conn
         .prepare(
             "SELECT d.id, d.slug, d.name, d.description, d.difficulty, d.word_count,
                     d.tags, p.name, p.slug,
+                    (
+                        SELECT GROUP_CONCAT(sample.headword, char(31))
+                        FROM (
+                            SELECT w.headword
+                            FROM   deck_words dw
+                            JOIN   words w ON w.id = dw.word_id
+                            WHERE  dw.deck_id = d.id
+                            ORDER  BY dw.position, w.headword
+                            LIMIT  3
+                        ) sample
+                    ) AS sample_words,
                     CASE WHEN ds.deck_id IS NOT NULL THEN 1 ELSE 0 END AS installed
              FROM   decks d
              JOIN   packs p ON p.id = d.pack_id
@@ -80,6 +122,7 @@ fn query_discover_decks(conn: &Connection, user_id: i64) -> Result<Vec<DiscoverD
         Option<String>,
         String,
         String,
+        Option<String>,
         i64,
     );
 
@@ -96,6 +139,7 @@ fn query_discover_decks(conn: &Connection, user_id: i64) -> Result<Vec<DiscoverD
                 row.get(7)?,
                 row.get(8)?,
                 row.get(9)?,
+                row.get(10)?,
             ))
         })
         .map_err(|e| AppError::Internal(format!("Failed to query discover decks: {e}")))?
@@ -115,20 +159,19 @@ fn query_discover_decks(conn: &Connection, user_id: i64) -> Result<Vec<DiscoverD
                 tags_json,
                 pack_name,
                 pack_slug,
+                sample_words,
                 installed,
             )| {
-                let tags: Vec<String> = tags_json
-                    .as_deref()
-                    .and_then(|s| serde_json::from_str(s).ok())
-                    .unwrap_or_default();
+                let tags = parse_tags(tags_json.as_deref());
                 DiscoverDeckDto {
                     id,
                     slug,
                     title: name,
                     description,
-                    level,
+                    level: display_level(level, &tags),
                     word_count,
                     tags,
+                    sample_words: split_sample_words(sample_words.as_deref()),
                     pack_name,
                     pack_slug,
                     installed: installed != 0,
@@ -173,6 +216,17 @@ fn query_library_decks(conn: &Connection, user_id: i64) -> Result<Vec<LibraryDec
         .prepare(
             "SELECT d.id, d.slug, d.name, d.description, d.difficulty, d.word_count,
                     d.tags, COALESCE(p.name, 'Standalone'), COALESCE(p.slug, 'standalone'), ds.added_at,
+                    (
+                        SELECT GROUP_CONCAT(sample.headword, char(31))
+                        FROM (
+                            SELECT w.headword
+                            FROM   deck_words dw
+                            JOIN   words w ON w.id = dw.word_id
+                            WHERE  dw.deck_id = d.id
+                            ORDER  BY dw.position, w.headword
+                            LIMIT  3
+                        ) sample
+                    ) AS sample_words,
                     COALESCE((
                         SELECT COUNT(*)
                         FROM   review_cards rc
@@ -221,6 +275,7 @@ fn query_library_decks(conn: &Connection, user_id: i64) -> Result<Vec<LibraryDec
         String,
         String,
         String,
+        Option<String>,
         i64,
         i64,
         i64,
@@ -244,6 +299,7 @@ fn query_library_decks(conn: &Connection, user_id: i64) -> Result<Vec<LibraryDec
                 row.get(11)?,
                 row.get(12)?,
                 row.get(13)?,
+                row.get(14)?,
             ))
         })
         .map_err(|e| AppError::Internal(format!("Failed to query library decks: {e}")))?
@@ -264,24 +320,23 @@ fn query_library_decks(conn: &Connection, user_id: i64) -> Result<Vec<LibraryDec
                 pack_name,
                 pack_slug,
                 installed_at,
+                sample_words,
                 mastered_count,
                 due_count,
                 accuracy,
                 last_studied,
             )| {
-                let tags: Vec<String> = tags_json
-                    .as_deref()
-                    .and_then(|s| serde_json::from_str(s).ok())
-                    .unwrap_or_default();
+                let tags = parse_tags(tags_json.as_deref());
 
                 LibraryDeckDto {
                     id,
                     slug,
                     title,
                     description,
-                    level,
+                    level: display_level(level, &tags),
                     word_count,
                     tags,
+                    sample_words: split_sample_words(sample_words.as_deref()),
                     pack_name,
                     pack_slug,
                     installed_at,
@@ -407,10 +462,8 @@ fn query_deck_detail(
         last_studied,
     ) = deck;
 
-    let tags: Vec<String> = tags_json
-        .as_deref()
-        .and_then(|s| serde_json::from_str(s).ok())
-        .unwrap_or_default();
+    let tags = parse_tags(tags_json.as_deref());
+    let level = display_level(level, &tags);
 
     let mut stmt = conn
         .prepare(

@@ -91,7 +91,7 @@ fn seeded_database_loads_searchable_demo_content() {
         )
         .expect("seed counts");
 
-    assert_eq!(counts, (1, 3, 15));
+    assert_eq!(counts, (1, 9, 72));
 
     let response = crate::commands::search::search_with_conn(
         &conn,

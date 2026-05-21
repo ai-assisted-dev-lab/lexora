@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   Award,
   BookOpen,
@@ -12,7 +13,6 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 import { ProgressBar } from "@/components/ui";
 

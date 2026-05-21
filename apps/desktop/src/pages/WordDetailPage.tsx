@@ -15,6 +15,10 @@ import { useCallback, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
+  CompactIPA,
+  PronunciationPanel,
+} from "@/components/pronunciation/PronunciationPanel";
+import {
   Badge,
   Button,
   Card,
@@ -22,6 +26,8 @@ import {
   ProgressBar,
   SectionHeader,
 } from "@/components/ui";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
 import { useWordDetail } from "@/hooks/useWordDetail";
 import type {
   WordDetailDto,
@@ -30,12 +36,6 @@ import type {
   WordReviewStateDto,
 } from "@/services/commands/words";
 
-import {
-  CompactIPA,
-  PronunciationPanel,
-} from "@/components/pronunciation/PronunciationPanel";
-import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
 import { SenseList } from "./word-detail/SenseList";
 import type { WordDetailTab, WordSense } from "./word-detail/types";
 

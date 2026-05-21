@@ -1,13 +1,22 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { HomePage } from "@/pages/HomePage";
 
 afterEach(cleanup);
 
+function renderHomePage() {
+  return render(
+    <MemoryRouter>
+      <HomePage />
+    </MemoryRouter>,
+  );
+}
+
 describe("HomePage", () => {
   it("renders the mission hero and session CTA", () => {
-    render(<HomePage />);
+    renderHomePage();
 
     expect(
       screen.getByRole("heading", {
@@ -16,15 +25,15 @@ describe("HomePage", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /start today's session/i }),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: /start today's session/i }),
+    ).toHaveAttribute("href", "/study/session?mode=smart-review");
     expect(
       screen.getByText(/you studied 86 words this week/i),
     ).toBeInTheDocument();
   });
 
   it("renders the required deck shelves from mock data", () => {
-    render(<HomePage />);
+    renderHomePage();
 
     expect(
       screen.getByRole("heading", { name: "Most Popular" }),
@@ -40,7 +49,7 @@ describe("HomePage", () => {
   });
 
   it("renders right column widgets with accessible progress", () => {
-    render(<HomePage />);
+    renderHomePage();
 
     expect(screen.getByLabelText("Home widgets")).toBeInTheDocument();
     expect(screen.getByText("Featured Deck")).toBeInTheDocument();
@@ -52,7 +61,7 @@ describe("HomePage", () => {
   });
 
   it("keeps sample words inside deck cards", () => {
-    render(<HomePage />);
+    renderHomePage();
 
     const sampleWords = screen.getAllByLabelText("Sample words")[0];
     expect(within(sampleWords).getByText("briefing")).toBeInTheDocument();

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
 import {
-  type SchemaVersionDto,
   getSchemaVersion,
+  type SchemaVersionDto,
 } from "@/services/commands/db";
 
 export function useSchemaVersion(): SchemaVersionDto | null {

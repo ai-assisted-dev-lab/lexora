@@ -128,7 +128,9 @@ fn monthly_activity(
                    AND up.date = days.date_value
              ORDER BY days.date_value",
         )
-        .map_err(|e| AppError::Internal(format!("Failed to prepare monthly activity query: {e}")))?;
+        .map_err(|e| {
+            AppError::Internal(format!("Failed to prepare monthly activity query: {e}"))
+        })?;
 
     let rows = stmt
         .query_map(params![user_id, today_date], |row| {

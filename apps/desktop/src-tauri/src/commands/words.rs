@@ -320,7 +320,7 @@ mod tests {
         assert_eq!(detail.headword, "run");
         assert_eq!(detail.part_of_speech.as_deref(), Some("verb"));
         assert_eq!(detail.cefr_level.as_deref(), Some("A1"));
-        assert_eq!(detail.senses.len(), 1);
+        assert!(detail.senses.len() >= 2);
         assert_eq!(detail.senses[0].sense_index, 0);
         assert!(!detail.senses[0].examples.is_empty());
         assert!(detail.review_state.is_none());
@@ -331,7 +331,7 @@ mod tests {
         let conn = db_with_data();
         let user_id = login_as(&conn, "learner");
         let word_id: i64 = conn
-            .query_row("SELECT id FROM words WHERE headword = 'run'", [], |row| {
+            .query_row("SELECT id FROM words WHERE headword = 'walk'", [], |row| {
                 row.get(0)
             })
             .expect("seed word");
@@ -359,37 +359,37 @@ mod tests {
     fn get_word_detail_returns_pronunciations_relations_and_review_state() {
         let conn = db_with_data();
         let user_id = login_as(&conn, "learner");
-        let run_id: i64 = conn
-            .query_row("SELECT id FROM words WHERE headword = 'run'", [], |row| {
+        let eat_id: i64 = conn
+            .query_row("SELECT id FROM words WHERE headword = 'eat'", [], |row| {
                 row.get(0)
             })
-            .expect("run word");
-        let walk_id: i64 = conn
-            .query_row("SELECT id FROM words WHERE headword = 'eat'", [], |row| {
+            .expect("eat word");
+        let sleep_id: i64 = conn
+            .query_row("SELECT id FROM words WHERE headword = 'sleep'", [], |row| {
                 row.get(0)
             })
             .expect("related word");
 
         conn.execute(
             "INSERT INTO pronunciations (word_id, dialect, audio_path, tts_engine)
-             VALUES (?1, 'uk', 'audio/run-uk.mp3', 'bundled')",
-            params![run_id],
+             VALUES (?1, 'uk', 'audio/eat-uk.mp3', 'bundled')",
+            params![eat_id],
         )
         .expect("pronunciation");
         conn.execute(
             "INSERT INTO word_relations (from_word_id, to_word_id, relation_type)
              VALUES (?1, ?2, 'see_also')",
-            params![run_id, walk_id],
+            params![eat_id, sleep_id],
         )
         .expect("relation");
         conn.execute(
             "INSERT INTO review_cards (user_id, word_id, due, state, reps, lapses)
              VALUES (?1, ?2, '2026-05-20T00:00:00Z', 'learning', 3, 1)",
-            params![user_id, run_id],
+            params![user_id, eat_id],
         )
         .expect("review card");
 
-        let detail = query_word_detail(&conn, user_id, run_id).expect("word detail");
+        let detail = query_word_detail(&conn, user_id, eat_id).expect("word detail");
 
         assert_eq!(detail.pronunciations.len(), 1);
         assert_eq!(detail.relations.len(), 1);

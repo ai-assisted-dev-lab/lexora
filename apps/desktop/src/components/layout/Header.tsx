@@ -2,11 +2,12 @@ import "./Header.css";
 
 import { Bell } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { CommandPalette } from "@/components/command/CommandPalette";
 import { Badge, IconButton, PageHeader } from "@/components/ui";
 import { getPageLabel } from "@/router/routes";
+import { useAuth } from "@/store/authContext";
 
 import { NotificationCenter } from "./NotificationCenter";
 import { SearchBar } from "./SearchBar";
@@ -49,7 +50,14 @@ function NotificationButton() {
 
 export function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const title = getPageLabel(pathname);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  }, [logout, navigate]);
 
   return (
     <PageHeader className="page-header" aria-label="Page header">
@@ -59,7 +67,11 @@ export function Header() {
 
       <div className="page-header__actions">
         <NotificationButton />
-        <UserProfile />
+        <UserProfile
+          name={user?.username ?? "User"}
+          role={user?.role ?? "learner"}
+          onLogout={handleLogout}
+        />
       </div>
 
       <CommandPalette />

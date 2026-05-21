@@ -26,12 +26,12 @@ fn validate_time(value: &str) -> Result<(), AppError> {
             "reminderTime must use HH:MM format".to_string(),
         ));
     }
-    let hour = parts[0].parse::<u32>().map_err(|_| {
-        AppError::Validation("reminderTime must use HH:MM format".to_string())
-    })?;
-    let minute = parts[1].parse::<u32>().map_err(|_| {
-        AppError::Validation("reminderTime must use HH:MM format".to_string())
-    })?;
+    let hour = parts[0]
+        .parse::<u32>()
+        .map_err(|_| AppError::Validation("reminderTime must use HH:MM format".to_string()))?;
+    let minute = parts[1]
+        .parse::<u32>()
+        .map_err(|_| AppError::Validation("reminderTime must use HH:MM format".to_string()))?;
     if hour > 23 || minute > 59 {
         return Err(AppError::Validation(
             "reminderTime must be a valid local time".to_string(),
@@ -209,11 +209,9 @@ fn evaluated_at(conn: &Connection) -> Result<String, AppError> {
 
 fn day_enabled(conn: &Connection, local_date: &str, days_of_week: &str) -> Result<bool, AppError> {
     let weekday: Option<String> = conn
-        .query_row(
-            "SELECT strftime('%w', ?1)",
-            params![local_date],
-            |row| row.get(0),
-        )
+        .query_row("SELECT strftime('%w', ?1)", params![local_date], |row| {
+            row.get(0)
+        })
         .optional()
         .map_err(|e| AppError::Internal(format!("Failed to resolve weekday: {e}")))?;
     let weekday = weekday
@@ -387,9 +385,7 @@ fn evaluate_reminders_for_user(
             ReminderDraft {
                 kind: "daily_goal",
                 title: "Daily goal waiting".to_string(),
-                body: format!(
-                    "You have reviewed {reviewed_today} of {daily_goal} cards today."
-                ),
+                body: format!("You have reviewed {reviewed_today} of {daily_goal} cards today."),
                 action_label: "Start review",
                 route: "/review",
                 dedupe_key: format!("daily_goal:{date}"),
@@ -407,7 +403,10 @@ fn evaluate_reminders_for_user(
             ReminderDraft {
                 kind: "due_review",
                 title: "Reviews are due".to_string(),
-                body: format!("{due_count} review card{} ready now.", if due_count == 1 { " is" } else { "s are" }),
+                body: format!(
+                    "{due_count} review card{} ready now.",
+                    if due_count == 1 { " is" } else { "s are" }
+                ),
                 action_label: "Review now",
                 route: "/review",
                 dedupe_key: format!("due_review:{date}"),
@@ -418,7 +417,11 @@ fn evaluate_reminders_for_user(
         }
     }
 
-    if can_create && settings.streak_notifications_enabled && streak > 0 && reviewed_today < daily_goal {
+    if can_create
+        && settings.streak_notifications_enabled
+        && streak > 0
+        && reviewed_today < daily_goal
+    {
         if let Some(reminder) = insert_reminder(
             conn,
             user_id,
@@ -654,12 +657,10 @@ mod tests {
         .expect("evaluate");
 
         assert_eq!(result.due_review_count, 1);
-        assert!(
-            result
-                .new_reminders
-                .iter()
-                .any(|reminder| reminder.kind == "due_review")
-        );
+        assert!(result
+            .new_reminders
+            .iter()
+            .any(|reminder| reminder.kind == "due_review"));
     }
 
     #[test]
@@ -697,18 +698,14 @@ mod tests {
         let first = evaluate_reminders_for_user(&conn, user_id, input.clone()).expect("first");
         let second = evaluate_reminders_for_user(&conn, user_id, input).expect("second");
 
-        assert!(
-            first
-                .new_reminders
-                .iter()
-                .any(|reminder| reminder.kind == "daily_goal")
-        );
-        assert!(
-            !second
-                .new_reminders
-                .iter()
-                .any(|reminder| reminder.kind == "daily_goal")
-        );
+        assert!(first
+            .new_reminders
+            .iter()
+            .any(|reminder| reminder.kind == "daily_goal"));
+        assert!(!second
+            .new_reminders
+            .iter()
+            .any(|reminder| reminder.kind == "daily_goal"));
     }
 
     #[test]

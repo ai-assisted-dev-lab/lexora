@@ -1,9 +1,9 @@
 {
   "pack": {
     "slug": "english-essentials-demo",
-    "name": "English Essentials",
-    "description": "Core English vocabulary for everyday communication — a curated starter set for Vietnamese learners.",
-    "version": "1.0.0",
+    "name": "English-Vietnamese Core",
+    "description": "A curated English-Vietnamese starter catalog with real beginner-to-intermediate vocabulary, natural Vietnamese meanings, and practical example sentences.",
+    "version": "2.0.0",
     "author": "Lexora",
     "source": "bundled"
   },
@@ -11,28 +11,72 @@
     {
       "slug": "everyday-actions",
       "name": "Everyday Actions",
-      "description": "Essential English verbs used in daily life",
+      "description": "High-frequency verbs for daily routines and simple conversations.",
       "difficulty": "beginner",
-      "tags": ["verbs", "beginner", "A1"]
+      "tags": ["A1", "verbs", "daily-life", "beginner"]
     },
     {
       "slug": "around-the-house",
       "name": "Around the House",
-      "description": "Common objects found in and around the home",
+      "description": "Common household nouns Vietnamese learners meet in daily English.",
       "difficulty": "beginner",
-      "tags": ["nouns", "beginner", "A1", "home"]
+      "tags": ["A1", "nouns", "home", "beginner"]
     },
     {
       "slug": "greetings-and-social",
       "name": "Greetings & Social",
-      "description": "Phrases and words for greeting people and everyday social situations",
+      "description": "Polite words and short phrases for everyday social interaction.",
       "difficulty": "beginner",
-      "tags": ["phrases", "beginner", "A1", "social"]
+      "tags": ["A1", "phrases", "social", "beginner"]
+    },
+    {
+      "slug": "workplace-english",
+      "name": "Workplace English",
+      "description": "Meetings, deadlines, feedback, and office collaboration vocabulary.",
+      "difficulty": "intermediate",
+      "tags": ["B1", "work", "business", "intermediate"]
+    },
+    {
+      "slug": "travel-situations",
+      "name": "Travel Situations",
+      "description": "Airport, hotel, direction, and trip-planning words.",
+      "difficulty": "beginner",
+      "tags": ["A2", "travel", "phrases", "beginner"]
+    },
+    {
+      "slug": "academic-reading",
+      "name": "Academic Reading",
+      "description": "Core vocabulary for essays, research texts, and classroom discussion.",
+      "difficulty": "intermediate",
+      "tags": ["B2", "academic", "reading", "intermediate"]
+    },
+    {
+      "slug": "technology-terms",
+      "name": "Technology Terms",
+      "description": "Software, privacy, files, and everyday digital vocabulary.",
+      "difficulty": "intermediate",
+      "tags": ["B1", "technology", "work", "intermediate"]
+    },
+    {
+      "slug": "ielts-topic-builder",
+      "name": "IELTS Topic Builder",
+      "description": "Useful topic words for speaking and writing about society.",
+      "difficulty": "intermediate",
+      "tags": ["B2", "ielts", "speaking", "writing"]
+    },
+    {
+      "slug": "phrasal-verbs-in-context",
+      "name": "Phrasal Verbs in Context",
+      "description": "Common phrasal verbs taught through clear situations.",
+      "difficulty": "intermediate",
+      "tags": ["B1", "phrasal-verbs", "speaking", "intermediate"]
     }
   ],
   "words": [
     {
       "headword": "run",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "verb",
       "ipa_uk": "/rʌn/",
       "ipa_us": "/rʌn/",
@@ -42,12 +86,53 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "To move quickly on foot",
-          "definition_vi": "Chạy nhanh bằng chân",
+          "definition_en": "To move quickly on foot.",
+          "definition_vi": "chạy nhanh bằng chân",
+          "register": "common",
+          "domain": "daily actions",
           "examples": [
             {
               "sentence_en": "She runs five kilometres every morning.",
-              "sentence_vi": "Cô ấy chạy năm kilômét mỗi buổi sáng."
+              "sentence_vi": "Cô ấy chạy năm ki-lô-mét mỗi buổi sáng."
+            }
+          ]
+        },
+        {
+          "sense_index": 1,
+          "definition_en": "To manage or operate something.",
+          "definition_vi": "quản lý hoặc vận hành một việc gì đó",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "Mina runs a small language school.",
+              "sentence_vi": "Mina điều hành một trung tâm ngôn ngữ nhỏ."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "walk",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "verb",
+      "ipa_uk": "/wɔːk/",
+      "ipa_us": "/wɑːk/",
+      "frequency_rank": 430,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To move at a regular pace by putting one foot in front of the other.",
+          "definition_vi": "đi bộ",
+          "register": "common",
+          "domain": "daily actions",
+          "examples": [
+            {
+              "sentence_en": "We walk to the market after breakfast.",
+              "sentence_vi": "Chúng tôi đi bộ ra chợ sau bữa sáng."
             }
           ]
         }
@@ -55,6 +140,8 @@
     },
     {
       "headword": "eat",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "verb",
       "ipa_uk": "/iːt/",
       "ipa_us": "/iːt/",
@@ -64,12 +151,40 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "To put food in your mouth, chew, and swallow it",
-          "definition_vi": "Ăn thức ăn",
+          "definition_en": "To put food in your mouth, chew it, and swallow it.",
+          "definition_vi": "ăn thức ăn",
+          "register": "common",
+          "domain": "daily actions",
           "examples": [
             {
               "sentence_en": "We eat dinner together as a family.",
-              "sentence_vi": "Chúng tôi ăn tối cùng nhau như một gia đình."
+              "sentence_vi": "Gia đình tôi ăn tối cùng nhau."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "drink",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "verb",
+      "ipa_uk": "/drɪŋk/",
+      "ipa_us": "/drɪŋk/",
+      "frequency_rank": 720,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To take liquid into your mouth and swallow it.",
+          "definition_vi": "uống",
+          "register": "common",
+          "domain": "daily actions",
+          "examples": [
+            {
+              "sentence_en": "Please drink some water before you leave.",
+              "sentence_vi": "Hãy uống một ít nước trước khi bạn rời đi."
             }
           ]
         }
@@ -77,6 +192,8 @@
     },
     {
       "headword": "sleep",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "verb",
       "ipa_uk": "/sliːp/",
       "ipa_us": "/sliːp/",
@@ -86,8 +203,10 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "To rest with your eyes closed and your mind and body inactive",
-          "definition_vi": "Ngủ, nghỉ ngơi với mắt nhắm",
+          "definition_en": "To rest with your eyes closed and your body inactive.",
+          "definition_vi": "ngủ",
+          "register": "common",
+          "domain": "daily actions",
           "examples": [
             {
               "sentence_en": "Children need to sleep at least eight hours a night.",
@@ -99,6 +218,8 @@
     },
     {
       "headword": "read",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "verb",
       "ipa_uk": "/riːd/",
       "ipa_us": "/riːd/",
@@ -108,8 +229,10 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "To look at and understand written words or symbols",
-          "definition_vi": "Đọc, hiểu chữ viết",
+          "definition_en": "To look at and understand written words.",
+          "definition_vi": "đọc và hiểu chữ viết",
+          "register": "common",
+          "domain": "daily actions",
           "examples": [
             {
               "sentence_en": "He reads a book before bed every night.",
@@ -121,6 +244,8 @@
     },
     {
       "headword": "write",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "verb",
       "ipa_uk": "/raɪt/",
       "ipa_us": "/raɪt/",
@@ -130,12 +255,40 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "To make letters or words on a surface using a pen or pencil",
-          "definition_vi": "Viết, ghi chữ lên bề mặt",
+          "definition_en": "To form letters, words, or symbols on a surface.",
+          "definition_vi": "viết, ghi chữ",
+          "register": "common",
+          "domain": "daily actions",
           "examples": [
             {
               "sentence_en": "Please write your name at the top of the page.",
-              "sentence_vi": "Xin hãy viết tên bạn ở đầu trang."
+              "sentence_vi": "Vui lòng viết tên của bạn ở đầu trang."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "listen",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "verb",
+      "ipa_uk": "/ˈlɪsən/",
+      "ipa_us": "/ˈlɪsən/",
+      "frequency_rank": 610,
+      "cefr_level": "A1",
+      "deck_slugs": ["everyday-actions"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To give attention to a sound or to someone speaking.",
+          "definition_vi": "lắng nghe",
+          "register": "common",
+          "domain": "communication",
+          "examples": [
+            {
+              "sentence_en": "Listen carefully to the teacher's question.",
+              "sentence_vi": "Hãy lắng nghe kỹ câu hỏi của giáo viên."
             }
           ]
         }
@@ -143,6 +296,8 @@
     },
     {
       "headword": "book",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "noun",
       "ipa_uk": "/bʊk/",
       "ipa_us": "/bʊk/",
@@ -152,8 +307,10 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "A set of printed pages bound together inside a cover",
-          "definition_vi": "Sách, tập giấy được đóng bìa",
+          "definition_en": "A set of printed or digital pages used for reading.",
+          "definition_vi": "sách",
+          "register": "common",
+          "domain": "home",
           "examples": [
             {
               "sentence_en": "There is a book on the desk.",
@@ -165,21 +322,25 @@
     },
     {
       "headword": "chair",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "noun",
       "ipa_uk": "/tʃeə/",
-      "ipa_us": "/tʃɛr/",
+      "ipa_us": "/tʃer/",
       "frequency_rank": 890,
       "cefr_level": "A1",
       "deck_slugs": ["around-the-house"],
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "A separate seat for one person, with a back and usually four legs",
-          "definition_vi": "Ghế, đồ nội thất để ngồi có lưng tựa",
+          "definition_en": "A seat for one person, usually with a back and four legs.",
+          "definition_vi": "ghế",
+          "register": "common",
+          "domain": "home",
           "examples": [
             {
               "sentence_en": "Please sit down on the chair.",
-              "sentence_vi": "Xin hãy ngồi xuống ghế."
+              "sentence_vi": "Vui lòng ngồi xuống ghế."
             }
           ]
         }
@@ -187,6 +348,8 @@
     },
     {
       "headword": "table",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "noun",
       "ipa_uk": "/ˈteɪbəl/",
       "ipa_us": "/ˈteɪbəl/",
@@ -196,8 +359,10 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "A piece of furniture with a flat top and legs",
-          "definition_vi": "Bàn, đồ nội thất có mặt phẳng và chân",
+          "definition_en": "A piece of furniture with a flat top and legs.",
+          "definition_vi": "cái bàn",
+          "register": "common",
+          "domain": "home",
           "examples": [
             {
               "sentence_en": "We put the food on the table.",
@@ -209,6 +374,8 @@
     },
     {
       "headword": "window",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "noun",
       "ipa_uk": "/ˈwɪndəʊ/",
       "ipa_us": "/ˈwɪndoʊ/",
@@ -218,12 +385,14 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "An opening in a wall fitted with glass to let in light or air",
-          "definition_vi": "Cửa sổ, ô mở trên tường có kính",
+          "definition_en": "An opening in a wall with glass that lets in light or air.",
+          "definition_vi": "cửa sổ",
+          "register": "common",
+          "domain": "home",
           "examples": [
             {
-              "sentence_en": "Please open the window — it is hot in here.",
-              "sentence_vi": "Xin hãy mở cửa sổ ra — ở đây rất nóng."
+              "sentence_en": "Please open the window because the room is hot.",
+              "sentence_vi": "Vui lòng mở cửa sổ vì căn phòng nóng."
             }
           ]
         }
@@ -231,6 +400,8 @@
     },
     {
       "headword": "door",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "noun",
       "ipa_uk": "/dɔː/",
       "ipa_us": "/dɔːr/",
@@ -240,8 +411,10 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "A flat panel that opens and closes to allow entry to a room or building",
-          "definition_vi": "Cửa ra vào, tấm chắn có thể mở để vào phòng",
+          "definition_en": "A movable panel used to enter or leave a room or building.",
+          "definition_vi": "cửa ra vào",
+          "register": "common",
+          "domain": "home",
           "examples": [
             {
               "sentence_en": "He knocked on the door and waited.",
@@ -252,7 +425,87 @@
       ]
     },
     {
+      "headword": "kitchen",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈkɪtʃən/",
+      "ipa_us": "/ˈkɪtʃən/",
+      "frequency_rank": 970,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A room where food is prepared and cooked.",
+          "definition_vi": "nhà bếp",
+          "register": "common",
+          "domain": "home",
+          "examples": [
+            {
+              "sentence_en": "My mother is cooking rice in the kitchen.",
+              "sentence_vi": "Mẹ tôi đang nấu cơm trong bếp."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "bedroom",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈbedruːm/",
+      "ipa_us": "/ˈbedruːm/",
+      "frequency_rank": 1350,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A room used for sleeping.",
+          "definition_vi": "phòng ngủ",
+          "register": "common",
+          "domain": "home",
+          "examples": [
+            {
+              "sentence_en": "The bedroom is small but very quiet.",
+              "sentence_vi": "Phòng ngủ nhỏ nhưng rất yên tĩnh."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "garden",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈɡɑːdən/",
+      "ipa_us": "/ˈɡɑːrdən/",
+      "frequency_rank": 1430,
+      "cefr_level": "A1",
+      "deck_slugs": ["around-the-house"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A piece of land where flowers, vegetables, or trees are grown.",
+          "definition_vi": "khu vườn",
+          "register": "common",
+          "domain": "home",
+          "examples": [
+            {
+              "sentence_en": "They grow herbs in the garden behind the house.",
+              "sentence_vi": "Họ trồng rau thơm trong khu vườn sau nhà."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "headword": "hello",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "exclamation",
       "ipa_uk": "/həˈləʊ/",
       "ipa_us": "/həˈloʊ/",
@@ -262,8 +515,10 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "A greeting used when meeting or welcoming someone",
-          "definition_vi": "Xin chào, lời chào hỏi khi gặp ai đó",
+          "definition_en": "A greeting used when meeting or welcoming someone.",
+          "definition_vi": "xin chào",
+          "register": "common",
+          "domain": "social",
           "examples": [
             {
               "sentence_en": "She smiled and said hello to everyone.",
@@ -274,22 +529,26 @@
       ]
     },
     {
-      "headword": "thank you",
-      "part_of_speech": "phrase",
-      "ipa_uk": "/ˈθæŋk juː/",
-      "ipa_us": "/ˈθæŋk juː/",
-      "frequency_rank": null,
+      "headword": "goodbye",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "exclamation",
+      "ipa_uk": "/ˌɡʊdˈbaɪ/",
+      "ipa_us": "/ˌɡʊdˈbaɪ/",
+      "frequency_rank": 2500,
       "cefr_level": "A1",
       "deck_slugs": ["greetings-and-social"],
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "An expression of gratitude said to someone who has helped you",
-          "definition_vi": "Cảm ơn, lời cảm ơn khi ai đó giúp đỡ bạn",
+          "definition_en": "A word used when leaving someone.",
+          "definition_vi": "tạm biệt",
+          "register": "common",
+          "domain": "social",
           "examples": [
             {
-              "sentence_en": "Thank you for your help.",
-              "sentence_vi": "Cảm ơn bạn đã giúp đỡ."
+              "sentence_en": "I waved goodbye before getting on the bus.",
+              "sentence_vi": "Tôi vẫy tay tạm biệt trước khi lên xe buýt."
             }
           ]
         }
@@ -297,6 +556,8 @@
     },
     {
       "headword": "please",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "adverb",
       "ipa_uk": "/pliːz/",
       "ipa_us": "/pliːz/",
@@ -306,12 +567,14 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "Used to make a request more polite",
-          "definition_vi": "Làm ơn, từ lịch sự dùng khi yêu cầu",
+          "definition_en": "Used to make a request more polite.",
+          "definition_vi": "làm ơn, vui lòng",
+          "register": "polite",
+          "domain": "social",
           "examples": [
             {
               "sentence_en": "Could you pass the salt, please?",
-              "sentence_vi": "Bạn có thể chuyền muối cho tôi được không, làm ơn?"
+              "sentence_vi": "Bạn có thể đưa muối cho tôi được không, làm ơn?"
             }
           ]
         }
@@ -319,6 +582,8 @@
     },
     {
       "headword": "sorry",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "adjective",
       "ipa_uk": "/ˈsɒri/",
       "ipa_us": "/ˈsɔːri/",
@@ -328,8 +593,10 @@
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "Used to express apology or regret",
-          "definition_vi": "Xin lỗi, lời xin lỗi khi làm điều gì sai",
+          "definition_en": "Used to express apology or regret.",
+          "definition_vi": "xin lỗi, lấy làm tiếc",
+          "register": "common",
+          "domain": "social",
           "examples": [
             {
               "sentence_en": "I am sorry for being late.",
@@ -340,26 +607,1366 @@
       ]
     },
     {
+      "headword": "thank you",
+      "type": "phrase",
+      "review_status": "verified",
+      "part_of_speech": "phrase",
+      "ipa_uk": "/ˈθæŋk juː/",
+      "ipa_us": "/ˈθæŋk juː/",
+      "frequency_rank": null,
+      "cefr_level": "A1",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "An expression of gratitude.",
+          "definition_vi": "cảm ơn",
+          "register": "polite",
+          "domain": "social",
+          "examples": [
+            {
+              "sentence_en": "Thank you for your help.",
+              "sentence_vi": "Cảm ơn bạn vì đã giúp đỡ."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "welcome",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "adjective",
+      "ipa_uk": "/ˈwelkəm/",
+      "ipa_us": "/ˈwelkəm/",
+      "frequency_rank": 1450,
+      "cefr_level": "A1",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Used to greet someone in a friendly way or say they may enter.",
+          "definition_vi": "chào mừng, được hoan nghênh",
+          "register": "common",
+          "domain": "social",
+          "examples": [
+            {
+              "sentence_en": "Welcome to our English club.",
+              "sentence_vi": "Chào mừng bạn đến với câu lạc bộ tiếng Anh của chúng tôi."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "headword": "friend",
+      "type": "word",
+      "review_status": "verified",
       "part_of_speech": "noun",
-      "ipa_uk": "/frɛnd/",
-      "ipa_us": "/frɛnd/",
+      "ipa_uk": "/frend/",
+      "ipa_us": "/frend/",
       "frequency_rank": 295,
       "cefr_level": "A1",
       "deck_slugs": ["greetings-and-social"],
       "senses": [
         {
           "sense_index": 0,
-          "definition_en": "A person you know well and like, who is not related to you",
-          "definition_vi": "Bạn bè, người bạn quen biết và quý mến",
+          "definition_en": "A person you know well and like.",
+          "definition_vi": "bạn bè, người bạn",
+          "register": "common",
+          "domain": "social",
           "examples": [
             {
               "sentence_en": "She is my best friend from school.",
-              "sentence_vi": "Cô ấy là người bạn thân nhất của tôi từ hồi đi học."
+              "sentence_vi": "Cô ấy là bạn thân nhất của tôi từ thời đi học."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "invite",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "verb",
+      "ipa_uk": "/ɪnˈvaɪt/",
+      "ipa_us": "/ɪnˈvaɪt/",
+      "frequency_rank": 2310,
+      "cefr_level": "A2",
+      "deck_slugs": ["greetings-and-social"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To ask someone to come to an event or place.",
+          "definition_vi": "mời ai đó đến một sự kiện hoặc địa điểm",
+          "register": "common",
+          "domain": "social",
+          "examples": [
+            {
+              "sentence_en": "They invited us to dinner on Saturday.",
+              "sentence_vi": "Họ mời chúng tôi ăn tối vào thứ Bảy."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "meeting",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈmiːtɪŋ/",
+      "ipa_us": "/ˈmiːtɪŋ/",
+      "frequency_rank": 520,
+      "cefr_level": "A2",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "An event where people come together to discuss work or plans.",
+          "definition_vi": "cuộc họp",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "The team has a meeting at nine o'clock.",
+              "sentence_vi": "Nhóm có một cuộc họp lúc chín giờ."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "deadline",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈdedlaɪn/",
+      "ipa_us": "/ˈdedlaɪn/",
+      "frequency_rank": 3400,
+      "cefr_level": "B1",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "The latest time or date by which something must be finished.",
+          "definition_vi": "hạn chót",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "The deadline for the report is Friday.",
+              "sentence_vi": "Hạn chót nộp báo cáo là thứ Sáu."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "report",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/rɪˈpɔːt/",
+      "ipa_us": "/rɪˈpɔːrt/",
+      "frequency_rank": 260,
+      "cefr_level": "B1",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A spoken or written account of facts, results, or progress.",
+          "definition_vi": "báo cáo",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "Please send the sales report this afternoon.",
+              "sentence_vi": "Vui lòng gửi báo cáo doanh số chiều nay."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "proposal",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/prəˈpəʊzəl/",
+      "ipa_us": "/prəˈpoʊzəl/",
+      "frequency_rank": 1550,
+      "cefr_level": "B1",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A formal plan or suggestion for people to consider.",
+          "definition_vi": "đề xuất, bản đề xuất",
+          "register": "formal",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "Her proposal includes a new training budget.",
+              "sentence_vi": "Bản đề xuất của cô ấy có ngân sách đào tạo mới."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "feedback",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈfiːdbæk/",
+      "ipa_us": "/ˈfiːdbæk/",
+      "frequency_rank": 2800,
+      "cefr_level": "B1",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Comments that help someone improve work or performance.",
+          "definition_vi": "phản hồi, góp ý",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "The manager gave useful feedback after the presentation.",
+              "sentence_vi": "Quản lý đưa ra phản hồi hữu ích sau bài thuyết trình."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "colleague",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈkɒliːɡ/",
+      "ipa_us": "/ˈkɑːliːɡ/",
+      "frequency_rank": 3100,
+      "cefr_level": "B1",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A person who works with you.",
+          "definition_vi": "đồng nghiệp",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "My colleague helped me prepare the slides.",
+              "sentence_vi": "Đồng nghiệp của tôi giúp tôi chuẩn bị các trang trình chiếu."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "schedule",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈʃedjuːl/",
+      "ipa_us": "/ˈskedʒuːl/",
+      "frequency_rank": 1140,
+      "cefr_level": "B1",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A plan that lists times for events or tasks.",
+          "definition_vi": "lịch trình, thời khóa biểu",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "The project schedule changed after the client call.",
+              "sentence_vi": "Lịch trình dự án thay đổi sau cuộc gọi với khách hàng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "approve",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "verb",
+      "ipa_uk": "/əˈpruːv/",
+      "ipa_us": "/əˈpruːv/",
+      "frequency_rank": 2100,
+      "cefr_level": "B1",
+      "deck_slugs": ["workplace-english"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To officially agree to or accept something.",
+          "definition_vi": "phê duyệt, chấp thuận",
+          "register": "formal",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "The director approved the new hiring plan.",
+              "sentence_vi": "Giám đốc đã phê duyệt kế hoạch tuyển dụng mới."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "airport",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈeəpɔːt/",
+      "ipa_us": "/ˈerpɔːrt/",
+      "frequency_rank": 1900,
+      "cefr_level": "A2",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A place where planes take off and land.",
+          "definition_vi": "sân bay",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "We arrived at the airport two hours early.",
+              "sentence_vi": "Chúng tôi đến sân bay sớm hai tiếng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "ticket",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈtɪkɪt/",
+      "ipa_us": "/ˈtɪkɪt/",
+      "frequency_rank": 1210,
+      "cefr_level": "A2",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A document or digital record that gives permission to travel or enter.",
+          "definition_vi": "vé",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "She bought a train ticket online.",
+              "sentence_vi": "Cô ấy mua vé tàu trực tuyến."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "reservation",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˌrezəˈveɪʃən/",
+      "ipa_us": "/ˌrezərˈveɪʃən/",
+      "frequency_rank": 3300,
+      "cefr_level": "A2",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "An arrangement to keep a seat, room, or service for you.",
+          "definition_vi": "sự đặt chỗ",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "I have a hotel reservation under the name Nguyen.",
+              "sentence_vi": "Tôi có đặt phòng khách sạn dưới tên Nguyễn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "luggage",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈlʌɡɪdʒ/",
+      "ipa_us": "/ˈlʌɡɪdʒ/",
+      "frequency_rank": 4100,
+      "cefr_level": "A2",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Bags and suitcases used when travelling.",
+          "definition_vi": "hành lý",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "Our luggage is waiting at the baggage claim.",
+              "sentence_vi": "Hành lý của chúng tôi đang ở khu nhận hành lý."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "passport",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈpɑːspɔːt/",
+      "ipa_us": "/ˈpæspɔːrt/",
+      "frequency_rank": 5000,
+      "cefr_level": "A2",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "An official document used to prove identity when travelling between countries.",
+          "definition_vi": "hộ chiếu",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "Keep your passport in a safe place.",
+              "sentence_vi": "Hãy giữ hộ chiếu của bạn ở nơi an toàn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "direction",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/dəˈrekʃən/",
+      "ipa_us": "/dəˈrekʃən/",
+      "frequency_rank": 870,
+      "cefr_level": "A2",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Information about how to get to a place.",
+          "definition_vi": "chỉ dẫn đường đi",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "Could you give me directions to the museum?",
+              "sentence_vi": "Bạn có thể chỉ đường đến bảo tàng cho tôi không?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "landmark",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈlændmɑːk/",
+      "ipa_us": "/ˈlændmɑːrk/",
+      "frequency_rank": 6400,
+      "cefr_level": "B1",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A building or place that is easy to recognize.",
+          "definition_vi": "địa danh, mốc dễ nhận ra",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "The old church is a famous local landmark.",
+              "sentence_vi": "Nhà thờ cổ là một địa danh nổi tiếng ở địa phương."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "itinerary",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/aɪˈtɪnərəri/",
+      "ipa_us": "/aɪˈtɪnəreri/",
+      "frequency_rank": 8500,
+      "cefr_level": "B1",
+      "deck_slugs": ["travel-situations"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A plan of places to visit and times during a trip.",
+          "definition_vi": "lịch trình chuyến đi",
+          "register": "common",
+          "domain": "travel",
+          "examples": [
+            {
+              "sentence_en": "Our itinerary includes Hoi An and Hue.",
+              "sentence_vi": "Lịch trình của chúng tôi gồm Hội An và Huế."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "research",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/rɪˈsɜːtʃ/",
+      "ipa_us": "/ˈriːsɜːrtʃ/",
+      "frequency_rank": 490,
+      "cefr_level": "B1",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Careful study to discover new facts or understand a topic.",
+          "definition_vi": "nghiên cứu",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "The research focuses on second-language learning.",
+              "sentence_vi": "Nghiên cứu tập trung vào việc học ngôn ngữ thứ hai."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "evidence",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈevɪdəns/",
+      "ipa_us": "/ˈevɪdəns/",
+      "frequency_rank": 760,
+      "cefr_level": "B2",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Facts or information showing that something is true or likely.",
+          "definition_vi": "bằng chứng, chứng cứ",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "The author provides evidence for each claim.",
+              "sentence_vi": "Tác giả đưa ra bằng chứng cho từng luận điểm."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "theory",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈθɪəri/",
+      "ipa_us": "/ˈθɪri/",
+      "frequency_rank": 900,
+      "cefr_level": "B2",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A set of ideas used to explain something.",
+          "definition_vi": "lý thuyết",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "This theory explains how habits are formed.",
+              "sentence_vi": "Lý thuyết này giải thích cách thói quen được hình thành."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "method",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈmeθəd/",
+      "ipa_us": "/ˈmeθəd/",
+      "frequency_rank": 660,
+      "cefr_level": "B1",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A planned way of doing something.",
+          "definition_vi": "phương pháp",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "The study uses a mixed research method.",
+              "sentence_vi": "Nghiên cứu sử dụng phương pháp nghiên cứu hỗn hợp."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "analyze",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "verb",
+      "ipa_uk": "/ˈænəlaɪz/",
+      "ipa_us": "/ˈænəlaɪz/",
+      "frequency_rank": 2200,
+      "cefr_level": "B2",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To examine something carefully in order to understand it.",
+          "definition_vi": "phân tích",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "Students analyze the data before writing conclusions.",
+              "sentence_vi": "Sinh viên phân tích dữ liệu trước khi viết kết luận."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "source",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/sɔːs/",
+      "ipa_us": "/sɔːrs/",
+      "frequency_rank": 640,
+      "cefr_level": "B1",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A book, person, or place that provides information.",
+          "definition_vi": "nguồn thông tin",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "Always check whether a source is reliable.",
+              "sentence_vi": "Luôn kiểm tra xem một nguồn thông tin có đáng tin cậy không."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "summary",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈsʌməri/",
+      "ipa_us": "/ˈsʌməri/",
+      "frequency_rank": 1700,
+      "cefr_level": "B1",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A short statement of the main points.",
+          "definition_vi": "bản tóm tắt",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "Write a short summary of the article.",
+              "sentence_vi": "Hãy viết một bản tóm tắt ngắn của bài báo."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "argument",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈɑːɡjumənt/",
+      "ipa_us": "/ˈɑːrɡjumənt/",
+      "frequency_rank": 1180,
+      "cefr_level": "B2",
+      "deck_slugs": ["academic-reading"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A reason or set of reasons supporting an idea.",
+          "definition_vi": "lập luận, lý lẽ",
+          "register": "academic",
+          "domain": "academic",
+          "examples": [
+            {
+              "sentence_en": "Her argument is clear and supported by examples.",
+              "sentence_vi": "Lập luận của cô ấy rõ ràng và được hỗ trợ bằng ví dụ."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "device",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/dɪˈvaɪs/",
+      "ipa_us": "/dɪˈvaɪs/",
+      "frequency_rank": 1600,
+      "cefr_level": "B1",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A machine or tool made for a particular purpose.",
+          "definition_vi": "thiết bị",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "Connect your device to the Wi-Fi network.",
+              "sentence_vi": "Hãy kết nối thiết bị của bạn với mạng Wi-Fi."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "software",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈsɒftweə/",
+      "ipa_us": "/ˈsɔːftwer/",
+      "frequency_rank": 1200,
+      "cefr_level": "B1",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Programs used by a computer or digital device.",
+          "definition_vi": "phần mềm",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "The company updates its software every month.",
+              "sentence_vi": "Công ty cập nhật phần mềm mỗi tháng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "update",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "verb",
+      "ipa_uk": "/ʌpˈdeɪt/",
+      "ipa_us": "/ʌpˈdeɪt/",
+      "frequency_rank": 950,
+      "cefr_level": "B1",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To make something more modern, accurate, or current.",
+          "definition_vi": "cập nhật",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "Update the app before you open the file.",
+              "sentence_vi": "Hãy cập nhật ứng dụng trước khi mở tệp."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "password",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈpɑːswɜːd/",
+      "ipa_us": "/ˈpæswɜːrd/",
+      "frequency_rank": 4100,
+      "cefr_level": "A2",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A secret word or group of characters used to access an account.",
+          "definition_vi": "mật khẩu",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "Never share your password with anyone.",
+              "sentence_vi": "Đừng bao giờ chia sẻ mật khẩu của bạn với bất kỳ ai."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "privacy",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈprɪvəsi/",
+      "ipa_us": "/ˈpraɪvəsi/",
+      "frequency_rank": 2800,
+      "cefr_level": "B2",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "The right to keep personal information or life separate from others.",
+          "definition_vi": "quyền riêng tư, sự riêng tư",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "The app has clear privacy settings.",
+              "sentence_vi": "Ứng dụng có cài đặt quyền riêng tư rõ ràng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "file",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/faɪl/",
+      "ipa_us": "/faɪl/",
+      "frequency_rank": 780,
+      "cefr_level": "A2",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A saved document, image, or piece of data on a computer.",
+          "definition_vi": "tệp, tập tin",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "Save the file before closing the program.",
+              "sentence_vi": "Hãy lưu tệp trước khi đóng chương trình."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "network",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈnetwɜːk/",
+      "ipa_us": "/ˈnetwɜːrk/",
+      "frequency_rank": 710,
+      "cefr_level": "B1",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A group of connected computers, people, or systems.",
+          "definition_vi": "mạng, hệ thống kết nối",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "The office network is slow today.",
+              "sentence_vi": "Mạng văn phòng hôm nay chạy chậm."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "backup",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈbækʌp/",
+      "ipa_us": "/ˈbækʌp/",
+      "frequency_rank": 4300,
+      "cefr_level": "B1",
+      "deck_slugs": ["technology-terms"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A copy of data kept in case the original is lost.",
+          "definition_vi": "bản sao lưu",
+          "register": "common",
+          "domain": "technology",
+          "examples": [
+            {
+              "sentence_en": "Create a backup before importing new data.",
+              "sentence_vi": "Hãy tạo bản sao lưu trước khi nhập dữ liệu mới."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "environment",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ɪnˈvaɪrənmənt/",
+      "ipa_us": "/ɪnˈvaɪrənmənt/",
+      "frequency_rank": 620,
+      "cefr_level": "B1",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "The natural world or the conditions in which people live.",
+          "definition_vi": "môi trường",
+          "register": "common",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "Protecting the environment requires long-term action.",
+              "sentence_vi": "Bảo vệ môi trường đòi hỏi hành động lâu dài."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "economy",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ɪˈkɒnəmi/",
+      "ipa_us": "/ɪˈkɑːnəmi/",
+      "frequency_rank": 690,
+      "cefr_level": "B1",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "The system of money, jobs, trade, and production in a country.",
+          "definition_vi": "nền kinh tế",
+          "register": "common",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "Tourism supports the local economy.",
+              "sentence_vi": "Du lịch hỗ trợ nền kinh tế địa phương."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "education",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˌedʒʊˈkeɪʃən/",
+      "ipa_us": "/ˌedʒuˈkeɪʃən/",
+      "frequency_rank": 550,
+      "cefr_level": "B1",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "The process of teaching and learning, especially in schools.",
+          "definition_vi": "giáo dục",
+          "register": "common",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "Education can improve opportunities for young people.",
+              "sentence_vi": "Giáo dục có thể cải thiện cơ hội cho người trẻ."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "healthcare",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈhelθkeə/",
+      "ipa_us": "/ˈhelθker/",
+      "frequency_rank": 3600,
+      "cefr_level": "B2",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "Services that help people stay healthy or receive medical treatment.",
+          "definition_vi": "dịch vụ chăm sóc sức khỏe",
+          "register": "common",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "Affordable healthcare is important for every community.",
+              "sentence_vi": "Chăm sóc sức khỏe với chi phí hợp lý rất quan trọng với mọi cộng đồng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "policy",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈpɒləsi/",
+      "ipa_us": "/ˈpɑːləsi/",
+      "frequency_rank": 530,
+      "cefr_level": "B2",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A plan or rule used by a government, organization, or company.",
+          "definition_vi": "chính sách",
+          "register": "formal",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "The new policy supports public transport.",
+              "sentence_vi": "Chính sách mới hỗ trợ giao thông công cộng."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "community",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/kəˈmjuːnəti/",
+      "ipa_us": "/kəˈmjuːnəti/",
+      "frequency_rank": 810,
+      "cefr_level": "B1",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A group of people who live in the same area or share interests.",
+          "definition_vi": "cộng đồng",
+          "register": "common",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "The community raised money for a new library.",
+              "sentence_vi": "Cộng đồng đã gây quỹ cho một thư viện mới."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "benefit",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈbenɪfɪt/",
+      "ipa_us": "/ˈbenɪfɪt/",
+      "frequency_rank": 960,
+      "cefr_level": "B1",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A good result or advantage.",
+          "definition_vi": "lợi ích",
+          "register": "common",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "One benefit of reading is a larger vocabulary.",
+              "sentence_vi": "Một lợi ích của việc đọc là vốn từ vựng rộng hơn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "challenge",
+      "type": "word",
+      "review_status": "verified",
+      "part_of_speech": "noun",
+      "ipa_uk": "/ˈtʃælɪndʒ/",
+      "ipa_us": "/ˈtʃælɪndʒ/",
+      "frequency_rank": 1450,
+      "cefr_level": "B1",
+      "deck_slugs": ["ielts-topic-builder"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "A difficult task or problem that tests ability.",
+          "definition_vi": "thách thức",
+          "register": "common",
+          "domain": "society",
+          "examples": [
+            {
+              "sentence_en": "Air pollution is a major challenge for large cities.",
+              "sentence_vi": "Ô nhiễm không khí là một thách thức lớn đối với các thành phố lớn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "look into",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/lʊk ˈɪntuː/",
+      "ipa_us": "/lʊk ˈɪntuː/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To investigate or examine a problem.",
+          "definition_vi": "xem xét, điều tra",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "The support team will look into the login issue.",
+              "sentence_vi": "Nhóm hỗ trợ sẽ xem xét vấn đề đăng nhập."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "carry out",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/ˈkæri aʊt/",
+      "ipa_us": "/ˈkæri aʊt/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To do or complete a task, plan, or experiment.",
+          "definition_vi": "thực hiện, tiến hành",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "Researchers carried out a survey in three schools.",
+              "sentence_vi": "Các nhà nghiên cứu đã tiến hành khảo sát tại ba trường học."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "bring up",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/brɪŋ ʌp/",
+      "ipa_us": "/brɪŋ ʌp/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To mention a topic in conversation.",
+          "definition_vi": "nêu ra, đề cập đến",
+          "register": "common",
+          "domain": "communication",
+          "examples": [
+            {
+              "sentence_en": "Please bring up the budget during the meeting.",
+              "sentence_vi": "Vui lòng nêu vấn đề ngân sách trong cuộc họp."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "set up",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/set ʌp/",
+      "ipa_us": "/set ʌp/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To arrange or create something so it is ready to use.",
+          "definition_vi": "thiết lập, sắp xếp",
+          "register": "common",
+          "domain": "work",
+          "examples": [
+            {
+              "sentence_en": "Can you set up the projector before class?",
+              "sentence_vi": "Bạn có thể chuẩn bị máy chiếu trước giờ học không?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "turn down",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/tɜːn daʊn/",
+      "ipa_us": "/tɜːrn daʊn/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To refuse an offer or request.",
+          "definition_vi": "từ chối",
+          "register": "common",
+          "domain": "communication",
+          "examples": [
+            {
+              "sentence_en": "She turned down the job because it required travel.",
+              "sentence_vi": "Cô ấy từ chối công việc vì nó yêu cầu đi công tác."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "come across",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/kʌm əˈkrɒs/",
+      "ipa_us": "/kʌm əˈkrɔːs/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To find or meet something by chance.",
+          "definition_vi": "tình cờ gặp hoặc tìm thấy",
+          "register": "common",
+          "domain": "daily life",
+          "examples": [
+            {
+              "sentence_en": "I came across an interesting article about memory.",
+              "sentence_vi": "Tôi tình cờ đọc được một bài viết thú vị về trí nhớ."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "figure out",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/ˈfɪɡər aʊt/",
+      "ipa_us": "/ˈfɪɡjər aʊt/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To understand or solve something after thinking.",
+          "definition_vi": "hiểu ra, tìm ra cách giải quyết",
+          "register": "common",
+          "domain": "daily life",
+          "examples": [
+            {
+              "sentence_en": "We need to figure out why the file is missing.",
+              "sentence_vi": "Chúng ta cần tìm ra lý do tệp bị thiếu."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "headword": "keep up",
+      "type": "phrasal_verb",
+      "review_status": "verified",
+      "part_of_speech": "phrasal verb",
+      "ipa_uk": "/kiːp ʌp/",
+      "ipa_us": "/kiːp ʌp/",
+      "frequency_rank": null,
+      "cefr_level": "B1",
+      "deck_slugs": ["phrasal-verbs-in-context"],
+      "senses": [
+        {
+          "sense_index": 0,
+          "definition_en": "To continue at the same speed or level.",
+          "definition_vi": "theo kịp, duy trì",
+          "register": "common",
+          "domain": "daily life",
+          "examples": [
+            {
+              "sentence_en": "It is hard to keep up with new technology.",
+              "sentence_vi": "Thật khó để theo kịp công nghệ mới."
             }
           ]
         }
       ]
     }
+  ],
+  "relations": [
+    { "from": "run", "to": "walk", "relation_type": "see_also" },
+    { "from": "hello", "to": "goodbye", "relation_type": "see_also" },
+    { "from": "benefit", "to": "challenge", "relation_type": "antonym" },
+    { "from": "look into", "to": "research", "relation_type": "synonym" },
+    { "from": "carry out", "to": "method", "relation_type": "collocation" },
+    { "from": "privacy", "to": "password", "relation_type": "see_also" },
+    { "from": "proposal", "to": "approve", "relation_type": "collocation" },
+    { "from": "reservation", "to": "itinerary", "relation_type": "see_also" }
   ]
 }

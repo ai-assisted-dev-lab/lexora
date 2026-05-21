@@ -21,7 +21,14 @@ import {
   Trophy,
   Volume2,
 } from "lucide-react";
-import { type ReactNode,useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { CompactIPA } from "@/components/pronunciation/PronunciationPanel";
@@ -73,7 +80,7 @@ const multipleChoiceModeAliases = new Set(["multiple-choice", "multiple_choice"]
 
 const typeAnswerModeAliases = new Set(["type-answer", "type_answer"]);
 
-const weakDrillModeAliases = new Set(["weak-drill", "weak_drill"]);
+const weakDrillModeAliases = new Set(["weak-drill", "weak_drill", "weak-words"]);
 
 const ratingButtons: Array<{
   label: string;

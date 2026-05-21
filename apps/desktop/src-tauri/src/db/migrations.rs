@@ -513,8 +513,11 @@ mod tests {
             .query_row("SELECT last_insert_rowid()", [], |r| r.get(0))
             .unwrap();
 
-        conn.execute("INSERT INTO user_settings (user_id) VALUES (?1)", params![uid])
-            .expect("settings should use notification preference defaults");
+        conn.execute(
+            "INSERT INTO user_settings (user_id) VALUES (?1)",
+            params![uid],
+        )
+        .expect("settings should use notification preference defaults");
 
         let prefs: (i64, i64, i64) = conn
             .query_row(
