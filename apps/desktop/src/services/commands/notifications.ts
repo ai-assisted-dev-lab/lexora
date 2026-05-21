@@ -1,11 +1,7 @@
 import { invoke } from "@/services/tauri";
 
 export type ReminderKind = "daily_goal" | "due_review" | "streak" | "test";
-export type NotificationOsStatus =
-  | "sent"
-  | "denied"
-  | "unavailable"
-  | "failed";
+export type NotificationOsStatus = "sent" | "denied" | "unavailable" | "failed";
 
 export interface NotificationSettings {
   userId: number;

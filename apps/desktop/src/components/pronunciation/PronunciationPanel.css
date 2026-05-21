@@ -99,7 +99,9 @@
   cursor: pointer;
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   color: var(--color-primary);
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .pronunciation-panel__play-btn:hover:not(:disabled) {

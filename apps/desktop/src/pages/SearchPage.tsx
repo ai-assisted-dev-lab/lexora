@@ -24,7 +24,9 @@ function iconFor(type: SearchResultType) {
 function ResultRow({ result }: { result: SearchResult }) {
   return (
     <Link className="search-result-row" to={result.route}>
-      <div className="search-result-row__icon">{iconFor(result.resultType)}</div>
+      <div className="search-result-row__icon">
+        {iconFor(result.resultType)}
+      </div>
       <div className="search-result-row__body">
         <div className="search-result-row__title-line">
           <strong>{result.title}</strong>
@@ -32,8 +34,12 @@ function ResultRow({ result }: { result: SearchResult }) {
         </div>
         {result.snippet && <p>{result.snippet}</p>}
         <div className="search-result-row__meta">
-          {result.deckTitle && <Badge variant="muted">{result.deckTitle}</Badge>}
-          {result.packTitle && <Badge variant="muted">{result.packTitle}</Badge>}
+          {result.deckTitle && (
+            <Badge variant="muted">{result.deckTitle}</Badge>
+          )}
+          {result.packTitle && (
+            <Badge variant="muted">{result.packTitle}</Badge>
+          )}
           <span>{Math.round(result.score)} relevance</span>
         </div>
       </div>
@@ -98,16 +104,23 @@ export function SearchPage() {
         <div className="search-page__summary" role="status">
           {isLoading ? (
             <>
-              <Loader2 size={16} className="search-page__spinner" aria-hidden="true" />
+              <Loader2
+                size={16}
+                className="search-page__spinner"
+                aria-hidden="true"
+              />
               Searching for <strong>{query}</strong>
             </>
           ) : response ? (
             <>
-              <strong>{response.total}</strong> results for <strong>{response.query}</strong>
+              <strong>{response.total}</strong> results for{" "}
+              <strong>{response.query}</strong>
               <span>{response.elapsedMs} ms</span>
             </>
           ) : (
-            <>Search results for <strong>{query}</strong></>
+            <>
+              Search results for <strong>{query}</strong>
+            </>
           )}
         </div>
       )}
@@ -135,7 +148,11 @@ export function SearchPage() {
       {response && response.total > 0 && (
         <div className="search-page__groups">
           {response.groups.map((group) => (
-            <Card className="search-result-group" key={group.resultType} variant="glass">
+            <Card
+              className="search-result-group"
+              key={group.resultType}
+              variant="glass"
+            >
               <div className="search-result-group__header">
                 <h2>{group.label}</h2>
                 <Badge variant="muted">{group.results.length}</Badge>

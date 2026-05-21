@@ -14,20 +14,20 @@ Screenshots are generated from the local E2E fixture so they can be refreshed wi
 pnpm screenshots
 ```
 
-| Home | Discover |
-| --- | --- |
+| Home                                                | Discover                                                  |
+| --------------------------------------------------- | --------------------------------------------------------- |
 | ![Home dashboard](docs/assets/screenshots/home.png) | ![Discover catalog](docs/assets/screenshots/discover.png) |
 
-| Library | Study Session |
-| --- | --- |
+| Library                                         | Study Session                                               |
+| ----------------------------------------------- | ----------------------------------------------------------- |
 | ![Library](docs/assets/screenshots/library.png) | ![Study session](docs/assets/screenshots/study-session.png) |
 
-| Word Detail | Achievements |
-| --- | --- |
+| Word Detail                                             | Achievements                                              |
+| ------------------------------------------------------- | --------------------------------------------------------- |
 | ![Word detail](docs/assets/screenshots/word-detail.png) | ![Achievements](docs/assets/screenshots/achievements.png) |
 
-| Owner Data Studio |
-| --- |
+| Owner Data Studio                                                  |
+| ------------------------------------------------------------------ |
 | ![Owner-only Data Studio](docs/assets/screenshots/data-studio.png) |
 
 ## Implemented Features
@@ -48,20 +48,20 @@ Not included: cloud sync, marketplace/payments, dark mode, public community feat
 
 ## Tech Stack
 
-| Layer | Technology |
-| --- | --- |
-| Desktop shell | Tauri 2 |
-| UI | React 18, TypeScript, Vite |
-| Styling | Local CSS, design tokens, light-blue Azure Glass identity |
-| Animation | Framer Motion |
-| Routing | React Router |
-| Icons | Lucide React |
-| Charts | Recharts |
-| Native layer | Rust |
-| Database | SQLite with FTS5; SQLCipher feature available via `--features sqlcipher` |
-| Review engine | Rust/TypeScript FSRS scheduling helpers |
-| Package manager | pnpm workspaces |
-| Testing | Vitest, React Testing Library, Playwright, Rust tests |
+| Layer           | Technology                                                               |
+| --------------- | ------------------------------------------------------------------------ |
+| Desktop shell   | Tauri 2                                                                  |
+| UI              | React 18, TypeScript, Vite                                               |
+| Styling         | Local CSS, design tokens, light-blue Azure Glass identity                |
+| Animation       | Framer Motion                                                            |
+| Routing         | React Router                                                             |
+| Icons           | Lucide React                                                             |
+| Charts          | Recharts                                                                 |
+| Native layer    | Rust                                                                     |
+| Database        | SQLite with FTS5; SQLCipher feature available via `--features sqlcipher` |
+| Review engine   | Rust/TypeScript FSRS scheduling helpers                                  |
+| Package manager | pnpm workspaces                                                          |
+| Testing         | Vitest, React Testing Library, Playwright, Rust tests                    |
 
 ## Architecture
 

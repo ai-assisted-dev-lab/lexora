@@ -2,16 +2,15 @@ import "./profile/ProfilePage.css";
 
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import {
-  Award,
-  BookOpen,
-  Flame,
-  Layers,
-  Target,
-  Zap,
-} from "lucide-react";
+import { Award, BookOpen, Flame, Layers, Target, Zap } from "lucide-react";
 
-import { Badge, Card, ProgressBar, SectionHeader, StatCard } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  ProgressBar,
+  SectionHeader,
+  StatCard,
+} from "@/components/ui";
 import { useGamificationSummary } from "@/hooks/useGamificationSummary";
 
 import {
@@ -39,19 +38,19 @@ function formatDate(isoDate: string): string {
 
 export function ProfilePage() {
   const gamification = useGamificationSummary();
-  const {
-    displayName,
-    initials,
-    joinedDate,
-  } = userProfile;
+  const { displayName, initials, joinedDate } = userProfile;
   const level = gamification?.level ?? userProfile.level;
   const xp = gamification?.currentLevelXp ?? userProfile.xp;
   const xpNextLevel = gamification?.nextLevelXp ?? userProfile.xpNextLevel;
-  const currentStreak = gamification?.currentStreak ?? userProfile.currentStreak;
-  const longestStreak = gamification?.longestStreak ?? userProfile.longestStreak;
+  const currentStreak =
+    gamification?.currentStreak ?? userProfile.currentStreak;
+  const longestStreak =
+    gamification?.longestStreak ?? userProfile.longestStreak;
   const totalXP = gamification?.totalXp ?? userProfile.totalXP;
-  const masteredWords = gamification?.masteredWords ?? userProfile.masteredWords;
-  const totalSessions = gamification?.totalSessions ?? userProfile.totalSessions;
+  const masteredWords =
+    gamification?.masteredWords ?? userProfile.masteredWords;
+  const totalSessions =
+    gamification?.totalSessions ?? userProfile.totalSessions;
 
   const xpPct = Math.round((xp / xpNextLevel) * 100);
 
@@ -135,10 +134,7 @@ export function ProfilePage() {
         <div className="profile-main">
           {/* Favorite Deck */}
           <Card className="profile-deck">
-            <SectionHeader
-              title="Favourite Deck"
-              eyebrow="Most studied"
-            />
+            <SectionHeader title="Favourite Deck" eyebrow="Most studied" />
             <div className="profile-deck__top">
               <div>
                 <p className="profile-deck__title">{favoriteDeck.title}</p>
@@ -180,10 +176,7 @@ export function ProfilePage() {
                     key={achievement.title}
                     className="profile-showcase__item"
                   >
-                    <div
-                      className="profile-showcase__badge"
-                      aria-hidden="true"
-                    >
+                    <div className="profile-showcase__badge" aria-hidden="true">
                       <IconComp size={18} />
                     </div>
                     <p className="profile-showcase__title">

@@ -63,9 +63,7 @@ export function RightPanel() {
         </div>
         <div className="right-panel__stat">
           <span>Level</span>
-          <span className="right-panel__stat-value">
-            {summary?.level ?? 1}
-          </span>
+          <span className="right-panel__stat-value">{summary?.level ?? 1}</span>
         </div>
         <div className="right-panel__meter" aria-hidden="true">
           <span style={{ width: `${xpPct}%` }} />

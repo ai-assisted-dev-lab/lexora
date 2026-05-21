@@ -62,38 +62,41 @@ export function useAudioPlayer() {
     stopBrowserTts();
   }, []);
 
-  const playLocalAudio = useCallback(async (audioPath: string) => {
-    let url: string;
+  const playLocalAudio = useCallback(
+    async (audioPath: string) => {
+      let url: string;
 
-    if (audioPath.startsWith("http://") || audioPath.startsWith("https://")) {
-      url = audioPath;
-    } else {
-      const base64 = await readCachedAudio(audioPath);
-      const mediaType = guessMediaType(audioPath);
-      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: mediaType });
-      url = URL.createObjectURL(blob);
-      blobUrlRef.current = url;
-    }
+      if (audioPath.startsWith("http://") || audioPath.startsWith("https://")) {
+        url = audioPath;
+      } else {
+        const base64 = await readCachedAudio(audioPath);
+        const mediaType = guessMediaType(audioPath);
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: mediaType });
+        url = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
+      }
 
-    const audio = new Audio();
-    audioRef.current = audio;
+      const audio = new Audio();
+      audioRef.current = audio;
 
-    await new Promise<void>((resolve, reject) => {
-      audio.oncanplay = () => {
-        setState("playing");
-        audio.play().then(resolve).catch(reject);
+      await new Promise<void>((resolve, reject) => {
+        audio.oncanplay = () => {
+          setState("playing");
+          audio.play().then(resolve).catch(reject);
+        };
+        audio.onerror = () => reject(new Error("Audio element load error"));
+        audio.src = url;
+        audio.load();
+      });
+
+      audio.onended = () => {
+        setState("idle");
+        cleanUp();
       };
-      audio.onerror = () => reject(new Error("Audio element load error"));
-      audio.src = url;
-      audio.load();
-    });
-
-    audio.onended = () => {
-      setState("idle");
-      cleanUp();
-    };
-  }, [cleanUp]);
+    },
+    [cleanUp],
+  );
 
   const playFallbackTts = useCallback(
     async (text: string, settings: PronunciationSettings) => {

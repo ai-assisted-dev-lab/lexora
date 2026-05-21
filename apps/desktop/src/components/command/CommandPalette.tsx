@@ -399,7 +399,9 @@ export function CommandPalette() {
 
             <div className="command-palette__title-row">
               <h2 id="command-palette-title">Command Palette</h2>
-              <span>{isSearching ? "Searching..." : `${items.length} items`}</span>
+              <span>
+                {isSearching ? "Searching..." : `${items.length} items`}
+              </span>
             </div>
 
             <div

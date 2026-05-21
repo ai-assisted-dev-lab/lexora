@@ -3,7 +3,13 @@ import "./stats/StatsPage.css";
 import { motion } from "framer-motion";
 import { BookOpen, Flame, Layers, Target, Zap } from "lucide-react";
 
-import { Badge, Card, EmptyState, SectionHeader, StatCard } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  EmptyState,
+  SectionHeader,
+  StatCard,
+} from "@/components/ui";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useGamificationSummary } from "@/hooks/useGamificationSummary";
 
@@ -101,9 +107,7 @@ export function StatsPage() {
       }))
     : weakTopics;
 
-  const hasActivity = gamification
-    ? gamification.totalCardsReviewed > 0
-    : true;
+  const hasActivity = gamification ? gamification.totalCardsReviewed > 0 : true;
 
   return (
     <motion.div
@@ -183,17 +187,17 @@ export function StatsPage() {
             }
           />
           {liveMasteryTotal === 0 ? (
-            <div className="stats-mastery-empty" aria-label="Mastery level breakdown">
+            <div
+              className="stats-mastery-empty"
+              aria-label="Mastery level breakdown"
+            >
               <p className="stats-empty-hint">
                 Add a deck and complete your first session to see mastery
                 levels.
               </p>
             </div>
           ) : (
-            <div
-              className="stats-mastery"
-              aria-label="Mastery level breakdown"
-            >
+            <div className="stats-mastery" aria-label="Mastery level breakdown">
               {liveMastery.map((level) => {
                 const pct =
                   liveMasteryTotal > 0
@@ -244,10 +248,7 @@ export function StatsPage() {
           />
         ) : (
           <Card className="stats-weak-card">
-            <table
-              className="stats-weak-table"
-              aria-label="Weak topics list"
-            >
+            <table className="stats-weak-table" aria-label="Weak topics list">
               <thead>
                 <tr>
                   <th scope="col">Topic</th>

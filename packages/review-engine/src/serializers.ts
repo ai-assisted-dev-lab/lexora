@@ -1,8 +1,5 @@
 import { normalizeReviewCardState } from "./fsrsEngine";
-import type {
-  LexoraReviewCardState,
-  LexoraReviewCardStateName,
-} from "./types";
+import type { LexoraReviewCardState, LexoraReviewCardStateName } from "./types";
 
 export function serializeReviewCard(card: LexoraReviewCardState): string {
   return JSON.stringify(normalizeReviewCardState(card));
@@ -62,7 +59,9 @@ function readNumber(
 ): number {
   const value = record[fieldName];
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`Invalid review card: ${fieldName} must be a finite number.`);
+    throw new Error(
+      `Invalid review card: ${fieldName} must be a finite number.`,
+    );
   }
 
   return value;

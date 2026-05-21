@@ -217,7 +217,8 @@ const adminVocabularyItems = [
     partOfSpeech: "noun phrase",
     cefrLevel: "A2",
     primaryVietnameseMeaning: "the len may bay",
-    primaryEnglishDefinition: "A document that allows a passenger onto a plane.",
+    primaryEnglishDefinition:
+      "A document that allows a passenger onto a plane.",
     reviewStatus: "unverified",
     missing: {
       meaning: false,
@@ -245,7 +246,9 @@ function paginate<T>(items: T[], args: InvokeArgs | undefined) {
   };
   const page = Math.max(1, Number(input.page ?? 1));
   const pageSize = Math.max(1, Number(input.pageSize ?? 25));
-  const search = String(input.search ?? "").trim().toLowerCase();
+  const search = String(input.search ?? "")
+    .trim()
+    .toLowerCase();
   const filtered = search
     ? items.filter((item) =>
         JSON.stringify(item).toLowerCase().includes(search),
@@ -581,8 +584,7 @@ export function invoke<T>(command: string, args?: InvokeArgs): Promise<T> {
             headword: "deadline",
             partOfSpeech: "noun",
             level: "B1",
-            definitionEn:
-              "A time or date by which work must be finished.",
+            definitionEn: "A time or date by which work must be finished.",
             definitionVi: "han chot",
             example: "The report deadline is Friday.",
             dueState: "Learning",

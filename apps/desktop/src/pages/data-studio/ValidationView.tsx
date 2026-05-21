@@ -243,7 +243,11 @@ export function ValidationView() {
         ))}
       </div>
 
-      <div className="ds-quality-toolbar" role="search" aria-label="Issue filters">
+      <div
+        className="ds-quality-toolbar"
+        role="search"
+        aria-label="Issue filters"
+      >
         <label className="ds-field ds-field--grow" htmlFor="dq-search">
           <span className="ds-field__label">Search issues</span>
           <span className="ds-input-with-icon">
@@ -310,9 +314,7 @@ export function ValidationView() {
             value={entityType}
             onChange={(event) =>
               resetPage(() =>
-                setEntityType(
-                  event.target.value as DataQualityEntityType | "",
-                ),
+                setEntityType(event.target.value as DataQualityEntityType | ""),
               )
             }
           >
@@ -349,7 +351,9 @@ export function ValidationView() {
         </button>
       </div>
 
-      {status && <div className="ds-feedback ds-feedback--success">{status}</div>}
+      {status && (
+        <div className="ds-feedback ds-feedback--success">{status}</div>
+      )}
       {error && (
         <div className="ds-error" role="alert">
           {error}
@@ -373,7 +377,10 @@ export function ValidationView() {
       ) : (
         <>
           <div className="ds-table-wrap ds-quality-table-wrap">
-            <table className="ds-table ds-quality-table" aria-label="Quality issues">
+            <table
+              className="ds-table ds-quality-table"
+              aria-label="Quality issues"
+            >
               <thead>
                 <tr>
                   <th>Severity</th>
@@ -404,7 +411,9 @@ export function ValidationView() {
                       {labelFromValue(issue.entityType)}
                     </td>
                     <td>{issue.field ? labelFromValue(issue.field) : "-"}</td>
-                    <td className="ds-quality-table__message">{issue.message}</td>
+                    <td className="ds-quality-table__message">
+                      {issue.message}
+                    </td>
                     <td className="ds-quality-table__message">
                       {issue.recommendation ?? "-"}
                     </td>
@@ -421,7 +430,9 @@ export function ValidationView() {
                           }
                         >
                           <ExternalLink size={14} aria-hidden="true" />
-                          <span>{issue.navigationTarget?.label ?? "Locate"}</span>
+                          <span>
+                            {issue.navigationTarget?.label ?? "Locate"}
+                          </span>
                         </button>
                         <button
                           type="button"
@@ -450,7 +461,9 @@ export function ValidationView() {
           <div className="ds-pagination">
             <span>
               {issuePage?.total.toLocaleString()} issues
-              {summary?.lastScanTime ? ` / last scan ${summary.lastScanTime}` : ""}
+              {summary?.lastScanTime
+                ? ` / last scan ${summary.lastScanTime}`
+                : ""}
             </span>
             <div className="ds-pager-buttons">
               <button

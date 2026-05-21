@@ -44,13 +44,22 @@ function WeakWordRow({ item }: { item: SmartReviewQueueItemDto }) {
       </div>
       <div className="weak-word-row__indicators">
         {card.lapses > 0 && (
-          <WeakIndicator label={`${card.lapses} lapse${card.lapses > 1 ? "s" : ""}`} variant="lapses" />
+          <WeakIndicator
+            label={`${card.lapses} lapse${card.lapses > 1 ? "s" : ""}`}
+            variant="lapses"
+          />
         )}
         {card.difficulty >= 7.0 && (
-          <WeakIndicator label={`diff ${card.difficulty.toFixed(1)}`} variant="difficulty" />
+          <WeakIndicator
+            label={`diff ${card.difficulty.toFixed(1)}`}
+            variant="difficulty"
+          />
         )}
         {card.stability > 0 && card.stability < 2.0 && (
-          <WeakIndicator label={`stab ${card.stability.toFixed(1)}`} variant="stability" />
+          <WeakIndicator
+            label={`stab ${card.stability.toFixed(1)}`}
+            variant="stability"
+          />
         )}
       </div>
     </Card>
@@ -104,11 +113,7 @@ export function WeakWordsPage() {
           </p>
         </div>
         <div className="weak-words-hero__actions">
-          <Button
-            asChild
-            variant="primary"
-            disabled={!hasWords || isLoading}
-          >
+          <Button asChild variant="primary" disabled={!hasWords || isLoading}>
             <Link to={drillHref}>
               <Play size={15} aria-hidden="true" />
               Start Drill
@@ -170,7 +175,11 @@ export function WeakWordsPage() {
             description={error}
             icon={<AlertCircle size={28} aria-hidden="true" />}
             actions={
-              <Button type="button" variant="primary" onClick={() => void load()}>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => void load()}
+              >
                 <RotateCcw size={16} aria-hidden="true" />
                 Try again
               </Button>

@@ -48,7 +48,10 @@ export const masteryDistribution: MasteryLevel[] = [
   { label: "New", count: 55, color: "#94a3b8" },
 ];
 
-export const masteryTotal = masteryDistribution.reduce((s, l) => s + l.count, 0);
+export const masteryTotal = masteryDistribution.reduce(
+  (s, l) => s + l.count,
+  0,
+);
 
 export const weakTopics: WeakTopic[] = [
   {

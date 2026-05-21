@@ -89,13 +89,15 @@ try {
   await screenshot(page, "home");
 
   await page.goto(`${baseUrl}/#/discover`);
-  await expect(page.getByRole("heading", { level: 1, name: "Discover" }))
-    .toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Discover" }),
+  ).toBeVisible();
   await screenshot(page, "discover");
 
   await page.goto(`${baseUrl}/#/library`);
-  await expect(page.getByText("Your installed learning decks, ready offline."))
-    .toBeVisible();
+  await expect(
+    page.getByText("Your installed learning decks, ready offline."),
+  ).toBeVisible();
   await screenshot(page, "library");
 
   await page.goto(`${baseUrl}/#/study/session`);
@@ -107,8 +109,9 @@ try {
   await screenshot(page, "study-session");
 
   await page.goto(`${baseUrl}/#/word/10`);
-  await expect(page.getByRole("heading", { level: 1, name: "run" }))
-    .toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "run" }),
+  ).toBeVisible();
   await screenshot(page, "word-detail");
 
   await page.goto(`${baseUrl}/#/achievements`);
@@ -117,8 +120,9 @@ try {
 
   await loginAs(page, baseUrl, "owner");
   await page.goto(`${baseUrl}/#/admin/data-studio`);
-  await expect(page.getByRole("heading", { level: 2, name: "Data Studio" }))
-    .toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Data Studio" }),
+  ).toBeVisible();
   await expect(page.getByRole("tab", { name: /vocabulary/i })).toBeVisible();
   await screenshot(page, "data-studio");
 

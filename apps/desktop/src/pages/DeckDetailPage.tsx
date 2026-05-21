@@ -73,21 +73,24 @@ function buildStudyModes(deck: DeckDetailDto): StudyMode[] {
       title: "Flashcards",
     },
     {
-      description: "Choose the right Vietnamese meaning from plausible options.",
+      description:
+        "Choose the right Vietnamese meaning from plausible options.",
       estimate: `${Math.min(deck.wordCount, 20)} questions`,
       href: studyHref(deck.id, "multiple-choice"),
       Icon: ClipboardCheck,
       title: "Multiple Choice",
     },
     {
-      description: "Type the Vietnamese meaning and grade recall with fuzzy matching.",
+      description:
+        "Type the Vietnamese meaning and grade recall with fuzzy matching.",
       estimate: `${Math.min(deck.wordCount, 20)} prompts`,
       href: studyHref(deck.id, "type-answer"),
       Icon: Keyboard,
       title: "Type Answer",
     },
     {
-      description: "Focus on cards with lapses, high difficulty, or low stability.",
+      description:
+        "Focus on cards with lapses, high difficulty, or low stability.",
       estimate: `${deck.progress.dueCount} due`,
       href: studyHref(deck.id, "weak_drill"),
       Icon: Layers3,

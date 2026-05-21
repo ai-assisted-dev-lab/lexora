@@ -77,7 +77,12 @@ export function NotificationCenter({
   if (!open) return null;
 
   return (
-    <div className="notif-panel" ref={panelRef} role="dialog" aria-label="Notifications">
+    <div
+      className="notif-panel"
+      ref={panelRef}
+      role="dialog"
+      aria-label="Notifications"
+    >
       <div className="notif-panel__header">
         <span className="notif-panel__title">Reminders</span>
         <button

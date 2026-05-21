@@ -40,11 +40,7 @@ import {
   ProgressBar,
   StatCard,
 } from "@/components/ui";
-import {
-  gradeAnswer,
-  gradeToRating,
-  type MatchGrade,
-} from "@/lib/fuzzy-match";
+import { gradeAnswer, gradeToRating, type MatchGrade } from "@/lib/fuzzy-match";
 import {
   completeStudySession,
   type MultipleChoiceOptionDto,
@@ -76,11 +72,18 @@ const flashcardModeAliases = new Set([
   "learn",
 ]);
 
-const multipleChoiceModeAliases = new Set(["multiple-choice", "multiple_choice"]);
+const multipleChoiceModeAliases = new Set([
+  "multiple-choice",
+  "multiple_choice",
+]);
 
 const typeAnswerModeAliases = new Set(["type-answer", "type_answer"]);
 
-const weakDrillModeAliases = new Set(["weak-drill", "weak_drill", "weak-words"]);
+const weakDrillModeAliases = new Set([
+  "weak-drill",
+  "weak_drill",
+  "weak-words",
+]);
 
 const ratingButtons: Array<{
   label: string;
@@ -165,7 +168,10 @@ export function StudySessionPage() {
         ? "weak_drill"
         : "flashcard";
   const isSupportedMode =
-    isFlashcardMode || isMultipleChoiceMode || isTypeAnswerMode || isWeakDrillMode;
+    isFlashcardMode ||
+    isMultipleChoiceMode ||
+    isTypeAnswerMode ||
+    isWeakDrillMode;
 
   const [session, setSession] = useState<StudySessionDto | null>(null);
   const [multipleChoiceSession, setMultipleChoiceSession] =
@@ -196,8 +202,7 @@ export function StudySessionPage() {
   const currentItem = session?.queue.items[currentIndex] ?? null;
   const currentQuestion =
     multipleChoiceSession?.questions[currentIndex] ?? null;
-  const typeAnswerItem =
-    typeAnswerSession?.queue.items[currentIndex] ?? null;
+  const typeAnswerItem = typeAnswerSession?.queue.items[currentIndex] ?? null;
   const currentCard = currentItem ?? currentQuestion ?? typeAnswerItem;
   const isComplete = summary !== null;
   const activeSession = multipleChoiceSession ?? typeAnswerSession ?? session;
@@ -375,14 +380,7 @@ export function StudySessionPage() {
         setIsSubmitting(false);
       }
     },
-    [
-      cardStartedAtMs,
-      currentIndex,
-      currentItem,
-      isFlipped,
-      session,
-      summary,
-    ],
+    [cardStartedAtMs, currentIndex, currentItem, isFlipped, session, summary],
   );
 
   const submitMultipleChoiceOption = useCallback(
@@ -566,8 +564,7 @@ export function StudySessionPage() {
       return;
     }
 
-    const isLastItem =
-      currentIndex >= typeAnswerSession.queue.items.length - 1;
+    const isLastItem = currentIndex >= typeAnswerSession.queue.items.length - 1;
     if (isLastItem) {
       isSubmittingRef.current = true;
       setIsSubmitting(true);
@@ -636,7 +633,9 @@ export function StudySessionPage() {
         return;
       }
 
-      const shortcut = ratingButtons.find((rating) => rating.hint === event.key);
+      const shortcut = ratingButtons.find(
+        (rating) => rating.hint === event.key,
+      );
       if (shortcut && isFlipped) {
         event.preventDefault();
         void submitRating(shortcut.rating);
@@ -794,10 +793,7 @@ export function StudySessionPage() {
         </Card>
       )}
 
-      {!isLoading &&
-        !error &&
-        activeSession &&
-        totalItems === 0 && (
+      {!isLoading && !error && activeSession && totalItems === 0 && (
         <Card className="study-session-state-card" variant="glass">
           <EmptyState
             title="No cards ready"
@@ -994,7 +990,9 @@ function FlashcardView({ flipped, item, onFlip }: FlashcardViewProps) {
           )}
           {(item.exampleSentenceEn || item.exampleSentenceVi) && (
             <div className="flashcard__example">
-              {item.exampleSentenceEn && <strong>{item.exampleSentenceEn}</strong>}
+              {item.exampleSentenceEn && (
+                <strong>{item.exampleSentenceEn}</strong>
+              )}
               {item.exampleSentenceVi && <span>{item.exampleSentenceVi}</span>}
             </div>
           )}
@@ -1075,9 +1073,7 @@ function MultipleChoiceView({
           role="status"
         >
           <strong>{feedback.isCorrect ? "Correct" : "Not quite"}</strong>
-          <span>
-            Saved as {feedback.rating === "good" ? "Good" : "Again"}.
-          </span>
+          <span>Saved as {feedback.rating === "good" ? "Good" : "Again"}.</span>
           <Button
             type="button"
             variant="primary"
@@ -1243,8 +1239,7 @@ function gradeFromAccuracy(accuracy: number): {
   if (accuracy >= 50) {
     return {
       label: "Good effort",
-      subtitle:
-        "Solid progress. The tricky words need a few more repetitions.",
+      subtitle: "Solid progress. The tricky words need a few more repetitions.",
       iconEl: <Sparkles size={34} aria-hidden="true" />,
       grade: "good",
     };
@@ -1325,7 +1320,9 @@ function RatingBar({ again, hard, good, easy }: RatingBarProps) {
 }
 
 function SessionSummary({ summary }: SessionSummaryProps) {
-  const { label, subtitle, iconEl, grade } = gradeFromAccuracy(summary.accuracy);
+  const { label, subtitle, iconEl, grade } = gradeFromAccuracy(
+    summary.accuracy,
+  );
   const masteredCount = summary.goodCount + summary.easyCount;
   const continueHref = `/study/session?mode=${encodeURIComponent(summary.mode)}&sessionLength=20${
     summary.deckId ? `&deckId=${summary.deckId}` : ""
@@ -1362,10 +1359,7 @@ function SessionSummary({ summary }: SessionSummaryProps) {
         className="session-summary__accuracy"
         variants={summaryItemVariants}
       >
-        <span
-          className="session-summary__accuracy-number"
-          data-grade={grade}
-        >
+        <span className="session-summary__accuracy-number" data-grade={grade}>
           {summary.accuracy}%
         </span>
         <span className="session-summary__accuracy-label">{accuracyLabel}</span>

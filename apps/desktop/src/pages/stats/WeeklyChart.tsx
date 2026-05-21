@@ -39,7 +39,10 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
       aria-label="Weekly words reviewed bar chart"
     >
       <ResponsiveContainer width="100%" height={150}>
-        <BarChart data={data} margin={{ top: 8, right: 0, left: -28, bottom: 0 }}>
+        <BarChart
+          data={data}
+          margin={{ top: 8, right: 0, left: -28, bottom: 0 }}
+        >
           <XAxis
             dataKey="day"
             axisLine={false}

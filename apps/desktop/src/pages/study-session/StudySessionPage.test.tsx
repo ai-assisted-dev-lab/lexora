@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -107,7 +113,8 @@ const multipleChoiceQuestion = {
   definitionEn: "To explain something in more detail.",
   definitionVi: "trÃ¬nh bÃ y chi tiáº¿t",
   exampleSentenceEn: "Could you elaborate on your answer?",
-  exampleSentenceVi: "Báº¡n cÃ³ thá»ƒ trÃ¬nh bÃ y chi tiáº¿t hÆ¡n cÃ¢u tráº£ lá»i khÃ´ng?",
+  exampleSentenceVi:
+    "Báº¡n cÃ³ thá»ƒ trÃ¬nh bÃ y chi tiáº¿t hÆ¡n cÃ¢u tráº£ lá»i khÃ´ng?",
   additionalSenseCount: 1,
   options: [
     { vocabularyItemId: 103, label: "pháº£n Ä‘á»‘i máº¡nh máº½" },
@@ -152,7 +159,11 @@ function progress(reviewedCount: number, rating: string) {
   };
 }
 
-function multipleChoiceProgress(reviewedCount: number, rating: string, correct: boolean) {
+function multipleChoiceProgress(
+  reviewedCount: number,
+  rating: string,
+  correct: boolean,
+) {
   return {
     sessionId: 88,
     totalItems: 1,
@@ -316,8 +327,9 @@ describe("StudySessionPage", () => {
       input: { deckId: 1, sessionLength: 20, mode: "flashcard" },
     });
     expect(screen.getByText("Deck 1")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "Session progress" }))
-      .toHaveAttribute("aria-valuemax", "2");
+    expect(
+      screen.getByRole("progressbar", { name: "Session progress" }),
+    ).toHaveAttribute("aria-valuemax", "2");
     expect(screen.getByText("elaborate")).toBeInTheDocument();
     expect(screen.getByText("verb")).toBeInTheDocument();
     expect(screen.getByLabelText("Audio placeholder")).toBeInTheDocument();
@@ -453,10 +465,12 @@ describe("StudySessionPage", () => {
     expect(invokeMock).toHaveBeenCalledWith("start_multiple_choice_session", {
       input: { deckId: 1, sessionLength: 20, mode: "multiple_choice" },
     });
-    expect(screen.getByText("Choose the Vietnamese meaning")).toBeInTheDocument();
-    const options = screen.getAllByRole("button").filter((button) =>
-      button.classList.contains("choice-card__option"),
-    );
+    expect(
+      screen.getByText("Choose the Vietnamese meaning"),
+    ).toBeInTheDocument();
+    const options = screen
+      .getAllByRole("button")
+      .filter((button) => button.classList.contains("choice-card__option"));
     expect(options).toHaveLength(4);
     expect(new Set(options.map((option) => option.textContent))).toHaveProperty(
       "size",

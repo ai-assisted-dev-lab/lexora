@@ -23,7 +23,10 @@ export function registerOnlineTtsProvider(provider: OnlineTtsProvider): void {
   onlineProviders.set(provider.id, provider);
 }
 
-function voiceMatchesAccent(voice: SpeechSynthesisVoice, accent: PronunciationAccent): boolean {
+function voiceMatchesAccent(
+  voice: SpeechSynthesisVoice,
+  accent: PronunciationAccent,
+): boolean {
   const lang = voice.lang.toLowerCase();
   if (accent === "uk") return lang.includes("en-gb");
   if (accent === "us") return lang.includes("en-us");
@@ -44,14 +47,21 @@ export function speakWithBrowserTts(
   text: string,
   options: TtsPlaybackOptions,
 ): Promise<void> {
-  if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+  if (
+    !("speechSynthesis" in window) ||
+    !("SpeechSynthesisUtterance" in window)
+  ) {
     return Promise.reject(new Error("Browser TTS is not available."));
   }
 
   return new Promise((resolve, reject) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang =
-      options.accent === "uk" ? "en-GB" : options.accent === "us" ? "en-US" : "en";
+      options.accent === "uk"
+        ? "en-GB"
+        : options.accent === "us"
+          ? "en-US"
+          : "en";
     utterance.rate = options.speed;
     utterance.voice = chooseVoice(options.accent);
     utterance.onend = () => resolve();
@@ -95,7 +105,8 @@ export async function playTtsFallback(
         const audio = new Audio(url);
         await new Promise<void>((resolve, reject) => {
           audio.onended = () => resolve();
-          audio.onerror = () => reject(new Error("Online TTS playback failed."));
+          audio.onerror = () =>
+            reject(new Error("Online TTS playback failed."));
           audio.play().catch(reject);
         });
         return;

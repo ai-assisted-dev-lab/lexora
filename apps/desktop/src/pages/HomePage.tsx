@@ -96,14 +96,18 @@ export function HomePage() {
   const livePopularDecks = useMemo(
     () =>
       discover.decks.length > 0
-        ? discover.decks.slice(0, 3).map((deck, index) => toDeckCard(deck, index))
+        ? discover.decks
+            .slice(0, 3)
+            .map((deck, index) => toDeckCard(deck, index))
         : popularDecks,
     [discover.decks],
   );
   const liveLibraryDecks = useMemo(
     () =>
       library.decks.length > 0
-        ? library.decks.slice(0, 3).map((deck, index) => toDeckCard(deck, index))
+        ? library.decks
+            .slice(0, 3)
+            .map((deck, index) => toDeckCard(deck, index))
         : libraryDecks,
     [library.decks],
   );
@@ -163,7 +167,11 @@ export function HomePage() {
         {
           label: "Mastered words",
           value: gamification.masteredWords,
-          max: Math.max(gamification.masteredWords, gamification.totalCardsReviewed, 1),
+          max: Math.max(
+            gamification.masteredWords,
+            gamification.totalCardsReviewed,
+            1,
+          ),
           caption: `${gamification.masteredWords.toLocaleString()} mastered`,
         },
       ]

@@ -139,7 +139,11 @@ export function WordDetailPage() {
   const wordId = parseWordId(wordIdParam);
   const { error, isLoading, notFound, word } = useWordDetail(wordId);
   const [activeTab, setActiveTab] = useState<WordDetailTab>("overview");
-  const { state: audioState, play: playAudio, stop: stopAudio } = useAudioPlayer();
+  const {
+    state: audioState,
+    play: playAudio,
+    stop: stopAudio,
+  } = useAudioPlayer();
   const { settings: pronunciationSettings } = usePronunciationSettings();
 
   const activeTabLabel = useMemo(

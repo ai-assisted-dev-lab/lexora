@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -88,14 +94,18 @@ describe("DiscoverPage", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("Everyday Actions").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Around the House").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Greetings and Social").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Greetings and Social").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("renders CEFR and tag filter groups", async () => {
     await renderAndWait();
 
     expect(screen.getByRole("button", { name: "A1" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "beginner" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "beginner" }),
+    ).toBeInTheDocument();
   });
 
   it("filters decks by tag", async () => {
@@ -106,9 +116,10 @@ describe("DiscoverPage", () => {
 
     expect(screen.getAllByText("Everyday Actions").length).toBeGreaterThan(0);
     expect(screen.queryByText("Around the House")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "verbs" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "verbs" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("tag filter narrows deck list, resetting restores all decks", async () => {
@@ -164,7 +175,9 @@ describe("DiscoverPage", () => {
       .map((el) => el.closest(".catalog-card"))
       .filter(Boolean) as HTMLElement[];
     const card = cards[0];
-    const addBtn = within(card).getByRole("button", { name: /add to library/i });
+    const addBtn = within(card).getByRole("button", {
+      name: /add to library/i,
+    });
 
     await user.click(addBtn);
 
@@ -184,7 +197,9 @@ describe("DiscoverPage", () => {
       .map((el) => el.closest(".catalog-card"))
       .filter(Boolean) as HTMLElement[];
     const card = cards[0];
-    const installedBtn = within(card).getByRole("button", { name: /installed/i });
+    const installedBtn = within(card).getByRole("button", {
+      name: /installed/i,
+    });
 
     await user.click(installedBtn);
 

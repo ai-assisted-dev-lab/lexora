@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { dbHealthCheck,type DbHealthDto } from "@/services/commands/db";
+import { dbHealthCheck, type DbHealthDto } from "@/services/commands/db";
 
 /**
  * Calls `db_health_check` once on mount and returns the result.

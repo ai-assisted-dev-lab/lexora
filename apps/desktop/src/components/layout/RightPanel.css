@@ -57,7 +57,11 @@
   height: 72px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at center, var(--color-surface) 54%, transparent 56%),
+    radial-gradient(
+      circle at center,
+      var(--color-surface) 54%,
+      transparent 56%
+    ),
     conic-gradient(
       var(--color-accent) var(--goal-pct, 0%),
       var(--color-border) 0

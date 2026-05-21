@@ -461,10 +461,7 @@ function VocabularyRow({
       className={active ? "ds-row--active" : undefined}
       onClick={onOpen}
     >
-      <td
-        className="ds-table__check"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <td className="ds-table__check" onClick={(e) => e.stopPropagation()}>
         <input
           type="checkbox"
           checked={selected}
@@ -506,13 +503,19 @@ function VocabularyRow({
   );
 }
 
-function MissingDots({
-  flags,
-}: {
-  flags: AdminVocabularyListItem["missing"];
-}) {
-  const entries: { key: string; label: string; on: boolean; critical?: boolean }[] = [
-    { key: "meaning", label: "Vietnamese meaning", on: flags.meaning, critical: true },
+function MissingDots({ flags }: { flags: AdminVocabularyListItem["missing"] }) {
+  const entries: {
+    key: string;
+    label: string;
+    on: boolean;
+    critical?: boolean;
+  }[] = [
+    {
+      key: "meaning",
+      label: "Vietnamese meaning",
+      on: flags.meaning,
+      critical: true,
+    },
     {
       key: "definition",
       label: "English definition",
@@ -592,10 +595,8 @@ export function VocabularyDetailDrawer({ id, onClose, onSaved }: DrawerProps) {
       (form.ipaUk ?? "") !== (detail.ipaUk ?? "") ||
       (form.ipaUs ?? "") !== (detail.ipaUs ?? "") ||
       form.reviewStatus !== detail.reviewStatus ||
-      (form.primaryDefinitionEn ?? "") !==
-        (detail.primaryDefinitionEn ?? "") ||
-      (form.primaryDefinitionVi ?? "") !==
-        (detail.primaryDefinitionVi ?? "") ||
+      (form.primaryDefinitionEn ?? "") !== (detail.primaryDefinitionEn ?? "") ||
+      (form.primaryDefinitionVi ?? "") !== (detail.primaryDefinitionVi ?? "") ||
       (form.primaryExampleEn ?? "") !== (detail.primaryExampleEn ?? "") ||
       (form.primaryExampleVi ?? "") !== (detail.primaryExampleVi ?? "")
     );
@@ -629,14 +630,12 @@ export function VocabularyDetailDrawer({ id, onClose, onSaved }: DrawerProps) {
       patch.reviewStatus = form.reviewStatus;
     }
     if (
-      (form.primaryDefinitionEn ?? "") !==
-      (detail.primaryDefinitionEn ?? "")
+      (form.primaryDefinitionEn ?? "") !== (detail.primaryDefinitionEn ?? "")
     ) {
       patch.primaryDefinitionEn = form.primaryDefinitionEn ?? "";
     }
     if (
-      (form.primaryDefinitionVi ?? "") !==
-      (detail.primaryDefinitionVi ?? "")
+      (form.primaryDefinitionVi ?? "") !== (detail.primaryDefinitionVi ?? "")
     ) {
       patch.primaryDefinitionVi = form.primaryDefinitionVi ?? "";
     }
@@ -749,9 +748,7 @@ export function VocabularyDetailDrawer({ id, onClose, onSaved }: DrawerProps) {
                     className="ds-input"
                     value={form.partOfSpeech ?? ""}
                     placeholder="e.g. noun, verb"
-                    onChange={(e) =>
-                      setField("partOfSpeech", e.target.value)
-                    }
+                    onChange={(e) => setField("partOfSpeech", e.target.value)}
                   />
                 </Field>
                 <Field label="CEFR level">
@@ -812,14 +809,18 @@ export function VocabularyDetailDrawer({ id, onClose, onSaved }: DrawerProps) {
                   </span>
                 </Field>
                 <Field label="Pronunciation count">
-                  <span className="ds-input" style={{ background: "transparent" }}>
+                  <span
+                    className="ds-input"
+                    style={{ background: "transparent" }}
+                  >
                     {detail?.pronunciationCount ?? 0}
                   </span>
                 </Field>
               </div>
 
               <div className="ds-form-section-title">
-                Primary sense {form.senseCount > 1 ? `(${form.senseCount} senses total)` : ""}
+                Primary sense{" "}
+                {form.senseCount > 1 ? `(${form.senseCount} senses total)` : ""}
               </div>
               <div className="ds-form-grid ds-form-grid--full">
                 <Field label="English definition">
@@ -881,7 +882,10 @@ export function VocabularyDetailDrawer({ id, onClose, onSaved }: DrawerProps) {
                   </select>
                 </Field>
                 <Field label="Decks">
-                  <span className="ds-input" style={{ background: "transparent" }}>
+                  <span
+                    className="ds-input"
+                    style={{ background: "transparent" }}
+                  >
                     {detail?.deckCount ?? 0}
                   </span>
                 </Field>

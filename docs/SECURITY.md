@@ -53,11 +53,11 @@ user-supplied password.
 
 ### OS credential store
 
-| Platform | Backend                                               |
-| -------- | ----------------------------------------------------- |
-| Windows  | Windows Credential Manager (`wincred` API)            |
-| macOS    | Keychain Services                                     |
-| Linux    | libsecret / Secret Service (D-Bus) or kernel keyring  |
+| Platform | Backend                                              |
+| -------- | ---------------------------------------------------- |
+| Windows  | Windows Credential Manager (`wincred` API)           |
+| macOS    | Keychain Services                                    |
+| Linux    | libsecret / Secret Service (D-Bus) or kernel keyring |
 
 The `keyring` crate (v2) provides the cross-platform abstraction.
 
@@ -143,12 +143,12 @@ A migration utility (`sqlcipher_export` pragma) can be added later.
 
 ## Key Management Assumptions
 
-| Assumption                                            | Implication                                          |
-| ----------------------------------------------------- | ---------------------------------------------------- |
-| One Windows user account per installation             | Key is scoped to the user account; multi-user setups are unsupported in V1 |
-| Windows Credential Manager is not disabled by policy  | Enterprise machines with restrictive GPO may block this; add a fallback |
-| First-launch key generation succeeds                  | If `getrandom` fails (rare), the app cannot open the DB |
-| User does not manually delete the keychain entry      | No self-service recovery path in V1 |
+| Assumption                                           | Implication                                                                |
+| ---------------------------------------------------- | -------------------------------------------------------------------------- |
+| One Windows user account per installation            | Key is scoped to the user account; multi-user setups are unsupported in V1 |
+| Windows Credential Manager is not disabled by policy | Enterprise machines with restrictive GPO may block this; add a fallback    |
+| First-launch key generation succeeds                 | If `getrandom` fails (rare), the app cannot open the DB                    |
+| User does not manually delete the keychain entry     | No self-service recovery path in V1                                        |
 
 ---
 
@@ -167,8 +167,8 @@ These are documented for future milestones, not blocked.
 
 ## Files Affected
 
-| File                                           | Purpose                                      |
-| ---------------------------------------------- | -------------------------------------------- |
-| `src-tauri/src/db/encryption.rs`               | Key generation, keychain read/write          |
-| `src-tauri/src/db/mod.rs`                      | Applies `PRAGMA key` before any other pragma |
-| `src-tauri/Cargo.toml`                         | `sqlcipher` feature, `keyring`, `getrandom`  |
+| File                             | Purpose                                      |
+| -------------------------------- | -------------------------------------------- |
+| `src-tauri/src/db/encryption.rs` | Key generation, keychain read/write          |
+| `src-tauri/src/db/mod.rs`        | Applies `PRAGMA key` before any other pragma |
+| `src-tauri/Cargo.toml`           | `sqlcipher` feature, `keyring`, `getrandom`  |

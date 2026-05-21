@@ -126,9 +126,7 @@ export function AdminDataStudioPage() {
               >
                 <Icon size={14} aria-hidden="true" />
                 <span>{tab.label}</span>
-                {!tab.enabled && (
-                  <span className="ds-tab__count">soon</span>
-                )}
+                {!tab.enabled && <span className="ds-tab__count">soon</span>}
               </button>
             );
           })}

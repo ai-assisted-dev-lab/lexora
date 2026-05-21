@@ -80,7 +80,10 @@ function fromFsrsCard(card: Card): LexoraReviewCardState {
       card.scheduled_days,
       "card.scheduledDays",
     ),
-    learningSteps: assertFiniteNumber(card.learning_steps, "card.learningSteps"),
+    learningSteps: assertFiniteNumber(
+      card.learning_steps,
+      "card.learningSteps",
+    ),
     reps: assertNonNegativeInteger(card.reps, "card.reps"),
     lapses: assertNonNegativeInteger(card.lapses, "card.lapses"),
     state: fromFsrsState(card.state),
@@ -101,7 +104,10 @@ function toFsrsCard(card: LexoraReviewCardState): Card {
       card.scheduledDays,
       "card.scheduledDays",
     ),
-    learning_steps: assertFiniteNumber(card.learningSteps, "card.learningSteps"),
+    learning_steps: assertFiniteNumber(
+      card.learningSteps,
+      "card.learningSteps",
+    ),
     reps: assertNonNegativeInteger(card.reps, "card.reps"),
     lapses: assertNonNegativeInteger(card.lapses, "card.lapses"),
     state: toFsrsState(card.state),

@@ -36,10 +36,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "nsis",
-      "msi"
-    ],
+    "targets": ["nsis", "msi"],
     "createUpdaterArtifacts": false,
     "publisher": "Lexora Labs",
     "copyright": "Copyright (c) 2026 Lexora Labs",
@@ -66,9 +63,7 @@
         "installerIcon": "icons/icon.ico",
         "uninstallerIcon": "icons/icon.ico",
         "installMode": "currentUser",
-        "languages": [
-          "English"
-        ],
+        "languages": ["English"],
         "displayLanguageSelector": false,
         "compression": "lzma",
         "startMenuFolder": "Lexora"

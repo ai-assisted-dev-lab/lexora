@@ -37,8 +37,18 @@ export const favoriteDeck = {
 };
 
 export const showcaseAchievements: ShowcaseAchievement[] = [
-  { title: "Week Warrior", category: "Streak", tier: "silver", iconName: "Flame" },
-  { title: "Sharp Eye", category: "Accuracy", tier: "silver", iconName: "Target" },
+  {
+    title: "Week Warrior",
+    category: "Streak",
+    tier: "silver",
+    iconName: "Flame",
+  },
+  {
+    title: "Sharp Eye",
+    category: "Accuracy",
+    tier: "silver",
+    iconName: "Target",
+  },
   { title: "Century", category: "Words", tier: "bronze", iconName: "BookOpen" },
 ];
 

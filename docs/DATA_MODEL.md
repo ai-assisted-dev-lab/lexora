@@ -263,20 +263,20 @@ FSRS state per (user, word) pair.
 
 Immutable append-only log of every review event.
 
-| Column               | Type                         | Notes                                            |
-| -------------------- | ---------------------------- | ------------------------------------------------ |
-| `id`                 | INTEGER PK                   |                                                  |
-| `user_id`            | INTEGER FK → users           |                                                  |
-| `word_id`            | INTEGER FK → words           |                                                  |
-| `session_id`         | INTEGER FK → study_sessions  |                                                  |
-| `rating`             | INTEGER NOT NULL             | 1=Again, 2=Hard, 3=Good, 4=Easy                  |
-| `result`             | TEXT NOT NULL                | `'pass'`, `'fail'`                               |
-| `mode`               | TEXT NOT NULL                | `'review'`, `'learn'`, `'cram'`, `'preview'`     |
-| `state_before`       | TEXT NOT NULL                | JSON snapshot of FSRS state before               |
-| `state_after`        | TEXT NOT NULL                | JSON snapshot of FSRS state after                |
-| `review_duration_ms` | INTEGER                      | Time spent on this card                          |
-| `device`             | TEXT                         | Device identifier/type                           |
-| `reviewed_at`        | TEXT NOT NULL                | ISO 8601 UTC                                     |
+| Column               | Type                        | Notes                                        |
+| -------------------- | --------------------------- | -------------------------------------------- |
+| `id`                 | INTEGER PK                  |                                              |
+| `user_id`            | INTEGER FK → users          |                                              |
+| `word_id`            | INTEGER FK → words          |                                              |
+| `session_id`         | INTEGER FK → study_sessions |                                              |
+| `rating`             | INTEGER NOT NULL            | 1=Again, 2=Hard, 3=Good, 4=Easy              |
+| `result`             | TEXT NOT NULL               | `'pass'`, `'fail'`                           |
+| `mode`               | TEXT NOT NULL               | `'review'`, `'learn'`, `'cram'`, `'preview'` |
+| `state_before`       | TEXT NOT NULL               | JSON snapshot of FSRS state before           |
+| `state_after`        | TEXT NOT NULL               | JSON snapshot of FSRS state after            |
+| `review_duration_ms` | INTEGER                     | Time spent on this card                      |
+| `device`             | TEXT                        | Device identifier/type                       |
+| `reviewed_at`        | TEXT NOT NULL               | ISO 8601 UTC                                 |
 
 ---
 
@@ -321,13 +321,13 @@ Static definitions for achievement types (can be shipped in app bundle).
 
 Per-user unlock records.
 
-| Column           | Type                          | Notes                              |
-| ---------------- | ----------------------------- | ---------------------------------- |
-| `user_id`        | INTEGER FK → users            |                                    |
-| `achievement_id` | INTEGER FK → achievements     |                                    |
-| `unlocked_at`    | TEXT NOT NULL                 | ISO 8601 UTC                       |
-| `notified`       | INTEGER DEFAULT 0             | 1 = UI toast already shown         |
-| PRIMARY KEY      | (`user_id`, `achievement_id`) |                                    |
+| Column           | Type                          | Notes                      |
+| ---------------- | ----------------------------- | -------------------------- |
+| `user_id`        | INTEGER FK → users            |                            |
+| `achievement_id` | INTEGER FK → achievements     |                            |
+| `unlocked_at`    | TEXT NOT NULL                 | ISO 8601 UTC               |
+| `notified`       | INTEGER DEFAULT 0             | 1 = UI toast already shown |
+| PRIMARY KEY      | (`user_id`, `achievement_id`) |                            |
 
 ---
 
@@ -396,15 +396,15 @@ Metadata for backup files created on disk.
 
 Per-user study reminder configuration.
 
-| Column        | Type               | Notes                             |
-| ------------- | ------------------ | --------------------------------- |
-| `id`          | INTEGER PK         |                                   |
-| `user_id`     | INTEGER FK → users |                                   |
-| `remind_at`   | TEXT NOT NULL      | HH:MM local time                  |
-| `enabled`     | INTEGER DEFAULT 1  | Boolean                           |
-| `days_of_week`| TEXT DEFAULT '1111111' | 7-char bitmask Mon–Sun         |
-| `created_at`  | TEXT NOT NULL      |                                   |
-| `updated_at`  | TEXT NOT NULL      |                                   |
+| Column         | Type                   | Notes                  |
+| -------------- | ---------------------- | ---------------------- |
+| `id`           | INTEGER PK             |                        |
+| `user_id`      | INTEGER FK → users     |                        |
+| `remind_at`    | TEXT NOT NULL          | HH:MM local time       |
+| `enabled`      | INTEGER DEFAULT 1      | Boolean                |
+| `days_of_week` | TEXT DEFAULT '1111111' | 7-char bitmask Mon–Sun |
+| `created_at`   | TEXT NOT NULL          |                        |
+| `updated_at`   | TEXT NOT NULL          |                        |
 
 ---
 

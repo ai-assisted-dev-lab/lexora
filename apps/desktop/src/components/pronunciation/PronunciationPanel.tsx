@@ -105,7 +105,9 @@ function AudioRecordCard({
         <strong>{record.dialect.toUpperCase()} audio</strong>
         <p>{record.audioPath}</p>
         {record.ttsEngine && (
-          <p className="pronunciation-panel__audio-engine">{record.ttsEngine}</p>
+          <p className="pronunciation-panel__audio-engine">
+            {record.ttsEngine}
+          </p>
         )}
         {state === "error" && (
           <p className="pronunciation-panel__audio-error">

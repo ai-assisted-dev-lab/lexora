@@ -5,7 +5,15 @@
   "description": "Versioned manifest for Lexora seed data, catalog, asset, and optional audio package updates.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "schemaVersion", "manifestVersion", "channel", "publishedAt", "app", "packages"],
+  "required": [
+    "schema",
+    "schemaVersion",
+    "manifestVersion",
+    "channel",
+    "publishedAt",
+    "app",
+    "packages"
+  ],
   "properties": {
     "schema": {
       "const": "lexora.content-manifest"

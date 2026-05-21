@@ -88,14 +88,14 @@ Approaches that were explicitly considered and rejected.
 
 ## Open Questions (To Be Resolved in Later Prompts)
 
-| Question                             | Status                | Target Prompt |
-| ------------------------------------ | --------------------- | ------------- |
-| SQLCipher key derivation strategy    | Resolved — Prompt 22  | Prompt 22     |
-| Audio package format and compression | Open                  | Prompt 44     |
-| Backup archive format                | Open                  | Prompt 54     |
-| Update server hosting                | Open                  | Prompt 56     |
-| Installer type (.msi vs NSIS)        | Open                  | Prompt 58     |
-| First-run owner setup flow           | Open                  | Prompt 21     |
+| Question                             | Status               | Target Prompt |
+| ------------------------------------ | -------------------- | ------------- |
+| SQLCipher key derivation strategy    | Resolved — Prompt 22 | Prompt 22     |
+| Audio package format and compression | Open                 | Prompt 44     |
+| Backup archive format                | Open                 | Prompt 54     |
+| Update server hosting                | Open                 | Prompt 56     |
+| Installer type (.msi vs NSIS)        | Open                 | Prompt 58     |
+| First-run owner setup flow           | Open                 | Prompt 21     |
 
 ### SQLCipher key derivation strategy (Resolved)
 

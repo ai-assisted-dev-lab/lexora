@@ -49,14 +49,34 @@ function LexoraLogoMark() {
       focusable="false"
     >
       <defs>
-        <linearGradient id="login-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient
+          id="login-logo-grad"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="100%"
+        >
           <stop offset="0%" stopColor="var(--color-primary)" />
           <stop offset="100%" stopColor="var(--color-cyan)" />
         </linearGradient>
       </defs>
       {/* Stylised "L" — vertical stroke + horizontal base */}
-      <rect x="4" y="4" width="4" height="16" rx="1" fill="url(#login-logo-grad)" />
-      <rect x="4" y="16" width="13" height="4" rx="1" fill="url(#login-logo-grad)" />
+      <rect
+        x="4"
+        y="4"
+        width="4"
+        height="16"
+        rx="1"
+        fill="url(#login-logo-grad)"
+      />
+      <rect
+        x="4"
+        y="16"
+        width="13"
+        height="4"
+        rx="1"
+        fill="url(#login-logo-grad)"
+      />
     </svg>
   );
 }
@@ -128,11 +148,7 @@ export function LoginPage() {
           </p>
 
           {/* Form */}
-          <form
-            className="login-page__form"
-            onSubmit={handleSubmit}
-            noValidate
-          >
+          <form className="login-page__form" onSubmit={handleSubmit} noValidate>
             {/* Username field */}
             <div className="lx-form-group">
               <label className="lx-form-label" htmlFor="login-username">

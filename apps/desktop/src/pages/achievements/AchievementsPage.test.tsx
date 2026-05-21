@@ -54,9 +54,7 @@ describe("AchievementsPage", () => {
       "Pronunciation",
       "Hidden",
     ]) {
-      expect(
-        screen.getByRole("button", { name: label }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     }
   });
 

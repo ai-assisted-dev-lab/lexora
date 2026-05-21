@@ -332,9 +332,7 @@ export interface WeakWordsDto {
   items: SmartReviewQueueItemDto[];
 }
 
-export function getWeakWords(
-  deckId?: number | null,
-): Promise<WeakWordsDto> {
+export function getWeakWords(deckId?: number | null): Promise<WeakWordsDto> {
   return invoke<WeakWordsDto>("get_weak_words", { deckId });
 }
 
