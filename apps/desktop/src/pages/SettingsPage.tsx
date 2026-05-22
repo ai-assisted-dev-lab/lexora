@@ -27,19 +27,19 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/feedback";
 import { Badge, Button, Card, SectionHeader } from "@/components/ui";
 import { useAppInfo } from "@/hooks/useAppInfo";
+import { useDbHealth } from "@/hooks/useDbHealth";
+import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
+import { useSchemaVersion } from "@/hooks/useSchemaVersion";
 import {
   LANGUAGE_LABELS,
-  type SupportedLanguage,
   SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
 } from "@/i18n";
 import { useLanguage } from "@/i18n/useLanguage";
 import {
   accountUsesDefaultPassword,
   changePassword,
 } from "@/services/commands/auth";
-import { useDbHealth } from "@/hooks/useDbHealth";
-import { usePronunciationSettings } from "@/hooks/usePronunciationSettings";
-import { useSchemaVersion } from "@/hooks/useSchemaVersion";
 import type {
   BackupHistoryItemDto,
   BackupValidationDto,

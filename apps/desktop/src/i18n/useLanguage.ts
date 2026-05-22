@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import {
   isSupportedLanguage,
   setLanguage,
-  type SupportedLanguage,
   SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
 } from "./index";
 
 export interface UseLanguageResult {

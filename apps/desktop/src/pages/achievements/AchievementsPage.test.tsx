@@ -8,12 +8,10 @@ import {
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { AchievementsPage } from "@/pages/AchievementsPage";
 import type { Achievement } from "@/pages/achievements/types";
+import { AchievementsPage } from "@/pages/AchievementsPage";
 
 // ── Test fixture (lives in the test, not in production code) ──────────────
-
-const ACHIEVEMENTS = buildAchievementsFixture();
 
 function buildAchievementsFixture(): Achievement[] {
   const items: Achievement[] = [

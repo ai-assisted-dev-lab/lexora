@@ -1,5 +1,6 @@
 import "./RightPanel.css";
 
+import { Flame, Target, Zap } from "lucide-react";
 import type { CSSProperties } from "react";
 
 import { useGamificationSummary } from "@/hooks/useGamificationSummary";
@@ -16,7 +17,10 @@ export function RightPanel() {
   return (
     <aside className="right-panel" aria-label="Widgets">
       <div className="right-panel__widget">
-        <p className="right-panel__widget-title">Daily Goal</p>
+        <p className="right-panel__widget-title">
+          <Target size={11} aria-hidden="true" />
+          Daily Goal
+        </p>
         <div
           className="right-panel__goal-ring"
           style={{ "--goal-pct": `${goalPct}%` } as CSSProperties}
@@ -38,7 +42,10 @@ export function RightPanel() {
       </div>
 
       <div className="right-panel__widget">
-        <p className="right-panel__widget-title">Streak</p>
+        <p className="right-panel__widget-title">
+          <Flame size={11} aria-hidden="true" />
+          Streak
+        </p>
         <div className="right-panel__stat">
           <span>Current</span>
           <span className="right-panel__stat-value">
@@ -54,7 +61,10 @@ export function RightPanel() {
       </div>
 
       <div className="right-panel__widget">
-        <p className="right-panel__widget-title">Experience</p>
+        <p className="right-panel__widget-title">
+          <Zap size={11} aria-hidden="true" />
+          Experience
+        </p>
         <div className="right-panel__stat">
           <span>Total XP</span>
           <span className="right-panel__stat-value">

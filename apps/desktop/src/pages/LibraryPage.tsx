@@ -3,7 +3,9 @@ import "./library/LibraryPage.css";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
+  BarChart2,
   BookOpen,
+  Clock,
   Compass,
   LibraryBig,
   Loader2,
@@ -240,21 +242,25 @@ export function LibraryPage() {
 
       <section className="library-summary" aria-label="Library summary">
         <StatCard
+          icon={<Clock size={18} aria-hidden="true" />}
           label="Due today"
           value={String(dueToday)}
           meta="reviews queued"
         />
         <StatCard
+          icon={<BarChart2 size={18} aria-hidden="true" />}
           label="Average mastery"
           value={`${averageMastery}%`}
           meta="across installed decks"
         />
         <StatCard
+          icon={<Star size={18} aria-hidden="true" />}
           label="Favorites"
           value={String(favorites.length)}
           meta="pinned collections"
         />
         <StatCard
+          icon={<AlertCircle size={18} aria-hidden="true" />}
           label="Weak decks"
           value={String(weakDecks.length)}
           meta="need focus"

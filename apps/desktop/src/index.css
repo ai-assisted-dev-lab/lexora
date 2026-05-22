@@ -5,82 +5,190 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design Tokens */
+/* ── Design Tokens ────────────────────────────────────────────────────── */
 :root {
   /* Layout dimensions */
   --title-bar-h: 40px;
-  --sidebar-w: 220px;
-  --sidebar-collapsed-w: 56px;
-  --header-h: 56px;
-  --right-panel-w: 280px;
-  --page-pad: 24px;
+  --sidebar-w: 254px;
+  --sidebar-collapsed-w: 74px;
+  --header-h: 74px;
+  --right-panel-w: 320px;
+  --page-pad: 28px;
   --gap-sm: 8px;
   --gap-md: 16px;
   --gap-lg: 24px;
+  --gap-xl: 32px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
 
   /* Border radii */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 40px;
   --radius-pill: 999px;
 
-  /* Colors - canvas and surfaces */
-  --color-canvas: #eff6ff;
-  --color-canvas-subtle: #f0f9ff;
-  --color-surface: #ffffff;
-  --color-surface-raised: #f8faff;
-  --color-surface-elevated: #f8faff;
-  --color-surface-glass: rgba(255, 255, 255, 0.78);
+  /* Z-index layer system */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sidebar: 20;
+  --z-header: 30;
+  --z-dropdown: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+  --z-max: 999;
 
-  /* Colors - borders */
-  --color-border: #dbeafe;
-  --color-border-muted: #e8f0fe;
-  --color-border-strong: #bfdbfe;
+  /* Colors — canvas & surfaces */
+  --color-canvas: #edf3ff;
+  --color-canvas-subtle: #f4f9ff;
+  --color-surface: rgba(255, 255, 255, 0.92);
+  --color-surface-raised: rgba(255, 255, 255, 0.96);
+  --color-surface-elevated: #ffffff;
+  --color-surface-glass: rgba(255, 255, 255, 0.72);
+  --color-surface-deep: rgba(10, 22, 58, 0.82);
+  --color-surface-panel: rgba(255, 255, 255, 0.96);
+  --color-surface-data: rgba(255, 255, 255, 0.98);
 
-  /* Colors - accents */
+  /* Glass material tokens */
+  --glass-subtle-bg: rgba(255, 255, 255, 0.58);
+  --glass-subtle-blur: 12px;
+  --glass-subtle-border: rgba(255, 255, 255, 0.48);
+  --glass-medium-bg: rgba(255, 255, 255, 0.76);
+  --glass-medium-blur: 20px;
+  --glass-medium-border: rgba(255, 255, 255, 0.58);
+  --glass-strong-bg: rgba(255, 255, 255, 0.88);
+  --glass-strong-blur: 28px;
+  --glass-strong-border: rgba(255, 255, 255, 0.72);
+
+  /* Colors — borders */
+  --color-border: rgba(91, 141, 220, 0.18);
+  --color-border-muted: rgba(255, 255, 255, 0.52);
+  --color-border-strong: rgba(55, 110, 204, 0.26);
+  --color-border-focus: rgba(37, 99, 235, 0.48);
+
+  /* Colors — primary brand */
   --color-accent: #2563eb;
-  --color-accent-light: #eff6ff;
+  --color-accent-light: rgba(37, 99, 235, 0.1);
   --color-accent-hover: #1d4ed8;
   --color-primary: #2563eb;
   --color-primary-hover: #1d4ed8;
-  --color-primary-soft: #eff6ff;
-  --color-primary-soft-hover: #dbeafe;
-  --color-azure: #3b82f6;
+  --color-primary-active: #1e40af;
+  --color-primary-soft: rgba(37, 99, 235, 0.08);
+  --color-primary-soft-hover: rgba(37, 99, 235, 0.14);
+  --color-primary-glow: rgba(37, 99, 235, 0.22);
+
+  /* Extended blue palette */
+  --color-azure: #0284c7;
+  --color-azure-soft: rgba(2, 132, 199, 0.1);
+  --color-sky: #e0f2fe;
+  --color-sky-mid: #7dd3fc;
+  --color-indigo: #4f46e5;
   --color-cyan: #0891b2;
   --color-cyan-soft: #cffafe;
-  --color-focus-ring: #3b82f6;
-  --color-text-on-accent: #ffffff;
-  --color-danger: #dc2626;
-  --color-danger-soft: #fee2e2;
-  --color-danger-soft-hover: #fecaca;
-  --color-success: #15803d;
-  --color-success-soft: #dcfce7;
-  --color-warning: #b45309;
-  --color-warning-soft: #fef3c7;
+  --color-info: #0284c7;
 
-  /* Colors - text */
-  --color-text: #1e293b;
-  --color-text-muted: #64748b;
-  --color-text-subtle: #94a3b8;
+  /* Colors — focus & interactive */
+  --color-focus-ring: rgba(37, 99, 235, 0.7);
+  --color-text-on-accent: #ffffff;
+
+  /* Colors — semantic */
+  --color-danger: #dc2626;
+  --color-danger-soft: rgba(220, 38, 38, 0.1);
+  --color-danger-soft-hover: rgba(220, 38, 38, 0.16);
+  --color-success: #059669;
+  --color-success-soft: rgba(5, 150, 105, 0.1);
+  --color-warning: #d97706;
+  --color-warning-soft: rgba(217, 119, 6, 0.12);
+
+  /* Colors — text */
+  --color-text: #0f1829;
+  --color-text-muted: #374970;
+  --color-text-subtle: #6277a0;
+  --color-text-disabled: rgba(55, 73, 112, 0.4);
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(37, 99, 235, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md:
-    0 4px 12px rgba(37, 99, 235, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 8px 24px rgba(37, 99, 235, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-xs: 0 2px 8px rgba(20, 44, 100, 0.05), 0 1px 2px rgba(20, 44, 100, 0.03);
+  --shadow-sm: 0 4px 18px rgba(20, 44, 100, 0.07), 0 1px 4px rgba(20, 44, 100, 0.04);
+  --shadow-md: 0 12px 36px rgba(18, 40, 98, 0.11), 0 2px 8px rgba(18, 40, 98, 0.06);
+  --shadow-lg: 0 24px 72px rgba(14, 34, 88, 0.16), 0 4px 16px rgba(14, 34, 88, 0.08);
+  --shadow-xl: 0 40px 96px rgba(10, 26, 76, 0.22), 0 8px 24px rgba(10, 26, 76, 0.1);
   --shadow-glass:
-    0 10px 30px rgba(37, 99, 235, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  --shadow-focus: 0 0 0 4px rgba(59, 130, 246, 0.14);
+    0 24px 64px rgba(14, 34, 88, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  --shadow-focus: 0 0 0 4px rgba(37, 99, 235, 0.18);
+  --shadow-focus-strong: 0 0 0 3px rgba(37, 99, 235, 0.28);
+  --shadow-card-hover:
+    0 20px 56px rgba(18, 40, 98, 0.16), 0 4px 16px rgba(18, 40, 98, 0.1);
+  --shadow-glow-primary: 0 8px 32px rgba(37, 99, 235, 0.28);
+  --shadow-glow-primary-strong: 0 12px 40px rgba(37, 99, 235, 0.36);
+  --shadow-sidebar:
+    18px 0 48px rgba(6, 20, 80, 0.28), 4px 0 12px rgba(6, 20, 80, 0.12);
+
+  /* Gradients */
+  --gradient-brand:
+    linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #0891b2 100%);
+  --gradient-brand-vivid:
+    linear-gradient(135deg, #1d4ed8 0%, #2563eb 45%, #0284c7 100%);
+  --gradient-brand-subtle:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(8, 145, 178, 0.08) 100%);
+  --gradient-ambient:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(8, 145, 178, 0.1), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(249, 168, 37, 0.06), transparent 24%);
+  --gradient-panel:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.68));
+  --gradient-panel-strong:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88));
+  --gradient-sidebar:
+    linear-gradient(
+      168deg,
+      rgba(14, 52, 172, 0.98) 0%,
+      rgba(21, 67, 205, 0.97) 42%,
+      rgba(7, 94, 174, 0.95) 100%
+    ),
+    radial-gradient(circle at 18% 12%, rgba(100, 165, 255, 0.32), transparent 44%);
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-snappy: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --ease-in-soft: cubic-bezier(0.36, 0, 0.66, 0);
+  --ease-in-out-soft: cubic-bezier(0.37, 0, 0.63, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring-gentle: cubic-bezier(0.34, 1.2, 0.64, 1);
+  --dur-instant: 80ms;
+  --dur-xfast: 100ms;
+  --dur-fast: 160ms;
+  --dur-med: 260ms;
+  --dur-slow: 400ms;
+  --dur-xslow: 600ms;
+
+  /* Typography */
+  --font-sans:
+    "Aptos",
+    "Segoe UI Variable Display",
+    "Inter",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+  --font-display:
+    "Aptos Display",
+    "Aptos",
+    "Segoe UI Variable Display",
+    "Inter",
+    sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", monospace;
 }
 
-/* Reset */
+/* ── Reset ────────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -92,24 +200,79 @@
 html,
 body {
   height: 100%;
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  background: var(--color-canvas);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(237, 243, 255, 0.92)),
+    var(--gradient-ambient),
+    var(--color-canvas);
   color: var(--color-text);
   overflow: hidden;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
   height: 100%;
 }
 
-/* Splash placeholder */
+/* Ambient glow orbs */
+body::before,
+body::after {
+  position: fixed;
+  inset: auto;
+  content: "";
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(22px);
+}
+
+body::before {
+  top: -180px;
+  left: -140px;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.16), transparent 70%);
+  animation: floatAmbient 20s ease-in-out infinite;
+}
+
+body::after {
+  right: -160px;
+  bottom: -200px;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(8, 145, 178, 0.14), transparent 70%);
+  animation: floatAmbient 26s ease-in-out infinite reverse;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.wordmark {
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.16);
+}
+
+/* ── Splash ───────────────────────────────────────────────────────────── */
 .splash {
   display: flex;
   flex-direction: column;
@@ -122,11 +285,7 @@ body {
 .wordmark {
   font-size: 4.5rem;
   font-weight: 700;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary) 0%,
-    var(--color-cyan) 100%
-  );
+  background: var(--gradient-brand);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -138,4 +297,62 @@ body {
   font-size: 1.125rem;
   color: var(--color-text-muted);
   font-weight: 400;
+}
+
+/* ── Keyframes ────────────────────────────────────────────────────────── */
+@keyframes floatAmbient {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(22px, -28px, 0) scale(1.08);
+  }
+}
+
+/* ── Glass material utilities ─────────────────────────────────────────── */
+
+/* Subtle glass — sidebar, quiet headers, nav panels */
+.glass-subtle {
+  background: var(--glass-subtle-bg);
+  backdrop-filter: blur(var(--glass-subtle-blur));
+  border: 1px solid var(--glass-subtle-border);
+}
+
+/* Medium glass — modals, command palette, dashboard hero */
+.glass-medium {
+  background: var(--glass-medium-bg);
+  backdrop-filter: blur(var(--glass-medium-blur));
+  border: 1px solid var(--glass-medium-border);
+}
+
+/* Strong glass — achievement unlocks, completion screens */
+.glass-strong {
+  background: var(--glass-strong-bg);
+  backdrop-filter: blur(var(--glass-strong-blur));
+  border: 1px solid var(--glass-strong-border);
+}
+
+/* Solid surfaces — forms, tables, study content */
+.surface-solid {
+  background: var(--color-surface-panel);
+  border: 1px solid var(--color-border);
+}
+
+/* Data surface — Admin/Data Studio tables, dense lists */
+.surface-data {
+  background: var(--color-surface-data);
+  border: 1px solid var(--color-border);
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

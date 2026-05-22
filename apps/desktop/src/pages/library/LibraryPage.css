@@ -95,10 +95,13 @@
 
 .library-hero__stack {
   position: absolute;
-  border: 1px solid var(--color-border-muted);
+  border: 1px solid rgba(200, 224, 255, 0.4);
   border-radius: var(--radius-xl);
-  background: var(--color-surface-glass);
-  box-shadow: var(--shadow-glass);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
 }
 
 .library-hero__stack--one {
