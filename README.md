@@ -4,31 +4,25 @@ Lexora is a local-first Windows desktop vocabulary app for English <-> Vietnames
 
 Status: portfolio / release-candidate pass. The app is functional as a local desktop project, but public release hardening still needs signed installers, production SQLCipher verification, and final content packaging.
 
-![Lexora Home](docs/assets/screenshots/home.png)
+![Lexora Home](docs/screenshots/01_home.png)
 
 ## Screenshots
 
-Screenshots are generated from the local E2E fixture so they can be refreshed without cloud services:
+| Home | Discover |
+| ---- | -------- |
+| ![Home dashboard](docs/screenshots/01_home.png) | ![Discover catalog](docs/screenshots/02_discover.png) |
 
-```bash
-pnpm screenshots
-```
+| My Library | Review |
+| ---------- | ------ |
+| ![Library](docs/screenshots/03_library.png) | ![Smart review](docs/screenshots/04_review.png) |
 
-| Home                                                | Discover                                                  |
-| --------------------------------------------------- | --------------------------------------------------------- |
-| ![Home dashboard](docs/assets/screenshots/home.png) | ![Discover catalog](docs/assets/screenshots/discover.png) |
+| Stats | Achievements |
+| ----- | ------------ |
+| ![Progress & statistics](docs/screenshots/05_stats.png) | ![Achievements](docs/screenshots/06_achievements.png) |
 
-| Library                                         | Study Session                                               |
-| ----------------------------------------------- | ----------------------------------------------------------- |
-| ![Library](docs/assets/screenshots/library.png) | ![Study session](docs/assets/screenshots/study-session.png) |
-
-| Word Detail                                             | Achievements                                              |
-| ------------------------------------------------------- | --------------------------------------------------------- |
-| ![Word detail](docs/assets/screenshots/word-detail.png) | ![Achievements](docs/assets/screenshots/achievements.png) |
-
-| Owner Data Studio                                                  |
-| ------------------------------------------------------------------ |
-| ![Owner-only Data Studio](docs/assets/screenshots/data-studio.png) |
+| Settings |
+| -------- |
+| ![Settings](docs/screenshots/07_settings.png) |
 
 ## Implemented Features
 
