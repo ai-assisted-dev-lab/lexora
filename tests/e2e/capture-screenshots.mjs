@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..", "..");
 const desktopRoot = path.join(repoRoot, "apps", "desktop");
-const outDir = path.join(repoRoot, "docs", "assets", "screenshots");
+const outDir = path.join(repoRoot, "docs", "screenshots");
 const rootRequire = createRequire(import.meta.url);
 const desktopRequire = createRequire(path.join(desktopRoot, "package.json"));
 
@@ -66,7 +66,7 @@ async function loginAs(page, baseUrl, username) {
 
 async function screenshot(page, name) {
   await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(300);
   await page.screenshot({
     path: path.join(outDir, `${name}.png`),
     fullPage: false,
@@ -81,50 +81,46 @@ try {
   await fs.mkdir(outDir, { recursive: true });
   browser = await chromium.launch();
   const page = await browser.newPage({
-    viewport: { width: 1440, height: 1000 },
+    viewport: { width: 1280, height: 800 },
     deviceScaleFactor: 1,
   });
 
   await loginAs(page, baseUrl, "learner");
-  await screenshot(page, "home");
+  await screenshot(page, "01_home");
 
   await page.goto(`${baseUrl}/#/discover`);
   await expect(
     page.getByRole("heading", { level: 1, name: "Discover" }),
   ).toBeVisible();
-  await screenshot(page, "discover");
+  await screenshot(page, "02_discover");
 
   await page.goto(`${baseUrl}/#/library`);
   await expect(
     page.getByText("Your installed learning decks, ready offline."),
   ).toBeVisible();
-  await screenshot(page, "library");
+  await screenshot(page, "03_library");
 
-  await page.goto(`${baseUrl}/#/study/session`);
+  await page.goto(`${baseUrl}/#/review`);
   await expect(
-    page.getByRole("heading", { level: 1, name: "Flashcard Session" }),
+    page.getByRole("heading", { level: 1, name: "Review" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /flip flashcard for run/i }).click();
-  await expect(page.getByText("chay nhanh bang chan")).toBeVisible();
-  await screenshot(page, "study-session");
+  await screenshot(page, "04_review");
 
-  await page.goto(`${baseUrl}/#/word/10`);
+  await page.goto(`${baseUrl}/#/stats`);
   await expect(
-    page.getByRole("heading", { level: 1, name: "run" }),
+    page.getByRole("heading", { level: 1, name: "Stats" }),
   ).toBeVisible();
-  await screenshot(page, "word-detail");
+  await screenshot(page, "05_stats");
 
   await page.goto(`${baseUrl}/#/achievements`);
   await expect(page.getByText("Your milestones")).toBeVisible();
-  await screenshot(page, "achievements");
+  await screenshot(page, "06_achievements");
 
-  await loginAs(page, baseUrl, "owner");
-  await page.goto(`${baseUrl}/#/admin/data-studio`);
+  await page.goto(`${baseUrl}/#/settings`);
   await expect(
-    page.getByRole("heading", { level: 2, name: "Data Studio" }),
+    page.getByRole("heading", { level: 1, name: "Settings" }),
   ).toBeVisible();
-  await expect(page.getByRole("tab", { name: /vocabulary/i })).toBeVisible();
-  await screenshot(page, "data-studio");
+  await screenshot(page, "07_settings");
 
   console.log(`Screenshots written to ${path.relative(repoRoot, outDir)}`);
 } finally {
