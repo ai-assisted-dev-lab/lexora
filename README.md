@@ -8,21 +8,21 @@ Status: portfolio / release-candidate pass. The app is functional as a local des
 
 ## Screenshots
 
-| Home | Discover |
-| ---- | -------- |
-| ![Home dashboard](docs/screenshots/01_home.png) | ![Discover catalog](docs/screenshots/02_discover.png) |
-
-| My Library | Review |
-| ---------- | ------ |
-| ![Library](docs/screenshots/03_library.png) | ![Smart review](docs/screenshots/04_review.png) |
-
-| Stats | Achievements |
-| ----- | ------------ |
-| ![Progress & statistics](docs/screenshots/05_stats.png) | ![Achievements](docs/screenshots/06_achievements.png) |
-
-| Settings |
-| -------- |
-| ![Settings](docs/screenshots/07_settings.png) |
+<p align="center">
+  <img src="docs/screenshots/01_home.png" width="48%" alt="Home dashboard" />
+  <img src="docs/screenshots/02_discover.png" width="48%" alt="Discover catalog" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/03_library.png" width="48%" alt="My Library" />
+  <img src="docs/screenshots/04_review.png" width="48%" alt="Smart review" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/05_stats.png" width="48%" alt="Progress and statistics" />
+  <img src="docs/screenshots/06_achievements.png" width="48%" alt="Achievements" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/07_settings.png" width="48%" alt="Settings" />
+</p>
 
 ## Implemented Features
 
