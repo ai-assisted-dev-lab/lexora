@@ -531,11 +531,9 @@ mod tests {
         let conn = db_with_schema();
         create_default_accounts(&conn).expect("defaults");
         let owner_id: i64 = conn
-            .query_row(
-                "SELECT id FROM users WHERE username = 'owner'",
-                [],
-                |r| r.get(0),
-            )
+            .query_row("SELECT id FROM users WHERE username = 'owner'", [], |r| {
+                r.get(0)
+            })
             .unwrap();
 
         let err = change_password(&conn, owner_id, "wrong", "newer-password").unwrap_err();
@@ -547,11 +545,9 @@ mod tests {
         let conn = db_with_schema();
         create_default_accounts(&conn).expect("defaults");
         let owner_id: i64 = conn
-            .query_row(
-                "SELECT id FROM users WHERE username = 'owner'",
-                [],
-                |r| r.get(0),
-            )
+            .query_row("SELECT id FROM users WHERE username = 'owner'", [], |r| {
+                r.get(0)
+            })
             .unwrap();
 
         let err = change_password(&conn, owner_id, "owner", "abc").unwrap_err();
@@ -563,11 +559,9 @@ mod tests {
         let conn = db_with_schema();
         create_default_accounts(&conn).expect("defaults");
         let owner_id: i64 = conn
-            .query_row(
-                "SELECT id FROM users WHERE username = 'owner'",
-                [],
-                |r| r.get(0),
-            )
+            .query_row("SELECT id FROM users WHERE username = 'owner'", [], |r| {
+                r.get(0)
+            })
             .unwrap();
 
         let err = change_password(&conn, owner_id, "owner", "owner").unwrap_err();
@@ -579,11 +573,9 @@ mod tests {
         let conn = db_with_schema();
         create_default_accounts(&conn).expect("defaults");
         let owner_id: i64 = conn
-            .query_row(
-                "SELECT id FROM users WHERE username = 'owner'",
-                [],
-                |r| r.get(0),
-            )
+            .query_row("SELECT id FROM users WHERE username = 'owner'", [], |r| {
+                r.get(0)
+            })
             .unwrap();
 
         change_password(&conn, owner_id, "owner", "rotated-pw").expect("change");
@@ -599,11 +591,9 @@ mod tests {
         let conn = db_with_schema();
         create_default_accounts(&conn).expect("defaults");
         let owner_id: i64 = conn
-            .query_row(
-                "SELECT id FROM users WHERE username = 'owner'",
-                [],
-                |r| r.get(0),
-            )
+            .query_row("SELECT id FROM users WHERE username = 'owner'", [], |r| {
+                r.get(0)
+            })
             .unwrap();
 
         assert!(uses_default_password(&conn, owner_id).expect("check"));

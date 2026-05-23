@@ -912,9 +912,8 @@ fn canonicalize_existing_file(file_path: &str) -> Result<PathBuf, AppError> {
             "Backup path could not be resolved (possible broken symlink): {e}"
         ))
     })?;
-    let metadata = fs::symlink_metadata(&canonical).map_err(|e| {
-        AppError::Validation(format!("Backup path could not be inspected: {e}"))
-    })?;
+    let metadata = fs::symlink_metadata(&canonical)
+        .map_err(|e| AppError::Validation(format!("Backup path could not be inspected: {e}")))?;
     if !metadata.file_type().is_file() {
         return Err(AppError::Validation(format!(
             "Backup path is not a regular file: {}",

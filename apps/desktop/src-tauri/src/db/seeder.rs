@@ -6,8 +6,7 @@ use serde::Deserialize;
 use crate::errors::AppError;
 
 const DEMO_PACK_JSON: &str = include_str!("../../../../../data/seed/demo_pack.json");
-const ESSENTIAL_500_JSON: &str =
-    include_str!("../../../../../data/seed/essential_500_pack.json");
+const ESSENTIAL_500_JSON: &str = include_str!("../../../../../data/seed/essential_500_pack.json");
 
 // Demo pack ships last so the single `bundled_seed_version` app_metadata
 // key reflects its version — this preserves the existing seeder tests.
@@ -147,9 +146,7 @@ fn load_single_pack(
     }
 
     let tx = conn.transaction().map_err(|e| {
-        AppError::Internal(format!(
-            "Failed to start seed transaction for {label}: {e}"
-        ))
+        AppError::Internal(format!("Failed to start seed transaction for {label}: {e}"))
     })?;
 
     let report = upsert_seed_data(&tx, &seed, existing_pack.map(|(id, _)| id))?;
