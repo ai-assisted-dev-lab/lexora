@@ -39,6 +39,8 @@ async function listenOnAvailablePort() {
 
     try {
       await server.listen();
+      // Allow Vite to finish dependency optimisation before serving requests.
+      await new Promise((r) => setTimeout(r, 4000));
       return { server, port };
     } catch (error) {
       lastError = error;
@@ -50,7 +52,7 @@ async function listenOnAvailablePort() {
 }
 
 async function loginAs(page, baseUrl, username) {
-  await page.goto(baseUrl);
+  await page.goto(baseUrl, { timeout: 60000 });
   await page.evaluate(() => window.localStorage.clear());
   await page.goto(baseUrl);
   await expect(
