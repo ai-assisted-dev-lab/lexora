@@ -48,38 +48,38 @@ Lexora is a local-first Windows desktop app that makes English ↔ Vietnamese vo
 
 ## Features
 
-| Area | What's included |
-| ---- | --------------- |
-| **Accounts** | `learner / learner` and `owner / owner` seeded on first launch; owner guard enforced in routes and Rust commands |
-| **Home** | Daily goal, XP, streak, review activity heatmap, featured deck, and quick study entry |
-| **Discover** | Local deck catalog with CEFR/topic filters, install state, and incremental rendering |
-| **Library** | Installed decks with progress bars, due counts, and weak-deck filtering |
-| **Study** | Flashcard, multiple-choice, type-answer, and weak-word session modes |
-| **Word Detail** | Senses, examples, IPA/audio metadata, relations, review state, and history |
-| **Stats** | Progress charts, streak calendar, mastery distribution, and weekly activity |
-| **Achievements** | Milestone tracking backed by native command DTOs |
-| **Data Studio** | Owner-only paged vocabulary/deck tables, validation views, and guarded edit flows |
-| **Data** | SQLite with FTS5 fuzzy search; SQLCipher available via `--features sqlcipher` |
-| **Utilities** | Backup/restore, import/export, notifications, and updater plumbing |
+| Area             | What's included                                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Accounts**     | `learner / learner` and `owner / owner` seeded on first launch; owner guard enforced in routes and Rust commands |
+| **Home**         | Daily goal, XP, streak, review activity heatmap, featured deck, and quick study entry                            |
+| **Discover**     | Local deck catalog with CEFR/topic filters, install state, and incremental rendering                             |
+| **Library**      | Installed decks with progress bars, due counts, and weak-deck filtering                                          |
+| **Study**        | Flashcard, multiple-choice, type-answer, and weak-word session modes                                             |
+| **Word Detail**  | Senses, examples, IPA/audio metadata, relations, review state, and history                                       |
+| **Stats**        | Progress charts, streak calendar, mastery distribution, and weekly activity                                      |
+| **Achievements** | Milestone tracking backed by native command DTOs                                                                 |
+| **Data Studio**  | Owner-only paged vocabulary/deck tables, validation views, and guarded edit flows                                |
+| **Data**         | SQLite with FTS5 fuzzy search; SQLCipher available via `--features sqlcipher`                                    |
+| **Utilities**    | Backup/restore, import/export, notifications, and updater plumbing                                               |
 
 **Not included:** cloud sync, marketplace/payments, dark mode, public community features, or AI tutor/chat.
 
 ## Tech Stack
 
-| Layer | Technology |
-| ----- | ---------- |
-| Desktop shell | Tauri 2 |
-| UI | React 18, TypeScript, Vite |
-| Styling | Local CSS, design tokens, light-blue Azure Glass identity |
-| Animation | Framer Motion |
-| Routing | React Router |
-| Icons | Lucide React |
-| Charts | Recharts |
-| Native layer | Rust |
-| Database | SQLite + FTS5; SQLCipher via `--features sqlcipher` |
-| Review engine | FSRS scheduling (Rust + TypeScript) |
-| Package manager | pnpm workspaces |
-| Testing | Vitest, React Testing Library, Playwright, Rust unit tests |
+| Layer           | Technology                                                 |
+| --------------- | ---------------------------------------------------------- |
+| Desktop shell   | Tauri 2                                                    |
+| UI              | React 18, TypeScript, Vite                                 |
+| Styling         | Local CSS, design tokens, light-blue Azure Glass identity  |
+| Animation       | Framer Motion                                              |
+| Routing         | React Router                                               |
+| Icons           | Lucide React                                               |
+| Charts          | Recharts                                                   |
+| Native layer    | Rust                                                       |
+| Database        | SQLite + FTS5; SQLCipher via `--features sqlcipher`        |
+| Review engine   | FSRS scheduling (Rust + TypeScript)                        |
+| Package manager | pnpm workspaces                                            |
+| Testing         | Vitest, React Testing Library, Playwright, Rust unit tests |
 
 ## Architecture
 
@@ -154,6 +154,7 @@ pnpm --filter desktop tauri:build:windows
 ```
 
 Installer output:
+
 - `apps/desktop/src-tauri/target/release/bundle/nsis/`
 - `apps/desktop/src-tauri/target/release/bundle/msi/`
 

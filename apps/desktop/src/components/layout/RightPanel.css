@@ -2,13 +2,12 @@
 .right-panel {
   width: var(--right-panel-w);
   height: 100%;
-  background:
-    linear-gradient(
-      160deg,
-      rgba(255, 255, 255, 0.92) 0%,
-      rgba(237, 246, 255, 0.82) 60%,
-      rgba(224, 239, 255, 0.76) 100%
-    );
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(237, 246, 255, 0.82) 60%,
+    rgba(224, 239, 255, 0.76) 100%
+  );
   border: 1px solid rgba(200, 224, 255, 0.36);
   border-radius: 22px;
   overflow-y: auto;
@@ -86,11 +85,7 @@
   height: 76px;
   border-radius: 50%;
   background:
-    radial-gradient(
-      circle at center,
-      #ffffff 50%,
-      transparent 52%
-    ),
+    radial-gradient(circle at center, #ffffff 50%, transparent 52%),
     conic-gradient(
       from -90deg,
       #2563eb var(--goal-pct, 0%),

@@ -7,9 +7,12 @@
 
   /* Subtle page-canvas gradient — not blurred, keeps readability */
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(244, 249, 255, 0.18) 100%),
-    var(--gradient-ambient),
-    var(--color-canvas-subtle);
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(244, 249, 255, 0.18) 100%
+    ),
+    var(--gradient-ambient), var(--color-canvas-subtle);
 
   border: 1px solid rgba(200, 224, 255, 0.22);
   border-radius: 22px;

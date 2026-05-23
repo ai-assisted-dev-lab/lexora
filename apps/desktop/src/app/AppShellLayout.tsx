@@ -52,7 +52,10 @@ const pageVariants = {
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    transition: {
+      duration: 0.2,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
   },
   exit: {
     opacity: 0,

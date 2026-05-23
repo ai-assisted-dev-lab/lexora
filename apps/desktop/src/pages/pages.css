@@ -273,7 +273,9 @@
 
 .data-studio__module-card:hover {
   border-color: rgba(37, 99, 235, 0.2);
-  box-shadow: var(--shadow-md), 0 0 0 3px rgba(37, 99, 235, 0.05);
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 3px rgba(37, 99, 235, 0.05);
   transform: translateY(-2px);
 }
 

@@ -115,14 +115,18 @@
   --color-text-disabled: rgba(55, 73, 112, 0.4);
 
   /* Shadows */
-  --shadow-xs: 0 2px 8px rgba(20, 44, 100, 0.05), 0 1px 2px rgba(20, 44, 100, 0.03);
-  --shadow-sm: 0 4px 18px rgba(20, 44, 100, 0.07), 0 1px 4px rgba(20, 44, 100, 0.04);
-  --shadow-md: 0 12px 36px rgba(18, 40, 98, 0.11), 0 2px 8px rgba(18, 40, 98, 0.06);
-  --shadow-lg: 0 24px 72px rgba(14, 34, 88, 0.16), 0 4px 16px rgba(14, 34, 88, 0.08);
-  --shadow-xl: 0 40px 96px rgba(10, 26, 76, 0.22), 0 8px 24px rgba(10, 26, 76, 0.1);
+  --shadow-xs:
+    0 2px 8px rgba(20, 44, 100, 0.05), 0 1px 2px rgba(20, 44, 100, 0.03);
+  --shadow-sm:
+    0 4px 18px rgba(20, 44, 100, 0.07), 0 1px 4px rgba(20, 44, 100, 0.04);
+  --shadow-md:
+    0 12px 36px rgba(18, 40, 98, 0.11), 0 2px 8px rgba(18, 40, 98, 0.06);
+  --shadow-lg:
+    0 24px 72px rgba(14, 34, 88, 0.16), 0 4px 16px rgba(14, 34, 88, 0.08);
+  --shadow-xl:
+    0 40px 96px rgba(10, 26, 76, 0.22), 0 8px 24px rgba(10, 26, 76, 0.1);
   --shadow-glass:
-    0 24px 64px rgba(14, 34, 88, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 24px 64px rgba(14, 34, 88, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.88),
     inset 0 0 0 1px rgba(255, 255, 255, 0.28);
   --shadow-focus: 0 0 0 4px rgba(37, 99, 235, 0.18);
   --shadow-focus-strong: 0 0 0 3px rgba(37, 99, 235, 0.28);
@@ -134,20 +138,45 @@
     18px 0 48px rgba(6, 20, 80, 0.28), 4px 0 12px rgba(6, 20, 80, 0.12);
 
   /* Gradients */
-  --gradient-brand:
-    linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #0891b2 100%);
-  --gradient-brand-vivid:
-    linear-gradient(135deg, #1d4ed8 0%, #2563eb 45%, #0284c7 100%);
-  --gradient-brand-subtle:
-    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(8, 145, 178, 0.08) 100%);
+  --gradient-brand: linear-gradient(
+    135deg,
+    #2563eb 0%,
+    #3b82f6 50%,
+    #0891b2 100%
+  );
+  --gradient-brand-vivid: linear-gradient(
+    135deg,
+    #1d4ed8 0%,
+    #2563eb 45%,
+    #0284c7 100%
+  );
+  --gradient-brand-subtle: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.12) 0%,
+    rgba(8, 145, 178, 0.08) 100%
+  );
   --gradient-ambient:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 34%),
+    radial-gradient(
+      circle at top left,
+      rgba(59, 130, 246, 0.14),
+      transparent 34%
+    ),
     radial-gradient(circle at 82% 18%, rgba(8, 145, 178, 0.1), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(249, 168, 37, 0.06), transparent 24%);
-  --gradient-panel:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.68));
-  --gradient-panel-strong:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88));
+    radial-gradient(
+      circle at bottom right,
+      rgba(249, 168, 37, 0.06),
+      transparent 24%
+    );
+  --gradient-panel: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0.68)
+  );
+  --gradient-panel-strong: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 255, 255, 0.88)
+  );
   --gradient-sidebar:
     linear-gradient(
       168deg,
@@ -155,7 +184,11 @@
       rgba(21, 67, 205, 0.97) 42%,
       rgba(7, 94, 174, 0.95) 100%
     ),
-    radial-gradient(circle at 18% 12%, rgba(100, 165, 255, 0.32), transparent 44%);
+    radial-gradient(
+      circle at 18% 12%,
+      rgba(100, 165, 255, 0.32),
+      transparent 44%
+    );
 
   /* Motion */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
@@ -173,18 +206,10 @@
 
   /* Typography */
   --font-sans:
-    "Aptos",
-    "Segoe UI Variable Display",
-    "Inter",
-    "Segoe UI",
-    system-ui,
+    "Aptos", "Segoe UI Variable Display", "Inter", "Segoe UI", system-ui,
     sans-serif;
   --font-display:
-    "Aptos Display",
-    "Aptos",
-    "Segoe UI Variable Display",
-    "Inter",
-    sans-serif;
+    "Aptos Display", "Aptos", "Segoe UI Variable Display", "Inter", sans-serif;
   --font-mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", monospace;
 }
 
@@ -203,9 +228,12 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(237, 243, 255, 0.92)),
-    var(--gradient-ambient),
-    var(--color-canvas);
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.86),
+      rgba(237, 243, 255, 0.92)
+    ),
+    var(--gradient-ambient), var(--color-canvas);
   color: var(--color-text);
   overflow: hidden;
   text-rendering: optimizeLegibility;
