@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 198 28" width="198" height="28">
+  <style>
+    .ring {
+      animation: ripple 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .dot {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes ripple {
+      0%   { r: 6;  opacity: 0.5; }
+      100% { r: 13; opacity: 0;   }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1;   }
+      50%      { opacity: 0.75; }
+    }
+  </style>
+  <circle class="ring" cx="12" cy="14" r="6"   fill="#22c55e"/>
+  <circle class="dot"  cx="12" cy="14" r="5.5" fill="#22c55e"/>
+  <text x="26" y="19.5"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+    font-size="13.5" font-weight="600" fill="#22c55e" letter-spacing="0.2">
+    Active Development
+  </text>
+</svg>

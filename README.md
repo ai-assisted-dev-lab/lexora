@@ -4,12 +4,19 @@
 
 **Offline-first English ↔ Vietnamese vocabulary for Windows**
 
-[![Status](https://img.shields.io/badge/●%20In%20Development-brightgreen?style=flat-square)](https://github.com)
-[![Platform](https://img.shields.io/badge/Windows%2010%2F11-0078D6?style=flat-square&logo=windows&logoColor=white)](https://github.com)
-[![Tauri](https://img.shields.io/badge/Tauri%202-FFC131?style=flat-square&logo=tauri&logoColor=black)](https://tauri.app)
-[![React](https://img.shields.io/badge/React%2018-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![Rust](https://img.shields.io/badge/Rust-CE422B?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
-[![License](https://img.shields.io/badge/MIT-black?style=flat-square)](LICENSE)
+<br/>
+
+<img src="docs/wip-badge.svg" alt="Active Development" />
+
+<br/><br/>
+
+![Platform](https://img.shields.io/badge/Windows_10%2F11-0078D6?style=for-the-badge&logo=windows&logoColor=white&labelColor=1d4ed8)
+&nbsp;&nbsp;
+![License](https://img.shields.io/badge/License-MIT-334155?style=for-the-badge&labelColor=1e293b)
+
+<br/>
+
+<img src="https://skillicons.dev/icons?i=tauri,rust,react,ts,vite,sqlite" alt="Tauri · Rust · React · TypeScript · Vite · SQLite" />
 
 </div>
 
